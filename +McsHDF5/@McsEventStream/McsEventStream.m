@@ -26,13 +26,13 @@ classdef McsEventStream < McsHDF5.McsStream
         % Accessor function for events. Loads the events from the file the
         % first time that the Events field is requested.
         
-            if ~str.DataFull
+            if ~str.DataLoaded
                 fprintf('Reading event data...\n')
                 for gidx = 1:length(str.Events)
                     str.Events{gidx} = ...
                         h5read(str.FileName,[str.StructName '/EventEntity_' num2str(str.Info.EventID(gidx))]);
                 end
-                str.DataFull = true;
+                str.DataLoaded = true;
             end
             data = str.Events;
         end

@@ -17,7 +17,12 @@ function plot(evtStream,cfg,varargin)
 
     for evti = 1:length(evtStream.Events)
         evts = McsHDF5.TickToSec(evtStream.Events{evti});
-        plot(evts,ones(1,length(evts))*evti,varargin{:});
+        if size(evts,2) == 1
+            plot(evts,ones(1,length(evts))*evti,varargin{:});
+        elseif size(evts,2) == 2
+            plot(evts(:,1),ones(1,length(evts))*evti,varargin{:});
+            warning('Event durations are not yet shown!');
+        end
         hold on
     end
     hold off

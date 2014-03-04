@@ -12,7 +12,10 @@ classdef McsFrameStream < McsHDF5.McsStream
         function str = McsFrameStream(filename, strStruct)
         % function str = McsFrameStream(filename, strStruct)
         %
-        % Constructs a McsFrameStream object.
+        % Constructs a McsFrameStream object. Calls the constructors for
+        % the individual McsFrameDataEntity objects. The FrameData from the
+        % individual FrameDataEntities is not read directly from the file,
+        % but only once the FrameData field is actually accessed.
         
             str = str@McsHDF5.McsStream(filename,strStruct,'Frame');
             

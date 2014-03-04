@@ -40,13 +40,13 @@ classdef McsSegmentStream < McsHDF5.McsStream
         % data from the file the first time that the SegmentData field is
         % accessed.
         
-            if ~str.DataFull
+            if ~str.DataLoaded
                 fprintf('Reading segment data...\n');
                 for segi = 1:length(str.Info.SegmentID)
                     str.SegmentData{segi} = ...
                         h5read(str.FileName,[str.StructName '/SegmentData_' num2str(str.Info.SegmentID(segi))]);  
                 end 
-                str.DataFull = true;
+                str.DataLoaded = true;
                 for segi = 1:length(str.Info.SegmentID)
                     str.SegmentData{segi} = convert_from_raw(str,segi);
                 end

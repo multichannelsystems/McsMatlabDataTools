@@ -7,7 +7,7 @@ function plot(segStream,cfg,varargin)
 %
 %   segStream     -   A McsSegmentStream object
 %
-% cfg             -   Either empty (for default parameters) or a
+%   cfg           -   Either empty (for default parameters) or a
 %                     structure with (some of) the following fields:
 %                     'segments': empty for all segments, otherwise a
 %                       vector of segment indices (default: all)

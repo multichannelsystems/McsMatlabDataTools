@@ -14,6 +14,9 @@ function plot(analogStream,cfg,varargin)
 %                       'window': empty for the whole time range, otherwise
 %                           a vector with two entries: [start end] of the 
 %                           time range, both in seconds.
+%                       'legend': either true (default) or false. Matlab
+%                           can be very inefficient in plotting legends for
+%                           many channels and many time segments.
 %                       If fields are missing, their default values are used.
 %
 %   optional inputs in varargin are passed to the plot function.
@@ -23,6 +26,11 @@ function plot(analogStream,cfg,varargin)
     if isempty(cfg)
         cfg.channels = [];
         cfg.window = [];
+        cfg.legend = true;
+    end
+    
+    if ~isfield(cfg,'legend')
+        cfg.legend = true;
     end
     
     if ~isfield(cfg,'channels') 
@@ -47,8 +55,8 @@ function plot(analogStream,cfg,varargin)
         cfg.channels = cfg.channels(cfg.channels >= 1 & cfg.channels <= size(analogStream.ChannelData,2));
     end
 
-    start_index = find(analogStream.ChannelDataTimeStamps > McsHDF5.SecToTick(cfg.window(1)),1,'first');
-    end_index = find(analogStream.ChannelDataTimeStamps < McsHDF5.SecToTick(cfg.window(2)),1,'last');
+    start_index = find(analogStream.ChannelDataTimeStamps >= McsHDF5.SecToTick(cfg.window(1)),1,'first');
+    end_index = find(analogStream.ChannelDataTimeStamps <= McsHDF5.SecToTick(cfg.window(2)),1,'last');
     
     if end_index < start_index
         warning('No time range found')
@@ -66,14 +74,23 @@ function plot(analogStream,cfg,varargin)
     
     timestamps = McsHDF5.TickToSec(analogStream.ChannelDataTimeStamps(start_index:end_index));
     
-    if isempty([varargin{:}])
-        plot(timestamps,data_to_plot);
-    else
-        plot(timestamps,data_to_plot,varargin{:});
+    segstarts = [0 find(diff(timestamps) > 2*McsHDF5.TickToSec(analogStream.Info.Tick(1)))' length(timestamps)-1] + 1;
+    
+    for segi = 1:length(segstarts)-1
+        segidx = segstarts(segi):segstarts(segi+1)-1;
+        if isempty([varargin{:}])
+            plot(timestamps(segidx),data_to_plot(segidx,:));
+        else
+            plot(timestamps(segidx),data_to_plot(segidx,:),varargin{:});
+        end
+        hold on
     end
     
+    hold off
     chan_names = analogStream.Info.Label(cfg.channels);
-    legend(chan_names);
+    if cfg.legend
+        legend(chan_names);
+    end
     
     title([analogStream.Label]);
     xlabel('Time [s]')

@@ -46,9 +46,14 @@ function plot(frame,cfg,varargin)
         cfg.channelMatrix = true(size(frame.FrameData,2),size(frame.FrameData,3));
     end
     
+    if size(cfg.channelMatrix,1) ~= size(frame.FrameData,2) || size(cfg.channelMatrix,2) ~= size(frame.FrameData,3)
+        error('Size of cfg.channelMatrix does not match the number of channels in the file!');
+    end
+    
     if numel(cfg.window) == 1 || cfg.window(1) == cfg.window(2)
+        % plot single time point as a 3D visualization
         
-        idx = find(abs(frame.FrameDataTimeStamps - McsHDF5.SecToTick(cfg.window(1))) < frame.InfoStruct.Tick);
+        idx = find(abs(frame.FrameDataTimeStamps - McsHDF5.SecToTick(cfg.window(1))) <= frame.InfoStruct.Tick);
         if isempty(idx)
             warning('No data point found!')
             return;
@@ -78,8 +83,8 @@ function plot(frame,cfg,varargin)
         title(['Time: ' num2str(cfg.window(1)) ' [s]'])
     else
         
-        start_index = find(frame.FrameDataTimeStamps > McsHDF5.SecToTick(cfg.window(1)),1,'first');
-        end_index = find(frame.FrameDataTimeStamps < McsHDF5.SecToTick(cfg.window(2)),1,'last');
+        start_index = find(frame.FrameDataTimeStamps >= McsHDF5.SecToTick(cfg.window(1)),1,'first');
+        end_index = find(frame.FrameDataTimeStamps <= McsHDF5.SecToTick(cfg.window(2)),1,'last');
 
         if end_index < start_index
             warning('No time range found')

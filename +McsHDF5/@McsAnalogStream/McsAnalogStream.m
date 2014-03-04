@@ -20,11 +20,15 @@ classdef McsAnalogStream < McsHDF5.McsStream
             str = str@McsHDF5.McsStream(filename,strStruct,'Channel');
             
             timestamps = h5read(filename, [strStruct.Name '/ChannelDataTimeStamps']);
-            timestamps = timestamps + int64([0 1 1]);
-            for tsi = 1:size(timestamps,1)
-                str.ChannelDataTimeStamps(timestamps(tsi,2):timestamps(tsi,3)) = ...
-                    (int64(0:numel(timestamps(tsi,2):timestamps(tsi,3))-1) .* ...
-                    str.Info.Tick(1)) + timestamps(tsi,1);
+            if size(timestamps,1) ~= 3
+                timestamps = timestamps';
+            end
+            timestamps = bsxfun(@plus,timestamps,int64([0 1 1])');
+            
+            for tsi = 1:size(timestamps,2)
+                str.ChannelDataTimeStamps(timestamps(2,tsi):timestamps(3,tsi)) = ...
+                    (int64(0:numel(timestamps(2,tsi):timestamps(3,tsi))-1) .* ...
+                    str.Info.Tick(1)) + timestamps(1,tsi);
             end
             str.ChannelDataTimeStamps = str.ChannelDataTimeStamps';
             
@@ -36,11 +40,11 @@ classdef McsAnalogStream < McsHDF5.McsStream
         % Accessor function for the ChannelData field. Will read the
         % channel data from file the first time this field is accessed.
         
-            if ~str.DataFull
+            if ~str.DataLoaded
                 fprintf('Reading analog data...\n')
                 str.ChannelData = h5read(str.FileName, [str.StructName '/ChannelData']);
-                str.DataFull = true;
-                str.ChannelData = convert_from_raw(str);    
+                str.DataLoaded = true;
+                convert_from_raw(str);    
             end
             data = str.ChannelData;
         end
@@ -48,7 +52,7 @@ classdef McsAnalogStream < McsHDF5.McsStream
     end
     
     methods (Access = private)
-        function out = convert_from_raw(str)
+        function convert_from_raw(str)
             % function out = convert_from_raw(str)
             %
             % Converts the raw channel data to useful units. This is
@@ -57,9 +61,9 @@ classdef McsAnalogStream < McsHDF5.McsStream
             
             conv_factor = double(str.Info.ConversionFactor);
             adzero = double(str.Info.ADZero);
-            out = double(str.ChannelData);
-            out = bsxfun(@minus,out,adzero');
-            out = bsxfun(@times,out,conv_factor');
+            str.ChannelData = double(str.ChannelData);
+            str.ChannelData = bsxfun(@minus,str.ChannelData,adzero');
+            str.ChannelData = bsxfun(@times,str.ChannelData,conv_factor');
             
         end
         

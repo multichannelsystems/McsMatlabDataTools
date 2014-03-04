@@ -12,7 +12,7 @@ classdef McsStream < handle
     properties (Access = protected)
         FileName
         StructName
-        DataFull = false;
+        DataLoaded = false;
     end
     
     methods
@@ -42,7 +42,7 @@ classdef McsStream < handle
         % function Fs = getSamplingRate(str)
         %
         % Returns the sampling rate in Hz of the first channel of a
-        % McsStream.
+        % McsStream. Warning: Will not work for event channels!
         %
         % function Fs = getSamplingRate(str,i)
         %
