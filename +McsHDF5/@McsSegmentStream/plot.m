@@ -1,7 +1,10 @@
 function plot(segStream,cfg,varargin)
+% Plot the contents of a McsSegmentStream object.
+%
 % function plot(segStream,cfg,varargin)
 %
-% Function to plot the contents of a McsSegmentStream object.
+% Produces for each segment a 3D plot of trials x samples and a time series
+% plot which overlays all trials.
 %
 % Input:
 %
@@ -13,7 +16,7 @@ function plot(segStream,cfg,varargin)
 %                       vector of segment indices (default: all)
 %                     If fields are missing, their default values are used.
 %
-%   optional inputs in varargin are passed to the plot function.
+%   Optional inputs in varargin are passed to the plot function.
 
     clf
     
@@ -64,6 +67,11 @@ function plot(segStream,cfg,varargin)
         %ts = -pre:double(segStream.Info.Tick(id)):post;
         ts = McsHDF5.TickToSec(ts);
         plot(ts,data_to_plot');
+        
+        hold on
+        plot(ts,mean(data_to_plot),'-k','LineWidth',2);
+        hold off
+        
         axis tight
         xlabel('Time [s]');
         ylabel([unit_string segStream.Info.Unit{1}],'Interpreter','tex')

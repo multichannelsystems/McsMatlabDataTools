@@ -1,7 +1,10 @@
 function plot(frameStream,cfg,varargin)
+% Plot the contents of a McsFrameStream object.
+%
 % function plot(frameStream,cfg,varargin)
 %
-% Function to plot the contents of a McsFrameStream object.
+% Produces plots of the individual FrameDataEntities (one figure per
+% entity).
 %
 % Input:
 %
@@ -31,7 +34,7 @@ function plot(frameStream,cfg,varargin)
 %                       See help McsFrameDataEntity.plot for more details
 %                       on the 'window' and the 'channelMatrix' parameter
 %
-%   optional inputs in varargin are passed to the plot function.
+%   Optional inputs in varargin are passed to the plot function.
 
     if isempty(cfg)
         cfg.entities = [];

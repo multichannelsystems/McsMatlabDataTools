@@ -1,7 +1,10 @@
 function plot(evtStream,cfg,varargin)
+% Plot the contents of a McsEventStream object. 
+%
 % function plot(evtStream,cfg,varargin)
 %
-% Function to plot the contents of a McsEventStream object.
+% Produces a plot in which the time stamp of each event is shown as a dot
+% on a time scale.
 %
 % Input:
 %
@@ -9,7 +12,7 @@ function plot(evtStream,cfg,varargin)
 %
 %   cfg          -   Reserved for future use, currently unused
 %
-%   optional inputs in varargin are passed to the plot function.
+%   Optional inputs in varargin are passed to the plot function.
 
     if isempty(varargin)
         varargin{1} = '.k';

@@ -1,21 +1,31 @@
 classdef McsAnalogStream < McsHDF5.McsStream
-% McsAnalogStream
+% Holds the contents of an AnalogStream. 
 %
-% Holds the contents of an AnalogStream
+% Fields:
+%   ChannelData         -   (samples x channels) array of the sampled data.
+%                           Samples are given in units of 10 ^ Info.Exponent 
+%                           [Info.Unit]
+%
+%   ChannelDataTimeStamps - (samples x 1) vector of time stamps given in
+%                           microseconds.
+%
+% The other fields and the Info field provide general information about the
+% analog stream.
 
     properties (SetAccess = private)
         ChannelData = [];
-        ChannelDataTimeStamps = [];
+        ChannelDataTimeStamps = int64([]);
     end
     
     methods
         
         function str = McsAnalogStream(filename, strStruct)
+        % Constructs a McsAnalogStream object
+        %
         % function str = McsAnalogStream(filename, strStruct)    
         %
-        % Constructs a McsAnalogStream object and reads the
-        % meta-information and the time stamps, not the analog data. This
-        % is done the first time that ChannelData is accessed.
+        % Reads the meta-information and the time stamps, not the analog
+        % data. This is done the first time that ChannelData is accessed.
         
             str = str@McsHDF5.McsStream(filename,strStruct,'Channel');
             
@@ -35,10 +45,12 @@ classdef McsAnalogStream < McsHDF5.McsStream
         end
         
         function data = get.ChannelData(str)
+        %  Accessor function for the ChannelData field.
+        %
         % function data = get.ChannelData(str)
         %
-        % Accessor function for the ChannelData field. Will read the
-        % channel data from file the first time this field is accessed.
+        % Will read the channel data from file the first time this field is
+        % accessed.
         
             if ~str.DataLoaded
                 fprintf('Reading analog data...\n')
@@ -53,11 +65,12 @@ classdef McsAnalogStream < McsHDF5.McsStream
     
     methods (Access = private)
         function convert_from_raw(str)
+            % Converts the raw channel data to useful units.
+            %
             % function out = convert_from_raw(str)
             %
-            % Converts the raw channel data to useful units. This is
-            % performed directly after the data is loaded from the hdf5
-            % file.
+            % This is performed directly after the data is loaded from the
+            % hdf5 file.
             
             conv_factor = double(str.Info.ConversionFactor);
             adzero = double(str.Info.ADZero);

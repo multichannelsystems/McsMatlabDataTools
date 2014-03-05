@@ -1,7 +1,11 @@
 function plot(frame,cfg,varargin)
+% Plot the contents of a McsFrameDataEntity object.
+%
 % function plot(frame,cfg,varargin)
 %
-% Function to plot the contents of a McsFrameDataEntity object.
+% Will either produce a 3D figure of the channel amplitudes at a single
+% time point, or a 2D matrix of plots, each showing the signal of a single
+% channel for a given time range.
 %
 % Input:
 %
@@ -22,7 +26,7 @@ function plot(frame,cfg,varargin)
 %                       over all channels is generated.
 %               If fields are missing, their default values are used.
 %
-%   optional inputs in varargin are passed to the plot function.
+%   Optional inputs in varargin are passed to the plot function.
 
     clf
     
@@ -53,7 +57,7 @@ function plot(frame,cfg,varargin)
     if numel(cfg.window) == 1 || cfg.window(1) == cfg.window(2)
         % plot single time point as a 3D visualization
         
-        idx = find(abs(frame.FrameDataTimeStamps - McsHDF5.SecToTick(cfg.window(1))) <= frame.InfoStruct.Tick);
+        idx = find(abs(frame.FrameDataTimeStamps - McsHDF5.SecToTick(cfg.window(1))) <= frame.Info.Tick);
         if isempty(idx)
             warning('No data point found!')
             return;
@@ -64,7 +68,7 @@ function plot(frame,cfg,varargin)
         
         data_to_plot = frame.FrameData(idx,:,:);
         orig_exp = log10(max(abs(data_to_plot(:))));
-        unit_exp = double(frame.InfoStruct.Exponent);
+        unit_exp = double(frame.Info.Exponent);
 
         [fact,unit_string] = McsHDF5.ExponentToUnit(orig_exp+unit_exp,orig_exp);
 
@@ -77,12 +81,13 @@ function plot(frame,cfg,varargin)
         else
             surf(X,Y,data_to_plot,varargin{:});
         end
-        xlabel('y channels')
-        ylabel('x channels')
-        zlabel([unit_string frame.InfoStruct.Unit{1}],'Interpreter','tex')
+        xlabel('x channels')
+        ylabel('y channels')
+        zlabel([unit_string frame.Info.Unit{1}],'Interpreter','tex')
         title(['Time: ' num2str(cfg.window(1)) ' [s]'])
     else
-        
+        % plot time range with a 2D array of plots, each plot showing the
+        % time series in the time range for a specific channel.
         start_index = find(frame.FrameDataTimeStamps >= McsHDF5.SecToTick(cfg.window(1)),1,'first');
         end_index = find(frame.FrameDataTimeStamps <= McsHDF5.SecToTick(cfg.window(2)),1,'last');
 
@@ -91,19 +96,19 @@ function plot(frame,cfg,varargin)
             return
         end
 
-        data_to_plot = frame.FrameData(start_index:end_index,:,:);
+        %data_to_plot = frame.FrameData(start_index:end_index,:,:);
 
         timestamps = McsHDF5.TickToSec(frame.FrameDataTimeStamps(start_index:end_index));
         
-        orig_exp = log10(max(abs(data_to_plot(:))));
-        unit_exp = double(frame.InfoStruct.Exponent);
+        orig_exp = log10(max(max(max(abs(frame.FrameData(start_index:end_index,:,:))))));
+        unit_exp = double(frame.Info.Exponent);
 
         [fact,unit_string] = McsHDF5.ExponentToUnit(orig_exp+unit_exp,orig_exp);
 
-        data_to_plot = data_to_plot * fact;
+        %data_to_plot = data_to_plot * fact;
         
-        num_x = size(data_to_plot,2);
-        num_y = size(data_to_plot,3);
+        num_x = size(frame.FrameData,2);
+        num_y = size(frame.FrameData,3);
 
         left = 0.08;
         bottom = 0.08;
@@ -113,8 +118,8 @@ function plot(frame,cfg,varargin)
         height = (1-bottom)/(1.1*num_y+0.1);
         spacing_y = 0.1*height;
         
-        range_y = [min(min(min(data_to_plot(:,cfg.channelMatrix)))) ...
-            max(max(max(data_to_plot(:,cfg.channelMatrix))))];
+        range_y = [min(min(min(frame.FrameData(start_index:end_index,cfg.channelMatrix)))) ...
+            max(max(max(frame.FrameData(start_index:end_index,cfg.channelMatrix))))];
 
         for xi = 1:num_x
             for yi = 1:num_y
@@ -123,9 +128,9 @@ function plot(frame,cfg,varargin)
                                     1-(yi*spacing_y+yi*height),...
                                     width,height]);
                     if isempty([varargin{:}])
-                        plot(timestamps,data_to_plot(:,xi,yi));
+                        plot(timestamps,frame.FrameData(start_index:end_index,xi,yi)*fact);
                     else
-                        plot(timestamps,data_to_plot(:,xi,yi),varargin{:});
+                        plot(timestamps,frame.FrameData(start_index:end_index,xi,yi)*fact,varargin{:});
                     end
                     axis([timestamps(1) timestamps(end) range_y(1) range_y(2)]);
                     if xi > 1 && yi < num_y
@@ -142,7 +147,7 @@ function plot(frame,cfg,varargin)
                         end
                     end
                     if xi == 1
-                        ylabel([unit_string frame.InfoStruct.Unit{1}],'Interpreter','tex')
+                        ylabel([unit_string frame.Info.Unit{1}],'Interpreter','tex')
                         if yi ~= num_y
                             set(gca,'XTick',[])
                             set(gca,'XColor',get(gcf,'Color'))

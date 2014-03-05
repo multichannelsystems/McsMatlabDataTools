@@ -1,7 +1,8 @@
 classdef McsFrameStream < McsHDF5.McsStream
-% McsFrameStream
+% Holds the contents of a FrameStream
 %
-% Holds the contents of a FrameStream, i.e. one or more FrameDataEntities
+% Contains one or more FrameDataEntities in a cell array. The other fields
+% and the Info field provide general information about the frame stream.
     
     properties 
         FrameDataEntities = {}
@@ -10,12 +11,14 @@ classdef McsFrameStream < McsHDF5.McsStream
     methods
         
         function str = McsFrameStream(filename, strStruct)
+        % Constructs a McsFrameStream object. 
+        %
         % function str = McsFrameStream(filename, strStruct)
         %
-        % Constructs a McsFrameStream object. Calls the constructors for
-        % the individual McsFrameDataEntity objects. The FrameData from the
-        % individual FrameDataEntities is not read directly from the file,
-        % but only once the FrameData field is actually accessed.
+        % Calls the constructors for the individual McsFrameDataEntity
+        % objects. The FrameData from the individual FrameDataEntities is
+        % not read directly from the file, but only once the FrameData
+        % field is actually accessed.
         
             str = str@McsHDF5.McsStream(filename,strStruct,'Frame');
             

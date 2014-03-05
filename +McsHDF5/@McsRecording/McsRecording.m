@@ -1,7 +1,9 @@
 classdef McsRecording
-% McsRecording
-%
 % Stores a single recording.
+%
+% The different streams present in the recording are sorted into the
+% {Analog,Frame,Event,Segment}Stream fields where they are stored as cell
+% arrays.
     
     properties
         RecordingID = 0
@@ -19,9 +21,9 @@ classdef McsRecording
     methods
         
         function rec = McsRecording(filename, recStruct)
-        % function rec = McsRecording(filename, recStruct)
-        %
         % Reads a single recording inside a HDF5 file.
+        %
+        % function rec = McsRecording(filename, recStruct)
         %
         % Input:
         %   filename    -   (string) Name of the HDF5 file

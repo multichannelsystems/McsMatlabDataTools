@@ -1,4 +1,7 @@
 classdef McsStream < handle
+% Superclass for the different streams.
+%
+% Reads and stores the Info struct and the other data attributes.
     
     properties 
         StreamGUID
@@ -18,9 +21,10 @@ classdef McsStream < handle
     methods
         
         function str = McsStream(filename, strStruct, type)
+        % Reads the Info attributes and the stream attributes.
+        %
         % function str = McsStream(filename, strStruct, type)
         % 
-        % Reads the Info attributes and the stream attributes.
             
             str.StructName = strStruct.Name;
             str.FileName = filename;
@@ -39,10 +43,11 @@ classdef McsStream < handle
         end
         
         function Fs = getSamplingRate(str,varargin)
+        % Returns the sampling rate in Hz
+        %    
         % function Fs = getSamplingRate(str)
         %
-        % Returns the sampling rate in Hz of the first channel of a
-        % McsStream. Warning: Will not work for event channels!
+        % Warning: Will not work for event channels!
         %
         % function Fs = getSamplingRate(str,i)
         %

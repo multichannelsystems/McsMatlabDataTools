@@ -1,7 +1,7 @@
 function plot(md,cfg,varargin)
-%function plot(md,cfg,varargin)
-%
 % Function to plot the contents of a McsData object.
+%
+% function plot(md,cfg,varargin)
 %
 % Input:
 %
@@ -20,7 +20,7 @@ function plot(md,cfg,varargin)
 %                   structure
 %               If fields are missing, their default values are used.
 %
-%   optional inputs in varargin are passed to the plot functions. warning: 
+%   Optional inputs in varargin are passed to the plot functions. Warning: 
 %   might produce error if segments / frames are mixed with analog streams.
 
     if isempty(cfg) || ~isfield(cfg,'recordings')

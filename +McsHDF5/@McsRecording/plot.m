@@ -1,7 +1,7 @@
 function plot(mr,cfg,varargin)
-% function plot(mr,cfg,varargin)
+% Plot the contents of a McsRecording object.
 %
-% Function to plot the contents of a McsRecording object.
+% function plot(mr,cfg,varargin)
 %
 % Input:
 %
@@ -32,7 +32,7 @@ function plot(mr,cfg,varargin)
 %                   vector with indices of event streams (default: all)
 %               If fields are missing, their default values are used.
 %
-%   optional inputs in varargin are passed to the plot functions. warning: 
+%   Optional inputs in varargin are passed to the plot functions. Warning: 
 %   might produce error if segments / frames are mixed with analog / event
 %   streams.
 

@@ -69,14 +69,14 @@ function scatterSpikeRate(fde,cfg,varargin)
         scatter3(xx,yy,zz,ratemat(ratemat > 0),varargin{:})
     end
     hold on
-    [XX,YY] = meshgrid(1:sz(2),1:sz(3));
+    [XX,YY] = meshgrid(1:sz(3),1:sz(2));
     s = squeeze(sum(ratemat,3));
     s(s == 0) = NaN;
     contourf(XX,YY,s)
     hold off
     axis([0 sz(2) 0 sz(3) 0 cfg.window(2)])
-    xlabel('y channels')
-    ylabel('x channels')
+    xlabel('x channels')
+    ylabel('y channels')
     zlabel('Time [s]')
 end
 
@@ -105,7 +105,7 @@ end
 
 function rates = computeRates(fde,spikes,cfg)
 
-    Fs = 1 / double(fde.InfoStruct.Tick) * 1e6;
+    Fs = 1 / double(fde.Info.Tick) * 1e6;
     
     winlen = cfg.rateWindow * Fs;
     step = cfg.rateStep * Fs;

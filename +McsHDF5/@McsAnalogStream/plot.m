@@ -1,7 +1,9 @@
 function plot(analogStream,cfg,varargin)
+% Plot the contents of a McsAnalogStream object.
+%
 % function plot(analogStream,cfg,varargin)
 %
-% Function to plot the contents of a McsAnalogStream object.
+% Produces a time series plot with the channels overlayed over each other.
 %
 % Input:
 %
@@ -16,7 +18,14 @@ function plot(analogStream,cfg,varargin)
 %                           time range, both in seconds.
 %                       'legend': either true (default) or false. Matlab
 %                           can be very inefficient in plotting legends for
-%                           many channels and many time segments.
+%                           many channels and many time segments. In this
+%                           case it can be advisable to shut legend
+%                           generation off.
+%                       'spacing': either true or false (default). If
+%                           false, no spacing is used. Otherwise, an offset
+%                           is added to each channel to separate them.
+%                           Using this option means that the y-axis is only
+%                           valid for the first channel
 %                       If fields are missing, their default values are used.
 %
 %   optional inputs in varargin are passed to the plot function.
@@ -27,9 +36,10 @@ function plot(analogStream,cfg,varargin)
         cfg.channels = [];
         cfg.window = [];
         cfg.legend = true;
+        cfg.spacing = false;
     end
     
-    if ~isfield(cfg,'legend')
+    if ~isfield(cfg,'legend') || isempty(cfg.legend)
         cfg.legend = true;
     end
     
@@ -39,6 +49,10 @@ function plot(analogStream,cfg,varargin)
     
     if ~isfield(cfg,'window') 
         cfg.window = []; 
+    end
+    
+    if ~isfield(cfg,'spacing') || isempty(cfg.spacing)
+        cfg.spacing = false;
     end
     
     if isempty(cfg.channels)
@@ -51,8 +65,12 @@ function plot(analogStream,cfg,varargin)
     end
     
     if any(cfg.channels < 1 | cfg.channels > size(analogStream.ChannelData,2))
-        warning(['Using only channel indices between 1 and ' num2str(size(analogStream.ChannelData,2)) '!']);
         cfg.channels = cfg.channels(cfg.channels >= 1 & cfg.channels <= size(analogStream.ChannelData,2));
+        if isempty(cfg.channels)
+            error('No channels found!');
+        else
+            warning(['Using only channel indices between ' num2str(cfg.channels(1)) ' and ' num2str(cfg.channels(end)) '!']);
+        end
     end
 
     start_index = find(analogStream.ChannelDataTimeStamps >= McsHDF5.SecToTick(cfg.window(1)),1,'first');
@@ -71,6 +89,13 @@ function plot(analogStream,cfg,varargin)
     [fact,unit_string] = McsHDF5.ExponentToUnit(orig_exp+unit_exp,orig_exp);
     
     data_to_plot = data_to_plot * fact;
+    
+    if cfg.spacing
+        mi = min(data_to_plot);
+        ma = max(data_to_plot);
+        offset = cumsum([0 ma(2:end)-mi(1:end-1)]);
+        data_to_plot = bsxfun(@minus,data_to_plot,offset);
+    end
     
     timestamps = McsHDF5.TickToSec(analogStream.ChannelDataTimeStamps(start_index:end_index));
     

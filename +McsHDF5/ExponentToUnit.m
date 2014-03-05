@@ -1,11 +1,15 @@
 function [fact,unit_string] = ExponentToUnit(e,o)
+% Utility function for some nice plotting of data.
+%
 % function [fact,unit_string] = ExponentToUnit(e,o)
 %
-% Utility function for some nice plotting of data: Receives the exponent of
-% the largest absolute value of the data (i.e. log10(max(abs(data)))) and
-% the exponent after the data is scaled by the exponent of the unit in
-% which it is expressed. Example: Maximum amplitude: 200 mV = 2*10^-1 V.
-% Data is given in units of 10^-9 V. Then e = -1, o = -1 - (-9) = 8.
+% Receives the exponent of the largest absolute value of the data (i.e.
+% log10(max(abs(data)))) and the exponent after the data is scaled by the
+% exponent of the unit in which it is expressed. Example: Maximum
+% amplitude: 200 mV = 2*10^-1 V. Data is given in units of 10^-9 V. Then e
+% = -1, o = -1 - (-9) = 8. The function outputs a scaling factor for the
+% data and a prefix string for the unit it is represented in after applying
+% the scaling factor.
 %
 % Output: 
 %   fact        -   scalar factor. data * fact transforms the data to nice
@@ -17,7 +21,7 @@ function [fact,unit_string] = ExponentToUnit(e,o)
 
     poss_strings = {'n','\mu','m','','k','M','G'};
     poss_exp = [-9,-6,-3,0,3,6,9];
-    i = find(poss_exp < e,1,'last');
+    i = find(poss_exp <= e,1,'last');
     if isempty(i)
         i = 1;
     end
