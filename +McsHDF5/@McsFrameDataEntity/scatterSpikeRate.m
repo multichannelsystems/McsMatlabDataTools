@@ -1,5 +1,43 @@
 function scatterSpikeRate(fde,cfg,varargin)
-
+% Very experimental function to visualize spike rates
+%
+% function scatterSpikeRate(fde,cfg,varargin)
+%
+% This function provides a possibility to visualize spike rates in data
+% recorded in a 2D electrode array, i.e. a frame stream. It performs a
+% simple, threshold based spike detection on the raw data. This detection
+% is done channel-wise to save memory. The result is transformed to
+% channel-wise spike rates which are shown in a 3D plot. In this plot,
+% rates > 0 are plotted as open circles with a radius proportional to the
+% rate. A contour function color-codes the the total spike rate per
+% channel.
+%
+% Input:
+%
+%   fde         -   A McsFrameDataEntity object.
+%
+%   cfg         -   Either empty (for default parameters) or a
+%                   structure with (some of) the following fields:
+%                   'channelMatrix': empty for all channels, otherwise a
+%                       matrix of bools with size channels_x x channels_y.
+%                       All channels with 'true' entries in this matrix are
+%                       used in the plots. (default: all channels)
+%                   'window': empty for the whole time range, otherwise
+%                       a vector with two entries: [start end] of the time
+%                       range, both in seconds.
+%                   'spikeBaselineSegment': [start end] in seconds of the
+%                       time range used to get a baseline estimation of the
+%                       noise standard deviation. If empty, the first 100
+%                       ms are used.
+%                   'spikeSD': threshold for spike detection in standard
+%                       deviations. If a data point exceeds
+%                       cfg.spikeSD*std(signal in cfg.spikeBaselineSegment)
+%                       after subtraction of the mean, it is counted as a
+%                       spike.
+%                   'rateWindow': Length in seconds of the window for spike
+%                       rate computation.
+%                   'rateStep': Step size in seconds for moving the rate
+%                       computation window over the data.
     defaultRateWindow = 0.05;
     defaultRateStep = 0.01;
 
@@ -7,7 +45,7 @@ function scatterSpikeRate(fde,cfg,varargin)
         cfg.window = [];
         cfg.channelMatrix = [];
         cfg.spikeSD = 5;
-        cfg.spikeBaselineSegment = [0 0.1];
+        cfg.spikeBaselineSegment = [McsHDF5.TickToSec(fde.FrameDataTimeStamps(1)) McsHDF5.TickToSec(fde.FrameDataTimeStamps(1))+0.1];
         cfg.rateWindow = defaultRateWindow;
         cfg.rateStep = defaultRateStep;    
     end
