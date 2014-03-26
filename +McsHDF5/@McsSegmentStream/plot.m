@@ -37,10 +37,22 @@ function plot(segStream,cfg,varargin)
         id = cfg.segments(segi);
         subplot(2,length(cfg.segments),segi);
         
-        data_to_plot = segStream.SegmentData{id};
+        if strcmp(segStream.DataType,'double')
+            data_to_plot = segStream.SegmentData{id};
+        else
+            conv_cfg = [];
+            conv_cfg.dataType = 'double';
+            data_to_plot = segStream.getConvertedData(id,conv_cfg);
+        end
         
         orig_exp = log10(max(abs(data_to_plot(:))));
-        unit_exp = double(segStream.Info.Exponent(1));
+        sourceChan = str2double(segStream.Info.SourceChannelIDs{segi});
+        if length(sourceChan) > 1
+            warning('Plots of multisegments are not yet supported!');
+            return;
+        end
+        channel_idx = find(segStream.SourceInfoChannel.ChannelID == sourceChan);
+        unit_exp = double(segStream.SourceInfoChannel.Exponent(channel_idx));
 
         [fact,unit_string] = McsHDF5.ExponentToUnit(orig_exp+unit_exp,orig_exp);
 
@@ -55,7 +67,8 @@ function plot(segStream,cfg,varargin)
         shading interp
         xlabel('samples')
         ylabel('events')
-        zlabel([unit_string segStream.Info.Unit{id}],'Interpreter','tex')
+        unit = segStream.SourceInfoChannel.Unit{channel_idx};
+        zlabel([unit_string unit],'Interpreter','tex')
         title(['Segment label ' segStream.Info.Label{id}])
         
         
@@ -63,8 +76,12 @@ function plot(segStream,cfg,varargin)
         
         pre = double(segStream.Info.PreInterval(id));
         post = double(segStream.Info.PostInterval(id));
-        ts = (1:size(data_to_plot,2)).*double(segStream.Info.Tick(id));
-        %ts = -pre:double(segStream.Info.Tick(id)):post;
+        ts = -pre:double(segStream.SourceInfoChannel.Tick(channel_idx)):post;
+        if length(ts) ~= size(data_to_plot,1)
+            warning('Pre- and post-interval does not match the number of samples!')
+            ts = (1:size(data_to_plot,2)).*double(segStream.SourceInfoChannel.Tick(channel_idx));
+        end
+        
         ts = McsHDF5.TickToSec(ts);
         plot(ts,data_to_plot');
         
@@ -74,7 +91,7 @@ function plot(segStream,cfg,varargin)
         
         axis tight
         xlabel('Time [s]');
-        ylabel([unit_string segStream.Info.Unit{1}],'Interpreter','tex')
+        ylabel([unit_string unit],'Interpreter','tex')
         
     end
 end

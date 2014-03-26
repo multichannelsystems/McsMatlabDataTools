@@ -1,0 +1,174 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of plot</title>
+  <meta name="keywords" content="plot">
+  <meta name="description" content="Plot the contents of a McsFrameStream object.">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="../index.html">+McsHDF5</a> &gt; <a href="index.html">@McsFrameStream</a> &gt; plot.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for +McsHDF5/@McsFrameStream&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>plot
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>Plot the contents of a McsFrameStream object.</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function plot(frameStream,cfg,varargin) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> Plot the contents of a McsFrameStream object.
+
+ function plot(frameStream,cfg,varargin)
+
+ Produces plots of the individual FrameDataEntities (one figure per
+ entity).
+
+ Input:
+
+   frameStream     -   A McsFrameStream object
+
+   cfg             -   Either empty (for default parameters) or a
+                       structure with (some of) the following fields:
+                       'entities': empty for all frame data entities,
+                           otherwise a vector of entity indices (default:
+                           all)
+                       'window': Specifies the displayed time range:
+                           []: Total time range
+                           single value or [start end]: replicated for all
+                           entities
+                           cell array of single values or [start end]:
+                           each cell is applied for its corresponding
+                           entity (default: [])
+                       'channelMatrix': Specifies the displayed channels:
+                           []: All channels
+                           nxm matrix: replicated for all entities
+                           cell array of matrices: each cell contains a
+                           matrix which is applied for its corresponding
+                           entity. (default: [])
+                       If fields are missing, their default values are
+                       used.
+
+                       See help McsFrameDataEntity.plot for more details
+                       on the 'window' and the 'channelMatrix' parameter
+
+   Optional inputs in varargin are passed to the plot function.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="plot.html" class="code" title="function plot(frameStream,cfg,varargin)">plot</a>	Plot the contents of a McsFrameStream object.</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="plot.html" class="code" title="function plot(frameStream,cfg,varargin)">plot</a>	Plot the contents of a McsFrameStream object.</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function plot(frameStream,cfg,varargin)</a>
+0002 <span class="comment">% Plot the contents of a McsFrameStream object.</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% function plot(frameStream,cfg,varargin)</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">% Produces plots of the individual FrameDataEntities (one figure per</span>
+0007 <span class="comment">% entity).</span>
+0008 <span class="comment">%</span>
+0009 <span class="comment">% Input:</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">%   frameStream     -   A McsFrameStream object</span>
+0012 <span class="comment">%</span>
+0013 <span class="comment">%   cfg             -   Either empty (for default parameters) or a</span>
+0014 <span class="comment">%                       structure with (some of) the following fields:</span>
+0015 <span class="comment">%                       'entities': empty for all frame data entities,</span>
+0016 <span class="comment">%                           otherwise a vector of entity indices (default:</span>
+0017 <span class="comment">%                           all)</span>
+0018 <span class="comment">%                       'window': Specifies the displayed time range:</span>
+0019 <span class="comment">%                           []: Total time range</span>
+0020 <span class="comment">%                           single value or [start end]: replicated for all</span>
+0021 <span class="comment">%                           entities</span>
+0022 <span class="comment">%                           cell array of single values or [start end]:</span>
+0023 <span class="comment">%                           each cell is applied for its corresponding</span>
+0024 <span class="comment">%                           entity (default: [])</span>
+0025 <span class="comment">%                       'channelMatrix': Specifies the displayed channels:</span>
+0026 <span class="comment">%                           []: All channels</span>
+0027 <span class="comment">%                           nxm matrix: replicated for all entities</span>
+0028 <span class="comment">%                           cell array of matrices: each cell contains a</span>
+0029 <span class="comment">%                           matrix which is applied for its corresponding</span>
+0030 <span class="comment">%                           entity. (default: [])</span>
+0031 <span class="comment">%                       If fields are missing, their default values are</span>
+0032 <span class="comment">%                       used.</span>
+0033 <span class="comment">%</span>
+0034 <span class="comment">%                       See help McsFrameDataEntity.plot for more details</span>
+0035 <span class="comment">%                       on the 'window' and the 'channelMatrix' parameter</span>
+0036 <span class="comment">%</span>
+0037 <span class="comment">%   Optional inputs in varargin are passed to the plot function.</span>
+0038 
+0039     <span class="keyword">if</span> isempty(cfg)
+0040         cfg.entities = [];
+0041         cfg.window = [];
+0042         cfg.channelMatrix = [];
+0043     <span class="keyword">end</span>
+0044     
+0045     <span class="keyword">if</span> ~isfield(cfg,<span class="string">'entities'</span>)
+0046         cfg.entities = [];
+0047     <span class="keyword">end</span>
+0048     
+0049     <span class="keyword">if</span> ~isfield(cfg,<span class="string">'window'</span>)
+0050         cfg.window = [];
+0051     <span class="keyword">end</span>
+0052     
+0053     <span class="keyword">if</span> ~isfield(cfg,<span class="string">'channelMatrix'</span>)
+0054         cfg.channelMatrix = [];
+0055     <span class="keyword">end</span>
+0056     
+0057     <span class="keyword">if</span> isempty(cfg.entities)
+0058         cfg.entities = 1:length(frameStream.FrameDataEntities);
+0059     <span class="keyword">end</span>
+0060     
+0061     <span class="keyword">if</span> length(cfg.window) &lt;= 2 &amp;&amp; ~iscell(cfg.window)
+0062         cfg.window = repmat({cfg.window},1,length(cfg.entities));
+0063     <span class="keyword">end</span>
+0064     
+0065     <span class="keyword">if</span> length(cfg.window) ~= length(cfg.entities) &amp;&amp; ~iscell(cfg.window)
+0066         error(<span class="string">'cfg.window not specified properly'</span>);
+0067     <span class="keyword">end</span>
+0068     
+0069     <span class="keyword">if</span> isempty(cfg.channelMatrix)
+0070         cfg.channelMatrix = repmat({[]},1,length(cfg.entities));
+0071     <span class="keyword">end</span>
+0072     
+0073     <span class="keyword">if</span> ~iscell(cfg.channelMatrix)
+0074         cfg.channelMatrix = repmat({cfg.channelMatrix},1,length(cfg.entities));
+0075     <span class="keyword">end</span>
+0076     
+0077     <span class="keyword">if</span> length(cfg.channelMatrix) ~= length(cfg.entities) &amp;&amp; ~iscell(cfg.channelMatrix)
+0078         error(<span class="string">'cfg.channelMatrix not specified properly'</span>);
+0079     <span class="keyword">end</span>
+0080     
+0081     <span class="keyword">for</span> enti = 1:length(cfg.entities)
+0082         id = cfg.entities(enti);
+0083         figure
+0084         
+0085         cfg_ent = [];
+0086         cfg_ent.window = cfg.window{enti};
+0087         cfg_ent.channelMatrix = cfg.channelMatrix{enti};
+0088         
+0089         <a href="plot.html" class="code" title="function plot(frameStream,cfg,varargin)">plot</a>(frameStream.FrameDataEntities{id},cfg_ent,varargin);
+0090     <span class="keyword">end</span>
+0091 
+0092 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Wed 26-Mar-2014 15:28:34 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

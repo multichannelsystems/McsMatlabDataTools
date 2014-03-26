@@ -47,10 +47,10 @@ function plot(frame,cfg,varargin)
         cfg.window = McsHDF5.TickToSec([frame.FrameDataTimeStamps(1) frame.FrameDataTimeStamps(end)]);
     end
     if isempty(cfg.channelMatrix)
-        cfg.channelMatrix = true(size(frame.FrameData,2),size(frame.FrameData,3));
+        cfg.channelMatrix = true(size(frame.FrameData,1),size(frame.FrameData,2));
     end
     
-    if size(cfg.channelMatrix,1) ~= size(frame.FrameData,2) || size(cfg.channelMatrix,2) ~= size(frame.FrameData,3)
+    if size(cfg.channelMatrix,1) ~= size(frame.FrameData,1) || size(cfg.channelMatrix,2) ~= size(frame.FrameData,2)
         error('Size of cfg.channelMatrix does not match the number of channels in the file!');
     end
     
@@ -66,8 +66,20 @@ function plot(frame,cfg,varargin)
             idx = idx(tmp);
         end
         
-        data_to_plot = frame.FrameData(idx,:,:);
-        orig_exp = log10(max(abs(data_to_plot(:))));
+        if strcmp(frame.DataType,'raw')
+            cfg_part = [];
+            cfg_part.window = McsHDF5.TickToSec([frame.FrameDataTimeStamps(idx) frame.FrameDataTimeStamps(idx) + frame.Info.Tick - 1]);
+            tmp_frame = frame.readPartialFrame(cfg_part);
+            cfg_conv = [];
+            cfg_conv.dataType = 'double';
+            data_to_plot = tmp_frame.getConvertedData(cfg_conv);
+        elseif strcmp(frame.DataType,'single')
+            data_to_plot = cast(frame.FrameData(:,:,idx),'double');
+        else
+            data_to_plot = frame.FrameData(:,:,idx);
+        end
+        
+        orig_exp = log10(max(abs(data_to_plot(cfg.channelMatrix(:)))));
         unit_exp = double(frame.Info.Exponent);
 
         [fact,unit_string] = McsHDF5.ExponentToUnit(orig_exp+unit_exp,orig_exp);
@@ -81,8 +93,8 @@ function plot(frame,cfg,varargin)
         else
             surf(X,Y,data_to_plot,varargin{:});
         end
-        xlabel('x channels')
-        ylabel('y channels')
+        xlabel('y channels')
+        ylabel('x channels')
         zlabel([unit_string frame.Info.Unit{1}],'Interpreter','tex')
         title(['Time: ' num2str(cfg.window(1)) ' [s]'])
     else
@@ -96,61 +108,135 @@ function plot(frame,cfg,varargin)
             return
         end
 
-        %data_to_plot = frame.FrameData(start_index:end_index,:,:);
-
         timestamps = McsHDF5.TickToSec(frame.FrameDataTimeStamps(start_index:end_index));
         
-        orig_exp = log10(max(max(max(abs(frame.FrameData(start_index:end_index,:,:))))));
-        unit_exp = double(frame.Info.Exponent);
+        if ~strcmp(frame.DataType,'raw')
 
-        [fact,unit_string] = McsHDF5.ExponentToUnit(orig_exp+unit_exp,orig_exp);
+            num_x = size(frame.FrameData,1);
+            num_y = size(frame.FrameData,2);
 
-        %data_to_plot = data_to_plot * fact;
-        
-        num_x = size(frame.FrameData,2);
-        num_y = size(frame.FrameData,3);
+            left = 0.08;
+            bottom = 0.08;
 
-        left = 0.08;
-        bottom = 0.08;
-
-        width = (1-left)/(1.1*num_x+0.1);
-        spacing_x = 0.1*width;
-        height = (1-bottom)/(1.1*num_y+0.1);
-        spacing_y = 0.1*height;
-        
-        range_y = [min(min(min(frame.FrameData(start_index:end_index,cfg.channelMatrix)))) ...
-            max(max(max(frame.FrameData(start_index:end_index,cfg.channelMatrix))))];
-
-        for xi = 1:num_x
-            for yi = 1:num_y
-                if cfg.channelMatrix(xi,yi)
-                    axes('position',[left+xi*spacing_x+(xi-1)*width,...
-                                    1-(yi*spacing_y+yi*height),...
-                                    width,height]);
-                    if isempty([varargin{:}])
-                        plot(timestamps,frame.FrameData(start_index:end_index,xi,yi)*fact);
-                    else
-                        plot(timestamps,frame.FrameData(start_index:end_index,xi,yi)*fact,varargin{:});
-                    end
-                    axis([timestamps(1) timestamps(end) range_y(1) range_y(2)]);
-                    if xi > 1 && yi < num_y
-                        axis off
-                    else
-                        set(gca,'Box','off');
-                        set(gca,'color',get(gcf,'Color'))
-                    end
-                    if yi == num_y
-                        xlabel('Time [s]')
-                        if xi ~= 1
-                            set(gca,'YTick',[])
-                            set(gca,'YColor',get(gcf,'Color'))
+            width = (1-left)/(1.1*num_x+0.1);
+            spacing_x = 0.1*width;
+            height = (1-bottom)/(1.1*num_y+0.1);
+            spacing_y = 0.1*height;
+            
+            range_y = [Inf -Inf];
+            % this is slower but more memory efficient than indexing the
+            % cube
+            for xi = 1:num_x
+                for yi = 1:num_y
+                    if cfg.channelMatrix(xi,yi)
+                        vals = squeeze(frame.FrameData(xi,yi,start_index:end_index));
+                        if min(vals) < range_y(1)
+                            range_y(1) = min(vals);
+                        end
+                        if max(vals) > range_y(2)
+                            range_y(2) = max(vals);
                         end
                     end
-                    if xi == 1
-                        ylabel([unit_string frame.Info.Unit{1}],'Interpreter','tex')
-                        if yi ~= num_y
-                            set(gca,'XTick',[])
-                            set(gca,'XColor',get(gcf,'Color'))
+                end
+            end
+            
+            orig_exp = log10(range_y(2));
+            unit_exp = double(frame.Info.Exponent);
+
+            [fact,unit_string] = McsHDF5.ExponentToUnit(orig_exp+unit_exp,orig_exp);
+            range_y = range_y * fact;
+
+            for xi = 1:num_x
+                for yi = 1:num_y
+                    if cfg.channelMatrix(xi,yi)
+                        axes('position',[left+xi*spacing_x+(xi-1)*width,...
+                                        1-(yi*spacing_y+yi*height),...
+                                        width,height]);
+                        if isempty([varargin{:}])
+                            plot(timestamps,squeeze(frame.FrameData(xi,yi,start_index:end_index))*fact);
+                        else
+                            plot(timestamps,squeeze(frame.FrameData(xi,yi,start_index:end_index))*fact,varargin{:});
+                        end
+                        axis([timestamps(1) timestamps(end) range_y(1) range_y(2)]);
+                        if xi > 1 && yi < num_y
+                            axis off
+                        else
+                            set(gca,'Box','off');
+                            set(gca,'color',get(gcf,'Color'))
+                        end
+                        if yi == num_y
+                            xlabel('Time [s]')
+                            if xi ~= 1
+                                set(gca,'YTick',[])
+                                set(gca,'YColor',get(gcf,'Color'))
+                            end
+                        end
+                        if xi == 1
+                            ylabel([unit_string frame.Info.Unit{1}],'Interpreter','tex')
+                            if yi ~= num_y
+                                set(gca,'XTick',[])
+                                set(gca,'XColor',get(gcf,'Color'))
+                            end
+                        end
+                    end
+                end
+            end
+        else
+            cfg_conv = [];
+            cfg_conv.dataType = 'double';
+            data_to_plot = frame.getConvertedData(cfg_conv);
+            orig_exp = log10(max(max(max(abs(data_to_plot(:,:,start_index:end_index))))));
+            unit_exp = double(frame.Info.Exponent);
+
+            [fact,unit_string] = McsHDF5.ExponentToUnit(orig_exp+unit_exp,orig_exp);
+
+            num_x = size(frame.FrameData,1);
+            num_y = size(frame.FrameData,2);
+
+            left = 0.08;
+            bottom = 0.08;
+
+            width = (1-left)/(1.1*num_x+0.1);
+            spacing_x = 0.1*width;
+            height = (1-bottom)/(1.1*num_y+0.1);
+            spacing_y = 0.1*height;
+
+            idx = repmat(find(cfg.channelMatrix),1,length(start_index:end_index));
+            offs = ((start_index:end_index) - 1) * numel(cfg.channelMatrix);
+            idx = bsxfun(@plus,idx,offs);
+            range_y = [min(data_to_plot(idx(:))), max(data_to_plot(idx(:)))]*fact;
+
+            for xi = 1:num_x
+                for yi = 1:num_y
+                    if cfg.channelMatrix(xi,yi)
+                        axes('position',[left+xi*spacing_x+(xi-1)*width,...
+                                        1-(yi*spacing_y+yi*height),...
+                                        width,height]);
+                        if isempty([varargin{:}])
+                            plot(timestamps,squeeze(data_to_plot(xi,yi,start_index:end_index))*fact);
+                        else
+                            plot(timestamps,squeeze(data_to_plot(xi,yi,start_index:end_index))*fact,varargin{:});
+                        end
+                        axis([timestamps(1) timestamps(end) range_y(1) range_y(2)]);
+                        if xi > 1 && yi < num_y
+                            axis off
+                        else
+                            set(gca,'Box','off');
+                            set(gca,'color',get(gcf,'Color'))
+                        end
+                        if yi == num_y
+                            xlabel('Time [s]')
+                            if xi ~= 1
+                                set(gca,'YTick',[])
+                                set(gca,'YColor',get(gcf,'Color'))
+                            end
+                        end
+                        if xi == 1
+                            ylabel([unit_string frame.Info.Unit{1}],'Interpreter','tex')
+                            if yi ~= num_y
+                                set(gca,'XTick',[])
+                                set(gca,'XColor',get(gcf,'Color'))
+                            end
                         end
                     end
                 end

@@ -1,0 +1,95 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of ExponentToUnit</title>
+  <meta name="keywords" content="ExponentToUnit">
+  <meta name="description" content="Utility function for some nice plotting of data.">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">+McsHDF5</a> &gt; ExponentToUnit.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for +McsHDF5&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>ExponentToUnit
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>Utility function for some nice plotting of data.</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [fact,unit_string] = ExponentToUnit(e,o) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> Utility function for some nice plotting of data.
+
+ function [fact,unit_string] = ExponentToUnit(e,o)
+
+ Receives the exponent of the largest absolute value of the data (i.e.
+ log10(max(abs(data)))) and the exponent after the data is scaled by the
+ exponent of the unit in which it is expressed. Example: Maximum
+ amplitude: 200 mV = 2*10^-1 V. Data is given in units of 10^-9 V. Then e
+ = -1, o = -1 - (-9) = 8. The function outputs a scaling factor for the
+ data and a prefix string for the unit it is represented in after applying
+ the scaling factor.
+
+ Output: 
+   fact        -   scalar factor. data * fact transforms the data to nice
+                   units. In the 200 mV example with units of 10^-9 V,
+                   fact = 10^-6
+
+   unit_string -   depending on the output range, the unit prefix (n, µ,
+                   m, ...)</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [fact,unit_string] = ExponentToUnit(e,o)</a>
+0002 <span class="comment">% Utility function for some nice plotting of data.</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% function [fact,unit_string] = ExponentToUnit(e,o)</span>
+0005 <span class="comment">%</span>
+0006 <span class="comment">% Receives the exponent of the largest absolute value of the data (i.e.</span>
+0007 <span class="comment">% log10(max(abs(data)))) and the exponent after the data is scaled by the</span>
+0008 <span class="comment">% exponent of the unit in which it is expressed. Example: Maximum</span>
+0009 <span class="comment">% amplitude: 200 mV = 2*10^-1 V. Data is given in units of 10^-9 V. Then e</span>
+0010 <span class="comment">% = -1, o = -1 - (-9) = 8. The function outputs a scaling factor for the</span>
+0011 <span class="comment">% data and a prefix string for the unit it is represented in after applying</span>
+0012 <span class="comment">% the scaling factor.</span>
+0013 <span class="comment">%</span>
+0014 <span class="comment">% Output:</span>
+0015 <span class="comment">%   fact        -   scalar factor. data * fact transforms the data to nice</span>
+0016 <span class="comment">%                   units. In the 200 mV example with units of 10^-9 V,</span>
+0017 <span class="comment">%                   fact = 10^-6</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">%   unit_string -   depending on the output range, the unit prefix (n, µ,</span>
+0020 <span class="comment">%                   m, ...)</span>
+0021 
+0022     poss_strings = {<span class="string">'n'</span>,<span class="string">'\mu'</span>,<span class="string">'m'</span>,<span class="string">''</span>,<span class="string">'k'</span>,<span class="string">'M'</span>,<span class="string">'G'</span>};
+0023     poss_exp = [-9,-6,-3,0,3,6,9];
+0024     i = find(poss_exp &lt;= e,1,<span class="string">'last'</span>);
+0025     <span class="keyword">if</span> isempty(i)
+0026         i = 1;
+0027     <span class="keyword">end</span>
+0028     fact = 10^(rem(o,3)-o);
+0029     unit_string = poss_strings{i};
+0030 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Wed 26-Mar-2014 15:28:34 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

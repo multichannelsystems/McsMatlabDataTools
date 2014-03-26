@@ -56,7 +56,7 @@ function plot(analogStream,cfg,varargin)
     end
     
     if isempty(cfg.channels)
-        cfg.channels = 1:size(analogStream.ChannelData,2);
+        cfg.channels = 1:size(analogStream.ChannelData,1);
     end
     
     if isempty(cfg.window)
@@ -64,8 +64,8 @@ function plot(analogStream,cfg,varargin)
                       analogStream.ChannelDataTimeStamps(end)]);
     end
     
-    if any(cfg.channels < 1 | cfg.channels > size(analogStream.ChannelData,2))
-        cfg.channels = cfg.channels(cfg.channels >= 1 & cfg.channels <= size(analogStream.ChannelData,2));
+    if any(cfg.channels < 1 | cfg.channels > size(analogStream.ChannelData,1))
+        cfg.channels = cfg.channels(cfg.channels >= 1 & cfg.channels <= size(analogStream.ChannelData,1));
         if isempty(cfg.channels)
             error('No channels found!');
         else
@@ -81,7 +81,14 @@ function plot(analogStream,cfg,varargin)
         return
     end
     
-    data_to_plot = analogStream.ChannelData(start_index:end_index,cfg.channels);
+    if strcmp(analogStream.DataType,'raw')
+        conv_cfg = [];
+        conv_cfg.dataType = 'double';
+        data_to_plot = analogStream.getConvertedData(conv_cfg);
+        data_to_plot = data_to_plot(cfg.channels,start_index:end_index);
+    else
+        data_to_plot = analogStream.ChannelData(cfg.channels,start_index:end_index);
+    end
     
     orig_exp = log10(max(abs(data_to_plot(:))));
     unit_exp = double(analogStream.Info.Exponent(1));
@@ -99,14 +106,14 @@ function plot(analogStream,cfg,varargin)
     
     timestamps = McsHDF5.TickToSec(analogStream.ChannelDataTimeStamps(start_index:end_index));
     
-    segstarts = [0 find(diff(timestamps) > 2*McsHDF5.TickToSec(analogStream.Info.Tick(1)))' length(timestamps)-1] + 1;
+    segstarts = [0 find(diff(timestamps) > 2*McsHDF5.TickToSec(analogStream.Info.Tick(1))) length(timestamps)-1] + 1;
     
     for segi = 1:length(segstarts)-1
         segidx = segstarts(segi):segstarts(segi+1)-1;
         if isempty([varargin{:}])
-            plot(timestamps(segidx),data_to_plot(segidx,:));
+            plot(timestamps(segidx),data_to_plot(:,segidx));
         else
-            plot(timestamps(segidx),data_to_plot(segidx,:),varargin{:});
+            plot(timestamps(segidx),data_to_plot(:,segidx),varargin{:});
         end
         hold on
     end

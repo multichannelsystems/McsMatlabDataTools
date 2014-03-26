@@ -1,0 +1,123 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of McsEventStream</title>
+  <meta name="keywords" content="McsEventStream">
+  <meta name="description" content="">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="../index.html">+McsHDF5</a> &gt; <a href="index.html">@McsEventStream</a> &gt; McsEventStream.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for +McsHDF5/@McsEventStream&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>McsEventStream
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong></strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>This is a script file. </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"></pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="McsEventStream.html" class="code" title="">McsEventStream</a>	</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="McsEventStream.html" class="code" title="">McsEventStream</a>	</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>SUBFUNCTIONS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="#_sub1" class="code">function str = McsEventStream(filename, strStruct, varargin)</a></li><li><a href="#_sub2" class="code">function data = get.Events(str)</a></li></ul>
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 classdef <a href="McsEventStream.html" class="code" title="">McsEventStream</a> &lt; McsHDF5.McsStream
+0002 <span class="comment">% Holds the contents of an EventStream</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% Fields:</span>
+0005 <span class="comment">%   Events      -   (1xn) cell array, each cell holding either a (events x</span>
+0006 <span class="comment">%                   1) vector of time stamps for each event or a (events x</span>
+0007 <span class="comment">%                   2) matrix, where the first column are time stamps and</span>
+0008 <span class="comment">%                   the second column are durations. Both are given in</span>
+0009 <span class="comment">%                   microseconds.</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">%   The Info field and the other attributes provide general information</span>
+0012 <span class="comment">%   about the event stream.</span>
+0013     
+0014     properties (SetAccess = private)
+0015         Events = {};
+0016         TimeStampDataType
+0017     <span class="keyword">end</span>
+0018     
+0019     methods
+0020         <a name="_sub0" href="#_subfunctions" class="code">function str = McsEventStream(filename, strStruct, varargin)</a>
+0021         <span class="comment">% Constructs a McsEventStream object.</span>
+0022         <span class="comment">%</span>
+0023         <span class="comment">% function str = McsEventStream(filename, strStruct)</span>
+0024         <span class="comment">% function str = McsEventStream(filename, strStruct, cfg)</span>
+0025         <span class="comment">%</span>
+0026         <span class="comment">% Reads the meta-information from the file but does not read the</span>
+0027         <span class="comment">% actual event data. This is performed the first time that the</span>
+0028         <span class="comment">% Events field is accessed.</span>
+0029         <span class="comment">%</span>
+0030         <span class="comment">% % Optional input:</span>
+0031         <span class="comment">%   cfg     -   configuration structure, can contain</span>
+0032         <span class="comment">%               the following field:</span>
+0033         <span class="comment">%               'timeStampDataType': The type of the time stamps,</span>
+0034         <span class="comment">%               can be either 'int64' (default) or 'double'. Using</span>
+0035         <span class="comment">%               'double' is useful for older Matlab version without</span>
+0036         <span class="comment">%               int64 arithmetic.</span>
+0037         
+0038             str = str@McsHDF5.McsStream(filename,strStruct,<span class="string">'Event'</span>);
+0039             evts = str.Info.EventID;
+0040             str.Events = cell(1,length(evts)); 
+0041             <span class="keyword">if</span> isempty(varargin) || ~isfield(varargin{1},<span class="string">'timeStampDataType'</span>) || strcmpi(varargin{1}.timeStampDataType,<span class="string">'int64'</span>)
+0042                 str.TimeStampDataType = <span class="string">'int64'</span>;
+0043             <span class="keyword">else</span>
+0044                 type = varargin{1}.timeStampDataType;
+0045                 <span class="keyword">if</span> ~strcmp(type,<span class="string">'double'</span>)
+0046                     error(<span class="string">'Only int64 and double are supported for timeStampDataType!'</span>);
+0047                 <span class="keyword">end</span>
+0048                 str.TimeStampDataType = type;
+0049             <span class="keyword">end</span>
+0050         <span class="keyword">end</span>
+0051         
+0052         <a name="_sub1" href="#_subfunctions" class="code">function data = get.Events(str)</a>
+0053         <span class="comment">% Accessor function for events.</span>
+0054         <span class="comment">%</span>
+0055         <span class="comment">% function data = get.Events(str)</span>
+0056         <span class="comment">%</span>
+0057         <span class="comment">% Loads the events from the file the first time that the Events</span>
+0058         <span class="comment">% field is requested.</span>
+0059         
+0060             <span class="keyword">if</span> ~str.DataLoaded
+0061                 fprintf(<span class="string">'Reading event data...\n'</span>)
+0062                 <span class="keyword">for</span> gidx = 1:length(str.Events)
+0063                     str.Events{gidx} = <span class="keyword">...</span>
+0064                         h5read(str.FileName,[str.StructName <span class="string">'/EventEntity_'</span> num2str(str.Info.EventID(gidx))])';
+0065                     <span class="keyword">if</span> ~strcmp(str.TimeStampDataType,<span class="string">'int64'</span>)
+0066                         str.Events{gidx} = cast(str.Events{gidx},str.TimeStampDataType);
+0067                     <span class="keyword">end</span>
+0068                 <span class="keyword">end</span>
+0069                 str.DataLoaded = true;
+0070             <span class="keyword">end</span>
+0071             data = str.Events;
+0072         <span class="keyword">end</span>
+0073     <span class="keyword">end</span>
+0074 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Wed 26-Mar-2014 15:28:34 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

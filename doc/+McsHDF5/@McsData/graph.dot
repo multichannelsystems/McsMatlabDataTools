@@ -1,0 +1,8 @@
+/* Created by mdot for Matlab */
+digraph m2html {
+  McsData -> McsData;
+  plot -> plot;
+
+  McsData [URL="McsData.html"];
+  plot [URL="plot.html"];
+}

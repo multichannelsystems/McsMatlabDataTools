@@ -10,7 +10,7 @@ classdef McsFrameStream < McsHDF5.McsStream
     
     methods
         
-        function str = McsFrameStream(filename, strStruct)
+        function str = McsFrameStream(filename, strStruct, varargin)
         % Constructs a McsFrameStream object. 
         %
         % function str = McsFrameStream(filename, strStruct)
@@ -27,7 +27,11 @@ classdef McsFrameStream < McsHDF5.McsStream
                 str.FrameDataEntities = cell(1,length(strStruct.Groups));
                 for gidx = 1:length(strStruct.Groups)
                     info = structfun(@(x)(x(gidx)),str.Info,'UniformOutput',false);
-                    str.FrameDataEntities{gidx} = McsHDF5.McsFrameDataEntity(filename,info,strStruct.Groups(gidx).Name);
+                    if isempty(varargin)
+                        str.FrameDataEntities{gidx} = McsHDF5.McsFrameDataEntity(filename,info,strStruct.Groups(gidx).Name);
+                    else
+                        str.FrameDataEntities{gidx} = McsHDF5.McsFrameDataEntity(filename,info,strStruct.Groups(gidx).Name,varargin{:});
+                    end
                 end
             end
          

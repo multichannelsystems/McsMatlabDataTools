@@ -1,0 +1,8 @@
+/* Created by mdot for Matlab */
+digraph m2html {
+  McsRecording -> McsRecording;
+  plot -> plot;
+
+  McsRecording [URL="McsRecording.html"];
+  plot [URL="plot.html"];
+}

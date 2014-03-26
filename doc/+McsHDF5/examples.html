@@ -1,0 +1,281 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of examples</title>
+  <meta name="keywords" content="examples">
+  <meta name="description" content="% The McsHDF5 Matlab tools">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">+McsHDF5</a> &gt; examples.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for +McsHDF5&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>examples
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>% The McsHDF5 Matlab tools</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>This is a script file. </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment">% The McsHDF5 Matlab tools
+ This document gives a short explanation of the usage of the McsHDF5
+ Matlab tools.</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <span class="comment">%% The McsHDF5 Matlab tools</span>
+0002 <span class="comment">% This document gives a short explanation of the usage of the McsHDF5</span>
+0003 <span class="comment">% Matlab tools.</span>
+0004 
+0005 <span class="comment">%% Importing the package</span>
+0006 <span class="comment">% First, add the base path of the +McsHDF5 folder to your matlab path</span>
+0007 <span class="comment">%</span>
+0008 <span class="comment">%   addpath Path/To/+McsHDF5</span>
+0009 
+0010 <span class="comment">%%</span>
+0011 <span class="comment">% Then import the package</span>
+0012 <span class="comment">%</span>
+0013 <span class="comment">%   import McsHDF5.*</span>
+0014 
+0015 <span class="comment">%% Loading data</span>
+0016 <span class="comment">% As an example, lets load a data set with 2 analog streams, 1 event stream</span>
+0017 <span class="comment">% and 1 segment stream:</span>
+0018 <span class="comment">%</span>
+0019 <span class="comment">%   data = McsHDF5.McsData('SOME_DATA_FILE.h5');</span>
+0020 
+0021 <span class="comment">%%</span>
+0022 <span class="comment">% Up to this point, only the metadata has been read from the file. The</span>
+0023 <span class="comment">% actual data within the stream will be loaded as soon as you try to access</span>
+0024 <span class="comment">% the stream, for example in a plot function. The recorded data is</span>
+0025 <span class="comment">% organized as follows within the data structure:</span>
+0026 <span class="comment">%</span>
+0027 <span class="comment">%</span>
+0028 <span class="comment">% * Top-level: General information and a cell array of McsRecording</span>
+0029 <span class="comment">% objects:</span>
+0030 <span class="comment">%</span>
+0031 <span class="comment">%   data</span>
+0032 
+0033 <span class="comment">%%</span>
+0034 <span class="comment">% * Each recording is stored in its individual cell:</span>
+0035 <span class="comment">%</span>
+0036 <span class="comment">%   data.Recording{1}</span>
+0037 
+0038 <span class="comment">%%</span>
+0039 <span class="comment">% * Each recording cell contains cell arrays of zero or more analog-,</span>
+0040 <span class="comment">% frame-, segment- and event-streams. The only exception is the frame</span>
+0041 <span class="comment">% stream which has additional sub-structures, the FrameDataEntities. If we</span>
+0042 <span class="comment">% access one of these streams (or a FrameDataEntity for FrameStreams), its</span>
+0043 <span class="comment">% data is loaded from the file:</span>
+0044 <span class="comment">%</span>
+0045 <span class="comment">%   data.Recording{1}.AnalogStream{1}</span>
+0046 
+0047 <span class="comment">%% Units</span>
+0048 <span class="comment">% For each stream, the associated data is stored in the field ChannelData</span>
+0049 <span class="comment">% (AnalogStream), SegmentData (SegmentStream) or FrameData</span>
+0050 <span class="comment">% (FrameDataEntities of FrameStreams). Per default, these values have</span>
+0051 <span class="comment">% already been converted during loading from ADC units to more useful units</span>
+0052 <span class="comment">% such as Volts. The actual unit it is represented in can be found for each</span>
+0053 <span class="comment">% stream in the fields Unit and Exponent (values 'V' and -9, respectively,</span>
+0054 <span class="comment">% mean that the data is stored in $$ 10^{-9} $$ V) of its Info structure:</span>
+0055 <span class="comment">%</span>
+0056 <span class="comment">%   data.Recording{1}.AnalogStream{1}.Info.Unit{1}</span>
+0057 <span class="comment">%   data.Recording{1}.AnalogStream{1}.Info.Exponent(1)</span>
+0058 
+0059 <span class="comment">%%</span>
+0060 <span class="comment">% The time stamp associated with each sample is stored in the field</span>
+0061 <span class="comment">% {Channel,Frame,Segment}DataTimeStamps in microseconds. Similarly, the</span>
+0062 <span class="comment">% time stamps of events in the EventStream are stored in microseconds as</span>
+0063 <span class="comment">% well.</span>
+0064 
+0065 <span class="comment">%% Data types</span>
+0066 <span class="comment">% For some applications, it might be necessary to change the data type of</span>
+0067 <span class="comment">% the data and the time stamps, for example because of memory constraints.</span>
+0068 <span class="comment">% The default data type for the {Channel,Frame,Segment}Data is 'double'. By</span>
+0069 <span class="comment">% specifying the data type during the loading of the file, you can half the</span>
+0070 <span class="comment">% memory requirements by using 'single' instead.</span>
+0071 <span class="comment">%</span>
+0072 <span class="comment">%   cfg = [];</span>
+0073 <span class="comment">%   cfg.dataType = 'single';</span>
+0074 <span class="comment">%   data = McsHDF5.McsData('SOME_DATA_FILE.h5',cfg);</span>
+0075 <span class="comment">%</span>
+0076 <span class="comment">% This may, however, lead to very minor inaccuracies and one can encounter</span>
+0077 <span class="comment">% problems with Matlab functions that except the data to be in 'double'</span>
+0078 <span class="comment">% format.</span>
+0079 
+0080 <span class="comment">%%</span>
+0081 <span class="comment">% Another possibility to potentially save even more memory is to specify</span>
+0082 <span class="comment">%</span>
+0083 <span class="comment">%   cfg = [];</span>
+0084 <span class="comment">%   cfg.dataType = 'raw';</span>
+0085 <span class="comment">%   data = McsHDF5.McsData('SOME_DATA_FILE.h5',cfg);</span>
+0086 <span class="comment">%</span>
+0087 <span class="comment">% With the 'raw' option , the data is stored in its original format</span>
+0088 <span class="comment">% internally in ADC units, so no conversion into meaningful units is</span>
+0089 <span class="comment">% performed. Because the data type of the original data can be 16 Bit</span>
+0090 <span class="comment">% integer (int16), this can reduce the memory requirements to 1/4th</span>
+0091 <span class="comment">% compared to the default 'double' format.</span>
+0092 
+0093 <span class="comment">%%</span>
+0094 <span class="comment">% One can convert data loaded with the 'raw' option to meaningful units</span>
+0095 <span class="comment">% either manually (in this example for the first channel of an analog stream):</span>
+0096 <span class="comment">%</span>
+0097 <span class="comment">%   converted_data = (data.Recording{1}.AnalogStream{1}.ChannelData(1,:) - ...</span>
+0098 <span class="comment">%                       data.Recording{1}.AnalogStream{1}.Info.ADZero(1)) * ...</span>
+0099 <span class="comment">%                       data.Recording{1}.AnalogStream{1}.Info.ConversionFactor(1);</span>
+0100 
+0101 <span class="comment">%%</span>
+0102 <span class="comment">% or by using the getConvertedData function which converts and returns the</span>
+0103 <span class="comment">% full data array:</span>
+0104 <span class="comment">%</span>
+0105 <span class="comment">%   cfg = [];</span>
+0106 <span class="comment">%   cfg.dataType = 'double';</span>
+0107 <span class="comment">%   converted_data = data.Recording{1}.AnalogStream{1}.getConvertedData(cfg);</span>
+0108 
+0109 <span class="comment">%% Plotting the data</span>
+0110 <span class="comment">% Each stream has simple plot functions to allow a quick check whether the</span>
+0111 <span class="comment">% data is all right:</span>
+0112 <span class="comment">%</span>
+0113 <span class="comment">%   plot(data.Recording{1}.AnalogStream{1},[])</span>
+0114 <span class="comment">%   plot(data.Recording{1}.EventStream{1},[])</span>
+0115 <span class="comment">%   plot(data.Recording{1}.SegmentStream{1},[])</span>
+0116 
+0117 <span class="comment">%%</span>
+0118 <span class="comment">% If for example the event stream and the segment streams have not been</span>
+0119 <span class="comment">% accessed before, their data is loaded during the execution of the</span>
+0120 <span class="comment">% respective plot function.</span>
+0121 <span class="comment">%</span>
+0122 <span class="comment">% Plot functions can also be executed at the recording or top level in</span>
+0123 <span class="comment">% order to get an overview over all streams in the recording, or even all</span>
+0124 <span class="comment">% streams in the data:</span>
+0125 <span class="comment">%</span>
+0126 <span class="comment">%   plot(data.Recording{1},[]);</span>
+0127 <span class="comment">%   plot(data,[]);</span>
+0128 
+0129 <span class="comment">%%</span>
+0130 <span class="comment">% If the second parameter of the plot function is empty, the default</span>
+0131 <span class="comment">% parameters are used for plotting. Otherwise, one can specify</span>
+0132 <span class="comment">% configuration structures for more fine-grained plotting. For example, the</span>
+0133 <span class="comment">% following commands will plot channels 1 and 2 of the second analog</span>
+0134 <span class="comment">% stream:</span>
+0135 <span class="comment">%</span>
+0136 <span class="comment">%   cfg = [];</span>
+0137 <span class="comment">%   cfg.channels = [1 2];</span>
+0138 <span class="comment">%   plot(data.Recording{1}.AnalogStream{2},cfg);</span>
+0139 
+0140 <span class="comment">%%</span>
+0141 <span class="comment">% Each plot function has its own set of options, so you need to check the</span>
+0142 <span class="comment">% individual help functions for the specifics:</span>
+0143 <span class="comment">%</span>
+0144 <span class="comment">%   help McsHDF5.McsEventStream.plot</span>
+0145 
+0146 <span class="comment">%%</span>
+0147 <span class="comment">% You can specify these configuration options also in higher level plot</span>
+0148 <span class="comment">% functions to achieve the same thing:</span>
+0149 <span class="comment">%</span>
+0150 <span class="comment">%   cfg = [];</span>
+0151 <span class="comment">%   cfg.analog{2}.channels = [1 2];</span>
+0152 <span class="comment">%   plot(data.Recording{1},cfg);</span>
+0153 <span class="comment">%</span>
+0154 <span class="comment">%   cfg = [];</span>
+0155 <span class="comment">%   cfg.conf.analog{2}.channels = [1 2];</span>
+0156 <span class="comment">%   plot(data,cfg);</span>
+0157 
+0158 <span class="comment">%%</span>
+0159 <span class="comment">% You can also specify additional options in the plot function. These are</span>
+0160 <span class="comment">% forwarded to the underlying MATLAB plotting functions. The following</span>
+0161 <span class="comment">% command produces a time series plot of the first analog stream with thick</span>
+0162 <span class="comment">% dashed red lines:</span>
+0163 <span class="comment">%</span>
+0164 <span class="comment">%   plot(data.Recording{1}.AnalogStream{1},cfg,'--r','LineWidth',5);</span>
+0165 
+0166 <span class="comment">%% Frame streams</span>
+0167 <span class="comment">% Frame streams have to be treated in more detail, because they can lead to</span>
+0168 <span class="comment">% potentially very large data sets. They comprise samples from a 2D array</span>
+0169 <span class="comment">% of recording channels for a total of possibly several thousand channels.</span>
+0170 <span class="comment">% Because of this, it can be problematic to store the full data cube</span>
+0171 <span class="comment">% (channels_x $$ \times $$ channels_y $$ \times $$ time) in memory.</span>
+0172 <span class="comment">% If you know which parts of the data you are interested in, you can also</span>
+0173 <span class="comment">% load just a small 'cuboid' (a 'hyperslab' in HDF5 terminology) to memory:</span>
+0174 <span class="comment">%</span>
+0175 <span class="comment">% First, load just the metadata:</span>
+0176 <span class="comment">%</span>
+0177 <span class="comment">%   frameData = McsHDF5.McsData('FILE_WITH_FRAME_DATA.h5');</span>
+0178 
+0179 <span class="comment">%%</span>
+0180 <span class="comment">% If we would execute one of the following commands, the whole frame would</span>
+0181 <span class="comment">% be loaded, which we want to avoid to save memory.</span>
+0182 <span class="comment">%</span>
+0183 <span class="comment">%   frameData.Recording{1}.FrameStream{1}.FrameDataEntity{1}</span>
+0184 <span class="comment">%   size(frameData.Recording{1}.FrameStream{1}.FrameDataEntity{1}.FrameData)</span>
+0185 <span class="comment">%   plot(frameData.Recording{1}.FrameStream{1}.FrameDataEntity{1},[])</span>
+0186 <span class="comment">%   plot(frameData,[])</span>
+0187 
+0188 <span class="comment">%%</span>
+0189 <span class="comment">% To avoid memory problems, you can load a region of interest as follows:</span>
+0190 <span class="comment">%</span>
+0191 <span class="comment">%   cfg = [];</span>
+0192 <span class="comment">%   cfg.time = [0 0.5]; % 0 to 0.5 s</span>
+0193 <span class="comment">%   cfg.channel_x = [10 30]; % channel &quot;rows&quot; 10 to 30</span>
+0194 <span class="comment">%   cfg.channel_y = []; % all channel &quot;columns&quot;</span>
+0195 <span class="comment">%   partialData = frameData.Recording{1}.FrameStream{1}.FrameDataEntities{1}.readPartialFrame(cfg);</span>
+0196 
+0197 <span class="comment">%%</span>
+0198 <span class="comment">% where 'time', 'channel_x' and 'channel_y' are 2x1 vectors of [start end]</span>
+0199 <span class="comment">% indices. For 'time', these are given in seconds with respect to the</span>
+0200 <span class="comment">% FrameDataTimeStamps, for the channels these are channel indices. If any</span>
+0201 <span class="comment">% of these is an empty array, the whole dimension is used. partialFrame</span>
+0202 <span class="comment">% contains only the specified subregion of the frame.</span>
+0203 
+0204 <span class="comment">%% Plotting frame data</span>
+0205 <span class="comment">% Due to the high dimensionality, finding useful plotting functions for</span>
+0206 <span class="comment">% frame data with several thousand channels can be tricky. Three options</span>
+0207 <span class="comment">% are provided here:</span>
+0208 
+0209 <span class="comment">%%</span>
+0210 <span class="comment">% 3D-plot of a single slice through the frame, i.e. the amplitudes of all</span>
+0211 <span class="comment">% channels for a single time point:</span>
+0212 <span class="comment">%</span>
+0213 <span class="comment">%   cfg = [];</span>
+0214 <span class="comment">%   cfg.window = 0.1; % 100 ms</span>
+0215 <span class="comment">%   plot(partialData,cfg);</span>
+0216 
+0217 <span class="comment">%%</span>
+0218 <span class="comment">% A 2D-array of line plots, each depicting the signal at each channel in a</span>
+0219 <span class="comment">% specified time range:</span>
+0220 <span class="comment">%</span>
+0221 <span class="comment">%   cfg = [];</span>
+0222 <span class="comment">%   cfg.window = [0.1 0.2]; % 100 ms to 200 ms</span>
+0223 <span class="comment">%   plot(partialData,cfg);</span>
+0224 
+0225 <span class="comment">%%</span>
+0226 <span class="comment">% A &quot;movie&quot; of the 3D-plots:</span>
+0227 <span class="comment">%</span>
+0228 <span class="comment">%   clf</span>
+0229 <span class="comment">%   cfg = [];</span>
+0230 <span class="comment">%   cfg.start = 0.1;</span>
+0231 <span class="comment">%   cfg.end = 0.2;</span>
+0232 <span class="comment">%   frameMovie(partialData,cfg);</span></pre></div>
+<hr><address>Generated on Wed 26-Mar-2014 15:28:34 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

@@ -1,0 +1,8 @@
+/* Created by mdot for Matlab */
+digraph m2html {
+  McsEventStream -> McsEventStream;
+  plot -> plot;
+
+  McsEventStream [URL="McsEventStream.html"];
+  plot [URL="plot.html"];
+}

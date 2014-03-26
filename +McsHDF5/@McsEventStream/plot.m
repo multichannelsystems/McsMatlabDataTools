@@ -14,36 +14,29 @@ function plot(evtStream,cfg,varargin)
 %
 %   Optional inputs in varargin are passed to the plot function.
 
-%     if isempty(varargin)
-%         varargin{1} = '.k';
-%     end
-% 
-%     for evti = 1:length(evtStream.Events)
-%         evts = McsHDF5.TickToSec(evtStream.Events{evti});
-%         if size(evts,2) == 1
-%             plot(evts,ones(1,length(evts))*evti,varargin{:});
-%         elseif size(evts,2) == 2
-%             plot(evts(:,1),ones(1,length(evts))*evti,varargin{:});
-%             warning('Event durations are not yet shown!');
-%         end
-%         hold on
-%     end
-%     hold off
     lineLength = 0.3;
     M = cell(length(evtStream.Events),2);
     for evti = 1:length(evtStream.Events)
-        if size(evtStream.Events{evti},2) == 1
-            M{evti,1} = McsHDF5.TickToSec([evtStream.Events{evti}  evtStream.Events{evti}]');
+        if size(evtStream.Events{evti},1) == 1
+            M{evti,1} = McsHDF5.TickToSec([evtStream.Events{evti} ; evtStream.Events{evti}]);
         else
-            M{evti,1} = McsHDF5.TickToSec([evtStream.Events{evti}(:,1)  sum(evtStream.Events{evti},2) sum(evtStream.Events{evti},2) evtStream.Events{evti}(:,1)]');
+            M{evti,1} = McsHDF5.TickToSec([evtStream.Events{evti}(1,:) ; sum(evtStream.Events{evti}) ; sum(evtStream.Events{evti}) ; evtStream.Events{evti}(1,:)]);
         end
         M{evti,2} = repmat([evti-lineLength ; evti+lineLength],1,size(M{evti,1},2));
     end
     for evti = 1:length(evtStream.Events)
-        if size(evtStream.Events{evti},2) == 1
-            line(M{evti,1},M{evti,2},'Color','k')
+        if size(evtStream.Events{evti},1) == 1
+            if isempty(varargin)
+                line(M{evti,1},M{evti,2},'Color','k')
+            else
+                line(M{evti,1},M{evti,2},varargin{:})
+            end
         else
-            patch(M{evti,1},repmat(M{evti,2},2,1),'k')
+            if isempty(varargin)
+                patch(M{evti,1},repmat(M{evti,2},2,1),'k')
+            else
+                patch(M{evti,1},repmat(M{evti,2},2,1),varargin{:})
+            end
         end
     end
     set(gca,'YTick',1:length(evtStream.Events));

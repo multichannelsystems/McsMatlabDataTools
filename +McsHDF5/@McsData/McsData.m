@@ -19,8 +19,6 @@ classdef McsData
 %
 %   See help McsData.plot for more information
 %
-%   walter@multichannelsystems.com
-%   21.02.2014
 
     properties
         FileName
@@ -31,10 +29,11 @@ classdef McsData
     
     methods
         
-        function md = McsData(filename)
+        function md = McsData(filename, varargin)
         % Reads a HDF5 file created by MCS software.
         %
         % function md = McsData(filename)
+        % function md = McsData(filename, cfg)
         %
         % This command will just read the meta-information in the file, the
         % actual data will be read lazily, i.e. once it is needed (e.g.
@@ -42,21 +41,49 @@ classdef McsData
         %
         % Input:
         %   filename    -   (string) Name of the HDF5 file
+        %   cfg     -   (optional) configuration structure, contains one or
+        %               more of the following fields:
+        %               'dataType': The type of the data, can be one of
+        %               'double' (default), 'single' or 'raw'. For 'double'
+        %               and 'single' the data is converted to meaningful
+        %               units, while for 'raw' no conversion is done and
+        %               the data is kept in ADC units. This uses less
+        %               memory than the conversion to double, but you might
+        %               have to convert the data prior to analysis, for
+        %               example by using the getConvertedData function.
+        %               'timeStampDataType': The type of the time stamps,
+        %               can be either 'int64' (default) or 'double'. Using
+        %               'double' is useful for older Matlab version without
+        %               int64 arithmetic.
         %
         % Output:
         %   md          -   A McsData object
-        %
-        %   walter@multichannelsystems.com
-        %   21.02.2014
             
             inf = h5info(filename);
             md.FileName = inf.Filename;
-            md.McsHdf5Version = inf.Attributes.Value;
-            
-            if md.McsHdf5Version ~= 1
-                error('Only MCS HDF5 version 1 is supported!');
+            validFile = false;
+            for att = 1:length(inf.Attributes)
+                if strcmp(inf.Attributes(att).Name,'McsHdf5ProtocolType')
+                    if ~strcmp(inf.Attributes(att).Value,'RawData')
+                        error('Only the RawData protocol type is supported!');
+                    else
+                        validFile = true;
+                    end
+                elseif strcmp(inf.Attributes(att).Name,'McsHdf5ProtocolVersion')
+                    if inf.Attributes(att).Value ~= 1
+                        error('Only MCS HDF5 version 1 is supported!');
+                    end
+                elseif strcmp(inf.Attributes(att).Name,'McsHdf5Version')
+                    if inf.Attributes(att).Value ~= 1
+                        error('Only MCS HDF5 version 1 is supported!');
+                    else
+                        validFile = true;
+                    end
+                end
+            end  
+            if ~validFile
+                error('This is not a valid Mcs HDF5 file!');
             end
-            
             % Data structure
             dataAttributes = inf.Groups.Attributes;
             for fni = 1:length(dataAttributes)
@@ -65,7 +92,11 @@ classdef McsData
             
             % Recordings
             for recs = 1:length(inf.Groups)
-                md.Recording{recs} = McsHDF5.McsRecording(filename, inf.Groups(recs).Groups);
+                if isempty(varargin)
+                    md.Recording{recs} = McsHDF5.McsRecording(filename, inf.Groups(recs).Groups);
+                else
+                    md.Recording{recs} = McsHDF5.McsRecording(filename, inf.Groups(recs).Groups, varargin{:});
+                end
             end
         end
       

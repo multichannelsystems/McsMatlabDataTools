@@ -1,0 +1,8 @@
+/* Created by mdot for Matlab */
+digraph m2html {
+  McsSegmentStream -> McsSegmentStream;
+  plot -> plot;
+
+  McsSegmentStream [URL="McsSegmentStream.html"];
+  plot [URL="plot.html"];
+}

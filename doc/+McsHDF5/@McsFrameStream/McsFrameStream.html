@@ -1,0 +1,94 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of McsFrameStream</title>
+  <meta name="keywords" content="McsFrameStream">
+  <meta name="description" content="">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="../index.html">+McsHDF5</a> &gt; <a href="index.html">@McsFrameStream</a> &gt; McsFrameStream.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for +McsHDF5/@McsFrameStream&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>McsFrameStream
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong></strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>This is a script file. </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"></pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="McsFrameStream.html" class="code" title="">McsFrameStream</a>	</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="McsFrameStream.html" class="code" title="">McsFrameStream</a>	</li></ul>
+<!-- crossreference -->
+
+<h2><a name="_subfunctions"></a>SUBFUNCTIONS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="#_sub1" class="code">function str = McsFrameStream(filename, strStruct, varargin)</a></li></ul>
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 classdef <a href="McsFrameStream.html" class="code" title="">McsFrameStream</a> &lt; McsHDF5.McsStream
+0002 <span class="comment">% Holds the contents of a FrameStream</span>
+0003 <span class="comment">%</span>
+0004 <span class="comment">% Contains one or more FrameDataEntities in a cell array. The other fields</span>
+0005 <span class="comment">% and the Info field provide general information about the frame stream.</span>
+0006     
+0007     properties 
+0008         FrameDataEntities = {}
+0009     <span class="keyword">end</span>
+0010     
+0011     methods
+0012         
+0013         <a name="_sub0" href="#_subfunctions" class="code">function str = McsFrameStream(filename, strStruct, varargin)</a>
+0014         <span class="comment">% Constructs a McsFrameStream object.</span>
+0015         <span class="comment">%</span>
+0016         <span class="comment">% function str = McsFrameStream(filename, strStruct)</span>
+0017         <span class="comment">%</span>
+0018         <span class="comment">% Calls the constructors for the individual McsFrameDataEntity</span>
+0019         <span class="comment">% objects. The FrameData from the individual FrameDataEntities is</span>
+0020         <span class="comment">% not read directly from the file, but only once the FrameData</span>
+0021         <span class="comment">% field is actually accessed.</span>
+0022         
+0023             str = str@McsHDF5.McsStream(filename,strStruct,<span class="string">'Frame'</span>);
+0024             
+0025             <span class="comment">% check if entities are present</span>
+0026             <span class="keyword">if</span> ~isempty(strStruct.Groups)
+0027                 str.FrameDataEntities = cell(1,length(strStruct.Groups));
+0028                 <span class="keyword">for</span> gidx = 1:length(strStruct.Groups)
+0029                     info = structfun(@(x)(x(gidx)),str.Info,<span class="string">'UniformOutput'</span>,false);
+0030                     <span class="keyword">if</span> isempty(varargin)
+0031                         str.FrameDataEntities{gidx} = McsHDF5.McsFrameDataEntity(filename,info,strStruct.Groups(gidx).Name);
+0032                     <span class="keyword">else</span>
+0033                         str.FrameDataEntities{gidx} = McsHDF5.McsFrameDataEntity(filename,info,strStruct.Groups(gidx).Name,varargin{:});
+0034                     <span class="keyword">end</span>
+0035                 <span class="keyword">end</span>
+0036             <span class="keyword">end</span>
+0037          
+0038             
+0039         <span class="keyword">end</span>
+0040         
+0041         
+0042         
+0043     <span class="keyword">end</span>
+0044     
+0045 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Wed 26-Mar-2014 15:28:34 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

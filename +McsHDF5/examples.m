@@ -6,6 +6,7 @@
 % First, add the base path of the +McsHDF5 folder to your matlab path
 %
 %   addpath Path/To/+McsHDF5
+
 %%
 % Then import the package
 %
@@ -15,7 +16,7 @@
 % As an example, lets load a data set with 2 analog streams, 1 event stream
 % and 1 segment stream:
 %
-%   data = McsHDF5.McsData('DataSpikeAnalyzer.h5');
+%   data = McsHDF5.McsData('SOME_DATA_FILE.h5');
 
 %%
 % Up to this point, only the metadata has been read from the file. The
@@ -46,11 +47,11 @@
 %% Units
 % For each stream, the associated data is stored in the field ChannelData
 % (AnalogStream), SegmentData (SegmentStream) or FrameData
-% (FrameDataEntities of FrameStreams). These values have already been
-% converted during loading from ADC units to more useful units such as
-% Volts. The actual unit it is represented in can be found for each stream
-% in the fields Unit and Exponent (values 'V' and -9, respectively, mean
-% that the data is stored in $$ 10^{-9} $$ V) of its Info structure:
+% (FrameDataEntities of FrameStreams). Per default, these values have
+% already been converted during loading from ADC units to more useful units
+% such as Volts. The actual unit it is represented in can be found for each
+% stream in the fields Unit and Exponent (values 'V' and -9, respectively,
+% mean that the data is stored in $$ 10^{-9} $$ V) of its Info structure:
 %
 %   data.Recording{1}.AnalogStream{1}.Info.Unit{1}
 %   data.Recording{1}.AnalogStream{1}.Info.Exponent(1)
@@ -60,6 +61,50 @@
 % {Channel,Frame,Segment}DataTimeStamps in microseconds. Similarly, the
 % time stamps of events in the EventStream are stored in microseconds as
 % well.
+
+%% Data types
+% For some applications, it might be necessary to change the data type of
+% the data and the time stamps, for example because of memory constraints.
+% The default data type for the {Channel,Frame,Segment}Data is 'double'. By
+% specifying the data type during the loading of the file, you can half the
+% memory requirements by using 'single' instead. 
+%
+%   cfg = [];
+%   cfg.dataType = 'single';
+%   data = McsHDF5.McsData('SOME_DATA_FILE.h5',cfg);
+%
+% This may, however, lead to very minor inaccuracies and one can encounter
+% problems with Matlab functions that except the data to be in 'double'
+% format.
+
+%%
+% Another possibility to potentially save even more memory is to specify 
+%
+%   cfg = [];
+%   cfg.dataType = 'raw';
+%   data = McsHDF5.McsData('SOME_DATA_FILE.h5',cfg);
+%
+% With the 'raw' option , the data is stored in its original format
+% internally in ADC units, so no conversion into meaningful units is
+% performed. Because the data type of the original data can be 16 Bit
+% integer (int16), this can reduce the memory requirements to 1/4th
+% compared to the default 'double' format.
+
+%%
+% One can convert data loaded with the 'raw' option to meaningful units
+% either manually (in this example for the first channel of an analog stream):
+%
+%   converted_data = (data.Recording{1}.AnalogStream{1}.ChannelData(1,:) - ...
+%                       data.Recording{1}.AnalogStream{1}.Info.ADZero(1)) * ...
+%                       data.Recording{1}.AnalogStream{1}.Info.ConversionFactor(1);
+
+%%
+% or by using the getConvertedData function which converts and returns the
+% full data array:
+%
+%   cfg = [];
+%   cfg.dataType = 'double';
+%   converted_data = data.Recording{1}.AnalogStream{1}.getConvertedData(cfg);
 
 %% Plotting the data
 % Each stream has simple plot functions to allow a quick check whether the
@@ -122,14 +167,14 @@
 % Frame streams have to be treated in more detail, because they can lead to
 % potentially very large data sets. They comprise samples from a 2D array
 % of recording channels for a total of possibly several thousand channels.
-% Because of this, it can be problematic to store the full data cube (time
-% $$ \times $$ channels_y $$ \times $$ channels_x) in memory.
+% Because of this, it can be problematic to store the full data cube
+% (channels_x $$ \times $$ channels_y $$ \times $$ time) in memory.
 % If you know which parts of the data you are interested in, you can also
 % load just a small 'cuboid' (a 'hyperslab' in HDF5 terminology) to memory:
 %
 % First, load just the metadata:
 %
-%   frameData = McsHDF5.McsData('2014.02.28-13.20.20-Rec.h5');
+%   frameData = McsHDF5.McsData('FILE_WITH_FRAME_DATA.h5');
 
 %%
 % If we would execute one of the following commands, the whole frame would
@@ -151,10 +196,10 @@
 
 %%
 % where 'time', 'channel_x' and 'channel_y' are 2x1 vectors of [start end]
-% indices. For 'time', these are given in seconds, for the channels these
-% are channel indices. If any of these is an empty array, the whole
-% dimension is used. partialFrame contains only the specified subregion of
-% the frame.
+% indices. For 'time', these are given in seconds with respect to the
+% FrameDataTimeStamps, for the channels these are channel indices. If any
+% of these is an empty array, the whole dimension is used. partialFrame
+% contains only the specified subregion of the frame.
 
 %% Plotting frame data
 % Due to the high dimensionality, finding useful plotting functions for
@@ -178,29 +223,10 @@
 %   plot(partialData,cfg);
 
 %%
-% A "movie" of the 3D-plots (*EXPERIMENTAL*):
+% A "movie" of the 3D-plots:
 %
 %   clf
 %   cfg = [];
 %   cfg.start = 0.1;
 %   cfg.end = 0.2;
 %   frameMovie(partialData,cfg);
-
-%%
-% Estimates firing rates for overlapping time segments for each channel and
-% plots their evolution over time (*EXPERIMENTAL*, only useful for spike
-% data. Uses a very simple, threshold based spike detector):
-%
-%   scatterSpikeRate(partialData,[]);
-
-%% Cautionary note on matrix dimensions
-% General note of caution for all users of the McsPyDataTools or people
-% directly accessing HDF5 files: MATLAB changes the dimensions of the
-% stored matrices, because it uses C-style ordering of dimensions in
-% contrast to the FORTRAN-style ordering used in HDF5. For example, while
-% the dimensions of FrameData are given in the HDF5 file as (channels_x $$
-% \times $$ channels_y $$ \times $$ time), reading this file into MATLAB
-% will yield a FrameData matrix with dimensions (time $$ \times $$
-% channels_y $$ \times $$ channels_x). 2D matrices will be transposed as
-% well, so please be careful about transferring any functions from the
-% McsPyDataTools to Matlab!

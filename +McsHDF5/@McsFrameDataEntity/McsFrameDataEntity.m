@@ -2,19 +2,33 @@ classdef McsFrameDataEntity < handle
 % Holds the contents of a single FrameDataEntity
 %
 % Fields:
-%   FrameData       -   (samples x channels_y x channels_x) array of data
-%                       values, given in units of 10 ^ Info.Exponent 
-%                       [Info.Unit]
+%   FrameData       -   (channels_x x channels_y x samples) array of data
+%                       values.
 %
-%   FrameDataTimeStamps - (samples x 1) vector of time stamps in
+%   FrameDataTimeStamps - (1 x samples) vector of time stamps in
 %                       microseconds.
 %
-%   The Info field provides general information about the frame stream.
+%   ConversionFactors   - (channels_x x channels_y) matrix of conversion 
+%                         factors. If the FrameData has DataType 'raw',
+%                         multiplying these to FrameData after subtracting
+%                         Info.ADZero will convert the raw data to units of
+%                         10 ^ Info.Exponent [Info.Unit]. Note: this is
+%                         unnecessary if the FrameData has DataType
+%                         'single' or 'double' as it has been converted
+%                         already in this case.
+%
+%   The Info field provides general information about the frame stream,
+%   while the other fields describe data types, units and dimensions.
 
     properties (SetAccess = private)
         FrameData = [];
         FrameDataTimeStamps = int64([]);
         Info
+        DataDimensions = 'channels_x x channels_y x samples';
+        DataUnit
+        DataType
+        TimeStampDataType
+        ConversionFactors = [];
     end
     
     properties (Access = private)
@@ -22,37 +36,78 @@ classdef McsFrameDataEntity < handle
         StructName
         DataLoaded = false;
         Internal = false;
-        ConversionFactors = [];
     end
     
     methods
         
-        function fde = McsFrameDataEntity(filename, info, fdeStructName)
+        function fde = McsFrameDataEntity(filename, info, fdeStructName, varargin)
         % Reads the metadata, time stamps and conversion factors of the
         % frame data entity.
         %
         % function fde = McsFrameDataEntity(filename, info, fdeStructName)
+        % function fde = McsFrameDataEntity(filename, info, fdeStructName, cfg)
         %
         % The frame data itself is loaded only if it is requested by
         % another function.
+        %
+        % Optional input:
+        %   cfg     -   configuration structure, contains one or more of
+        %               the following fields:
+        %               'dataType': The type of the data, can be one of
+        %               'double' (default), 'single' or 'raw'. For 'double'
+        %               and 'single' the data is converted to meaningful
+        %               units, while for 'raw' no conversion is done and
+        %               the data is kept in ADC units. This uses less
+        %               memory than the conversion to double, but you might
+        %               have to convert the data prior to analysis, for
+        %               example by using the getConvertedData function.
+        %               'timeStampDataType': The type of the time stamps,
+        %               can be either 'int64' (default) or 'double'. Using
+        %               'double' is useful for older Matlab version without
+        %               int64 arithmetic.
         
             fde.FileName = filename;
             fde.Info = info;
             fde.StructName = fdeStructName;
             fde.ConversionFactors = h5read(fde.FileName, ...
-                                      [fde.StructName '/ConversionFactors']);
+                                      [fde.StructName '/ConversionFactors'])';
             fde.ConversionFactors = double(fde.ConversionFactors);        
             timestamps = h5read(fde.FileName, [fde.StructName '/FrameDataTimeStamps']);
             if size(timestamps,1) ~= 3
                 timestamps = timestamps';
             end
-            timestamps = bsxfun(@plus,timestamps,int64([0 1 1])');
-            for tsi = 1:size(timestamps,2)
-                fde.FrameDataTimeStamps(timestamps(2,tsi):timestamps(3,tsi)) = ...
-                    (int64(0:numel(timestamps(2,tsi):timestamps(3,tsi))-1) .* ...
-                    fde.Info.Tick(1)) + timestamps(1,tsi);
+            if isempty(varargin) || ~isfield(varargin{1},'timeStampDataType') || strcmpi(varargin{1}.timeStampDataType,'int64')
+                timestamps = bsxfun(@plus,timestamps,int64([0 1 1])');
+                for tsi = 1:size(timestamps,2)
+                    fde.FrameDataTimeStamps(timestamps(2,tsi):timestamps(3,tsi)) = ...
+                        (int64(0:numel(timestamps(2,tsi):timestamps(3,tsi))-1) .* ...
+                        fde.Info.Tick) + timestamps(1,tsi);
+                end
+                fde.TimeStampDataType = 'int64';
+            else
+                type = varargin{1}.timeStampDataType;
+                if ~strcmp(type,'double')
+                    error('Only int64 and double are supported for timeStampDataType!');
+                end
+                fde.FrameDataTimeStamps = cast([],type);
+                timestamps = bsxfun(@plus,double(timestamps),[0 1 1]');
+                for tsi = 1:size(timestamps,2)
+                    fde.FrameDataTimeStamps(timestamps(2,tsi):timestamps(3,tsi)) = ...
+                        ((0:numel(timestamps(2,tsi):timestamps(3,tsi))-1) .* ...
+                        cast(fde.Info.Tick,type)) + timestamps(1,tsi);
+                end
+                fde.TimeStampDataType = type;
             end
-            fde.FrameDataTimeStamps = fde.FrameDataTimeStamps';
+            
+            if isempty(varargin) || ~isfield(varargin{1},'dataType') || strcmpi(varargin{1}.dataType,'double')
+                fde.DataType = 'double';
+            else
+                type = varargin{1}.dataType;
+                if ~strcmpi(type,'double') && ~strcmpi(type,'single') && ~strcmpi(type,'raw')
+                    error('Only double, single and raw are allowed as data types!');
+                end
+                fde.DataType = varargin{1}.dataType;
+            end
         end
         
         function data = get.FrameData(fde)
@@ -67,16 +122,73 @@ classdef McsFrameDataEntity < handle
                 fprintf('Reading frame data...\n');
                 fde.FrameData = h5read(fde.FileName, ...
                                       [fde.StructName '/FrameData']);
+                fde.FrameData = permute(fde.FrameData,[3 2 1]);
                 fde.DataLoaded = true;
-
-                convert_from_raw(fde);
+                
+                if ~strcmp(fde.DataType,'raw')
+                    [~,unit_prefix] = McsHDF5.ExponentToUnit(fde.Info.Exponent,0);
+                    fde.DataUnit = [unit_prefix fde.Info.Unit{1}];
+                    convert_from_raw(fde);    
+                else
+                    fde.DataUnit = 'ADC';
+                end
 
             end
             data = fde.FrameData;
         end
+        
+        
+        function data = getConvertedData(fde,cfg)
+        %
+        % Returns the conversion of FrameData into units of 10 ^
+        % Info.Exponent [Info.Unit].
+        %
+        % function data = getConvertedData(fde,cfg)
+        %
+        % Converts 'raw' data into meaningful units and returns it with the
+        % specified dataType. If FrameData already has DataType 'single' or
+        % 'double' (i.e. has already been converted), either the FrameData
+        % values are returned directly, or, if cfg.dataType differs from
+        % the DataType field, the FrameData is cast to cfg.dataType. The
+        % values in the FrameData field are not altered by this function.
+        %
+        % Input:
+        %   fde     -   A FrameDataEntity
+        %   cfg     -   A configuration structure which may contain the
+        %               field 'dataType'. 'dataType' has to be one of the
+        %               built-in data types, the default is 'double'.
+        %
+        % Output:
+        %   data    -   (channels_x x channels_y x samples) array with the
+        %               same size as FrameData. Its values are of type
+        %               cfg.dataType and it contains the FrameData values
+        %               in units of 10 ^ Info.Exponent [Info.Unit]
+            
+            if isempty(cfg)
+                cfg.dataType = 'double';
+            end
+
+            if ~isfield(cfg,'dataType')
+                cfg.dataType = 'double';
+            end
+
+            if ~strcmp(fde.DataType,'raw')
+                if ~strcmp(fde.DataType,cfg.dataType)
+                    data = cast(fde.FrameData,cfg.dataType);
+                else
+                    data = fde.FrameData;
+                end
+            else
+                conv_factor = cast(fde.ConversionFactors,cfg.dataType);
+                adzero = cast(fde.Info.ADZero,cfg.dataType);
+                data = cast(fde.FrameData,cfg.dataType) - adzero;
+                data = bsxfun(@times,data,conv_factor);
+            end
+        end
 
         function out_fde = readPartialFrame(fde,cfg)
-        % Read a hyperslab from the frame.
+
+        % Read a hyperslab from the fde.
         %
         % function out_fde = readPartialFrame(fde,cfg)
         %
@@ -90,7 +202,7 @@ classdef McsFrameDataEntity < handle
         %
         %   cfg       -   Either empty (for default parameters) or a
         %                 structure with (some of) the following fields:
-        %                 'time': If empty, the whole time interval, otherwise
+        %                 'window': If empty, the whole time interval, otherwise
         %                   [start end] in seconds
         %                 'channel_x', 'channel_y': channel range in x and
         %                   y direction, given as [first last] channel index.
@@ -101,14 +213,14 @@ classdef McsFrameDataEntity < handle
         %                   segment
         
             ts = fde.FrameDataTimeStamps;
-            defaultChannelX = 1:size(fde.FrameData,3);
-            defaultChannelY = 1:size(fde.FrameData,2);
-            defaultTime = 1:length(ts);
+            defaultChannelX = double(1:(fde.Info.FrameRight - fde.Info.FrameLeft + 1));
+            defaultChannelY = double(1:(fde.Info.FrameBottom - fde.Info.FrameTop + 1));
+            defaultWindow = 1:length(ts);
             
             if isempty(cfg)
                 cfg.channel_x = [];
                 cfg.channel_y = [];
-                cfg.time = [];
+                cfg.window = [];
             end
             
             if ~isfield(cfg,'channel_x') || isempty(cfg.channel_x)
@@ -123,22 +235,22 @@ classdef McsFrameDataEntity < handle
                 cfg.channel_y = cfg.channel_y(1):cfg.channel_y(2);
             end
             
-            if ~isfield(cfg,'time') || isempty(cfg.time)
-                cfg.time = defaultTime;
+            if ~isfield(cfg,'window') || isempty(cfg.window)
+                cfg.window = defaultWindow;
             else
-                t = find(ts >= McsHDF5.SecToTick(cfg.time(1)) & ts <= McsHDF5.SecToTick(cfg.time(2)));
-                if McsHDF5.TickToSec(ts(t(1)) - fde.Info.Tick) > cfg.time(1) || ...
-                        McsHDF5.TickToSec(ts(t(end)) + fde.Info.Tick) < cfg.time(2)
+                t = find(ts >= McsHDF5.SecToTick(cfg.window(1)) & ts <= McsHDF5.SecToTick(cfg.window(2)));
+                if McsHDF5.TickToSec(ts(t(1)) - fde.Info.Tick) > cfg.window(1) || ...
+                        McsHDF5.TickToSec(ts(t(end)) + fde.Info.Tick) < cfg.window(2)
                     warning(['Using only time range between ' McsHDF5.TickToSec(ts(t(1))) ...
                         ' and ' McsHDF5.TickToSec(ts(t(end))) ' s!']);
                 elseif isempty(t)
                     error('No time range found!');
                 end
-                cfg.time = t;
+                cfg.window = t;
             end
             
-            if any(cfg.channel_x < 1 | cfg.channel_x > size(fde.FrameData,3))
-                cfg.channel_x = cfg.channel_x(cfg.channel_x >= 1 & cfg.channel_x <= size(fde.FrameData,3));
+            if any(cfg.channel_x < 1 | cfg.channel_x > length(defaultChannelX))
+                cfg.channel_x = cfg.channel_x(cfg.channel_x >= 1 & cfg.channel_x <= length(defaultChannelX));
                 if isempty(cfg.channel_x)
                     error('No channels found for channel_x!');
                 else
@@ -146,8 +258,8 @@ classdef McsFrameDataEntity < handle
                 end
             end
             
-            if any(cfg.channel_y < 1 | cfg.channel_y > size(fde.FrameData,2))
-                cfg.channel_y = cfg.channel_y(cfg.channel_y >= 1 & cfg.channel_y <= size(fde.FrameData,2));
+            if any(cfg.channel_y < 1 | cfg.channel_y > length(defaultChannelY))
+                cfg.channel_y = cfg.channel_y(cfg.channel_y >= 1 & cfg.channel_y <= length(defaultChannelY));
                 if isempty(cfg.channel_y)
                     error('No channels found for channel_y!');
                 else
@@ -162,8 +274,8 @@ classdef McsFrameDataEntity < handle
             fid = H5F.open(fde.FileName);
             gid = H5G.open(fid,fde.StructName);
             did = H5D.open(gid,'FrameData');
-            dims = [length(cfg.channel_x) length(cfg.channel_y) length(cfg.time)];
-            offset = [cfg.channel_x(1)-1 cfg.channel_y(1)-1 cfg.time(1)-1];
+            dims = [length(cfg.channel_x) length(cfg.channel_y) length(cfg.window)];
+            offset = [cfg.channel_x(1)-1 cfg.channel_y(1)-1 cfg.window(1)-1];
             mem_space_id = H5S.create_simple(3,dims,[]);
             file_space_id = H5D.get_space(did);
             H5S.select_hyperslab(file_space_id,'H5S_SELECT_SET',offset,[],[],dims);
@@ -171,13 +283,30 @@ classdef McsFrameDataEntity < handle
             out_fde.Internal = true;
 
             out_fde.FrameData = H5D.read(did,'H5ML_DEFAULT',mem_space_id,file_space_id,'H5P_DEFAULT');
-
-            out_fde.FrameDataTimeStamps = ts(cfg.time);
-            out_fde.ConversionFactors = fde.ConversionFactors(cfg.channel_y,cfg.channel_x);
-            out_fde.DataLoaded = true;
-            convert_from_raw(out_fde);
-            out_fde.Internal = false;
+            out_fde.FrameData = permute(out_fde.FrameData,[3 2 1]);
+            out_fde.Info.FrameRight = out_fde.Info.FrameLeft + cfg.channel_x(end) - 1;
+            out_fde.Info.FrameBottom = out_fde.Info.FrameTop + cfg.channel_y(end) - 1;
+            out_fde.Info.FrameLeft = out_fde.Info.FrameLeft + cfg.channel_x(1) - 1;
+            out_fde.Info.FrameTop = out_fde.Info.FrameTop + cfg.channel_y(1) - 1;
             
+            out_fde.FrameDataTimeStamps = ts(cfg.window);
+            out_fde.ConversionFactors = fde.ConversionFactors(cfg.channel_x,cfg.channel_y);
+            out_fde.DataLoaded = true;
+            out_fde.TimeStampDataType = fde.TimeStampDataType;
+            type = fde.DataType;
+            out_fde.DataType = type;
+            if ~strcmp(type,'raw')
+                convert_from_raw(out_fde);
+            end
+            out_fde.Internal = false;
+            if ~isempty(fde.DataUnit)
+                out_fde.DataUnit = fde.DataUnit;
+            elseif strcmp(type,'raw')
+                out_fde.DataUnit = 'ADC';
+            else
+                [~,unit_prefix] = McsHDF5.ExponentToUnit(out_fde.Info.Exponent,0);
+                out_fde.DataUnit = [unit_prefix out_fde.Info.Unit{1}];
+            end
             
             H5D.close(did);
             H5G.close(gid);
@@ -194,11 +323,11 @@ classdef McsFrameDataEntity < handle
         %
         % This is performed during loading of the data.
             
-            fde.FrameData = double(fde.FrameData) - double(fde.Info.ADZero);
+            fde.FrameData = cast(fde.FrameData,fde.DataType) - cast(fde.Info.ADZero,fde.DataType);
 
             % multiply FrameData with the conversion factors in a fast and
             % memory efficient way
-            fde.FrameData = bsxfun(@times,fde.FrameData,shiftdim(fde.ConversionFactors,-1));            
+            fde.FrameData = bsxfun(@times,fde.FrameData,cast(fde.ConversionFactors,fde.DataType));            
         end
     end
     
