@@ -126,7 +126,7 @@ classdef McsFrameDataEntity < handle
                 fde.DataLoaded = true;
                 
                 if ~strcmp(fde.DataType,'raw')
-                    [~,unit_prefix] = McsHDF5.ExponentToUnit(fde.Info.Exponent,0);
+                    [ignore,unit_prefix] = McsHDF5.ExponentToUnit(fde.Info.Exponent,0);
                     fde.DataUnit = [unit_prefix fde.Info.Unit{1}];
                     convert_from_raw(fde);    
                 else
@@ -304,7 +304,7 @@ classdef McsFrameDataEntity < handle
             elseif strcmp(type,'raw')
                 out_fde.DataUnit = 'ADC';
             else
-                [~,unit_prefix] = McsHDF5.ExponentToUnit(out_fde.Info.Exponent,0);
+                [ignore,unit_prefix] = McsHDF5.ExponentToUnit(out_fde.Info.Exponent,0);
                 out_fde.DataUnit = [unit_prefix out_fde.Info.Unit{1}];
             end
             

@@ -95,7 +95,9 @@ function plot(analogStream,cfg,varargin)
     
     [fact,unit_string] = McsHDF5.ExponentToUnit(orig_exp+unit_exp,orig_exp);
     
-    data_to_plot = data_to_plot * fact;
+    if ~isnan(fact)
+        data_to_plot = data_to_plot * fact;
+    end
     
     if cfg.spacing
         mi = min(data_to_plot);

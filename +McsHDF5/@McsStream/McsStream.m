@@ -4,6 +4,7 @@ classdef McsStream < handle
 % Reads and stores the Info struct and the other data attributes.
     
     properties 
+        StreamInfoVersion
         StreamGUID
         StreamType
         SourceStreamGUID
@@ -25,19 +26,38 @@ classdef McsStream < handle
         %
         % function str = McsStream(filename, strStruct, type)
         % 
-            
+            if exist('h5info','builtin')
+                mode = 'h5';
+            else
+                mode = 'hdf5';
+            end
             str.StructName = strStruct.Name;
             str.FileName = filename;
             
-            inf = h5read(filename, [strStruct.Name '/Info' type]);
+            if strcmp(mode,'h5')
+                inf = h5read(filename, [strStruct.Name '/Info' type]);
+            else
+                fid = H5F.open(filename,'H5F_ACC_RDONLY','H5P_DEFAULT');
+                did = H5D.open(fid, [strStruct.Name '/Info' type]);
+                inf = H5D.read(did,'H5ML_DEFAULT','H5S_ALL','H5S_ALL','H5P_DEFAULT');
+            end
             fn = fieldnames(inf);
             for fni = 1:length(fn)
                 str.Info(1).(fn{fni}) = inf.(fn{fni});
             end
-            
+
             dataAttributes = strStruct.Attributes;
             for fni = 1:length(dataAttributes)
-                str.(dataAttributes(fni).Name) = dataAttributes(fni).Value;
+                if strcmp(mode,'h5')
+                    str.(dataAttributes(fni).Name) = dataAttributes(fni).Value;
+                else
+                    name = regexp(dataAttributes(fni).Name,'/\w+$','match');
+                    if isa(dataAttributes(fni).Value,'hdf5.h5string')
+                        str.(name{length(name)}(2:end)) = dataAttributes(fni).Value.Data;
+                    else
+                        str.(name{length(name)}(2:end)) = dataAttributes(fni).Value;
+                    end
+                end
             end
             
         end

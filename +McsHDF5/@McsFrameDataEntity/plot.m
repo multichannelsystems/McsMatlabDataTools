@@ -62,7 +62,7 @@ function plot(frame,cfg,varargin)
             warning('No data point found!')
             return;
         elseif numel(idx) > 1
-            [~,tmp] = min(abs(frame.FrameDataTimeStamps(idx) - McsHDF5.SecToTick(cfg.window(1))));
+            [ignore,tmp] = min(abs(frame.FrameDataTimeStamps(idx) - McsHDF5.SecToTick(cfg.window(1))));
             idx = idx(tmp);
         end
         

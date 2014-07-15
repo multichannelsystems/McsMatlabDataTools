@@ -16,6 +16,7 @@ classdef McsRecording
         FrameStream = {};
         EventStream = {};
         SegmentStream = {};
+        TimeStampStream = {};
     end
     
     methods
@@ -48,10 +49,23 @@ classdef McsRecording
         % Output:
         %   rec         -   A McsRecording object
         %
-        
+            if exist('h5info','builtin')
+                mode = 'h5';
+            else
+                mode = 'hdf5';
+            end
             dataAttributes = recStruct.Attributes;
             for fni = 1:length(dataAttributes)
-                rec.(dataAttributes(fni).Name) = dataAttributes(fni).Value;
+                if strcmp(mode,'h5')
+                    rec.(dataAttributes(fni).Name) = dataAttributes(fni).Value;
+                else
+                    str = regexp(dataAttributes(fni).Name,'/\w+$','match');
+                    if isa(dataAttributes(fni).Value,'hdf5.h5string')
+                        rec.(str{length(str)}(2:end)) = dataAttributes(fni).Value.Data;
+                    else
+                        rec.(str{length(str)}(2:end)) = dataAttributes(fni).Value;
+                    end
+                end
             end
 
             for gidx = 1:length(recStruct.Groups)
@@ -94,6 +108,16 @@ classdef McsRecording
                             rec.SegmentStream{streams} = McsHDF5.McsSegmentStream(filename, recStruct.Groups(gidx).Groups(streams));
                         else
                             rec.SegmentStream{streams} = McsHDF5.McsSegmentStream(filename, recStruct.Groups(gidx).Groups(streams), varargin{:});
+                        end
+                    end
+                
+                elseif ~isempty(strfind(groupname,'TimeStampStream'))
+                    % read timestamp streams
+                    for streams = 1:length(recStruct.Groups(gidx).Groups)
+                        if isempty(varargin)
+                            rec.TimeStampStream{streams} = McsHDF5.McsTimeStampStream(filename, recStruct.Groups(gidx).Groups(streams));
+                        else
+                            rec.TimeStampStream{streams} = McsHDF5.McsTimeStampStream(filename, recStruct.Groups(gidx).Groups(streams), varargin{:});
                         end
                     end
                 end 

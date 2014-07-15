@@ -16,7 +16,12 @@ function plot(evtStream,cfg,varargin)
 
     lineLength = 0.3;
     M = cell(length(evtStream.Events),2);
+    emptyEvents = false(1,length(evtStream.Events));
     for evti = 1:length(evtStream.Events)
+        if isempty(evtStream.Events{evti})
+            emptyEvents(evti) = true;
+            continue
+        end
         if size(evtStream.Events{evti},1) == 1
             M{evti,1} = McsHDF5.TickToSec([evtStream.Events{evti} ; evtStream.Events{evti}]);
         else
@@ -24,7 +29,13 @@ function plot(evtStream,cfg,varargin)
         end
         M{evti,2} = repmat([evti-lineLength ; evti+lineLength],1,size(M{evti,1},2));
     end
+    if all(emptyEvents)
+        return;
+    end
     for evti = 1:length(evtStream.Events)
+        if emptyEvents(evti)
+            continue
+        end
         if size(evtStream.Events{evti},1) == 1
             if isempty(varargin)
                 line(M{evti,1},M{evti,2},'Color','k')

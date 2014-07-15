@@ -58,40 +58,83 @@ classdef McsData
         %
         % Output:
         %   md          -   A McsData object
-            
-            inf = h5info(filename);
+            if exist('h5info','builtin')
+                mode = 'h5';
+            else
+                mode = 'hdf5';
+            end
+            if strcmp(mode,'h5') 
+                inf = h5info(filename);
+            else 
+                inf = hdf5info(filename);
+                inf = inf.GroupHierarchy;
+            end
             md.FileName = inf.Filename;
             validFile = false;
-            for att = 1:length(inf.Attributes)
-                if strcmp(inf.Attributes(att).Name,'McsHdf5ProtocolType')
-                    if ~strcmp(inf.Attributes(att).Value,'RawData')
-                        error('Only the RawData protocol type is supported!');
-                    else
-                        validFile = true;
-                    end
-                elseif strcmp(inf.Attributes(att).Name,'McsHdf5ProtocolVersion')
-                    if inf.Attributes(att).Value ~= 1
-                        error('Only MCS HDF5 version 1 is supported!');
-                    end
-                elseif strcmp(inf.Attributes(att).Name,'McsHdf5Version')
-                    if inf.Attributes(att).Value ~= 1
-                        error('Only MCS HDF5 version 1 is supported!');
-                    else
-                        validFile = true;
+            if strcmp(mode, 'h5')
+                for att = 1:length(inf.Attributes)
+                    if strcmp(inf.Attributes(att).Name,'McsHdf5ProtocolType')
+                        if ~strcmp(inf.Attributes(att).Value,'RawData')
+                            error('Only the RawData protocol type is supported!');
+                        else
+                            validFile = true;
+                        end
+                    elseif strcmp(inf.Attributes(att).Name,'McsHdf5ProtocolVersion')
+                        if inf.Attributes(att).Value ~= 1
+                            error('Only MCS HDF5 version 1 is supported!');
+                        end
+                    elseif strcmp(inf.Attributes(att).Name,'McsHdf5Version')
+                        if inf.Attributes(att).Value ~= 1
+                            error('Only MCS HDF5 version 1 is supported!');
+                        else
+                            validFile = true;
+                        end
                     end
                 end
-            end  
+            elseif strcmp(mode, 'hdf5')
+                for att = 1:length(inf.Attributes)
+                    if strcmp(inf.Attributes(att).Name,'/McsHdf5ProtocolType')
+                        if ~strcmp(inf.Attributes(att).Value.Data,'RawData')
+                            error('Only the RawData protocol type is supported!');
+                        else
+                            validFile = true;
+                        end
+                    elseif strcmp(inf.Attributes(att).Name,'/McsHdf5ProtocolVersion')
+                        if inf.Attributes(att).Value ~= 1
+                            error('Only MCS HDF5 version 1 is supported!');
+                        end
+                    elseif strcmp(inf.Attributes(att).Name,'/McsHdf5Version')
+                        if inf.Attributes(att).Value ~= 1
+                            error('Only MCS HDF5 version 1 is supported!');
+                        else
+                            validFile = true;
+                        end
+                    end
+                end
+            end
             if ~validFile
                 error('This is not a valid Mcs HDF5 file!');
             end
             % Data structure
             dataAttributes = inf.Groups.Attributes;
             for fni = 1:length(dataAttributes)
-                md.Data.(dataAttributes(fni).Name) = dataAttributes(fni).Value;
+                if strcmp(mode,'h5')
+                    md.Data.(dataAttributes(fni).Name) = dataAttributes(fni).Value;
+                elseif strcmp(mode,'hdf5')
+                    str = regexp(dataAttributes(fni).Name,'/\w+$','match');
+                    if isa(dataAttributes(fni).Value,'hdf5.h5string')
+                        md.Data.(str{length(str)}(2:end)) = dataAttributes(fni).Value.Data;
+                    else
+                        md.Data.(str{length(str)}(2:end)) = dataAttributes(fni).Value;
+                    end
+                end
             end
             
             % Recordings
             for recs = 1:length(inf.Groups)
+                if isempty(inf.Groups(recs).Groups)
+                    continue
+                end
                 if isempty(varargin)
                     md.Recording{recs} = McsHDF5.McsRecording(filename, inf.Groups(recs).Groups);
                 else

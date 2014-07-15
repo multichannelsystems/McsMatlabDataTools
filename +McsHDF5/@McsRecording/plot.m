@@ -22,6 +22,8 @@ function plot(mr,cfg,varargin)
 %                   see 'analog' for options
 %               'event': Configuration structure for McsEventStream.plot
 %                   see 'analog' for options
+%               'timestamp': Configuration structure for McsTimeStampStream.plot
+%                   see 'analog' for options
 %               'analogstreams': empty for all analog streams, otherwise
 %                   vector with indices of analog streams (default: all)
 %               'framestreams': empty for all frame streams, otherwise
@@ -29,6 +31,8 @@ function plot(mr,cfg,varargin)
 %               'segmentstreams': empty for all segment streams, otherwise
 %                   vector with indices of segment streams (default: all)
 %               'eventstreams': empty for all event streams, otherwise
+%                   vector with indices of event streams (default: all)
+%               'timestampstreams': empty for all event streams, otherwise
 %                   vector with indices of event streams (default: all)
 %               If fields are missing, their default values are used.
 %
@@ -41,6 +45,7 @@ function plot(mr,cfg,varargin)
         cfg.frame = [];
         cfg.segment = [];
         cfg.event = [];
+        cfg.timestamp = [];
     end
     
     if ~isempty(mr.AnalogStream)
@@ -124,6 +129,27 @@ function plot(mr,cfg,varargin)
             figure
             plot(mr.EventStream{cfg.eventstreams(stri)},cfg.event{stri},varargin{:});
             set(gcf,'Name',['Event Stream ' num2str(cfg.eventstreams(stri))]);
+        end
+    end
+    
+    if ~isempty(mr.TimeStampStream)
+        
+        if ~isfield(cfg,'timestamp') || isempty(cfg.timestamp)
+            cfg.timestamp = repmat({[]},1,length(mr.TimeStampStream));
+        end
+        
+        if ~isfield(cfg,'timestampstreams') || isempty(cfg.timestampstreams)
+            cfg.timestampstreams = 1:length(mr.TimeStampStream);
+        end
+        
+        if ~iscell(cfg.timestamp)
+            cfg.timestamp = repmat({cfg.timestamp},1,length(mr.TimeStampStream));
+        end
+        
+        for stri = 1:length(cfg.timestampstreams)
+            figure
+            plot(mr.TimeStampStream{cfg.timestampstreams(stri)},cfg.timestamp{stri},varargin{:});
+            set(gcf,'Name',['Time Stamp Stream ' num2str(cfg.timestampstreams(stri))]);
         end
     end
 

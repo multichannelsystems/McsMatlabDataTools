@@ -48,10 +48,19 @@ classdef McsAnalogStream < McsHDF5.McsStream
         %               can be either 'int64' (default) or 'double'. Using
         %               'double' is useful for older Matlab version without
         %               int64 arithmetic.
+            if exist('h5info','builtin')
+                mode = 'h5';
+            else
+                mode = 'hdf5';
+            end
         
             str = str@McsHDF5.McsStream(filename,strStruct,'Channel');
             
-            timestamps = h5read(filename, [strStruct.Name '/ChannelDataTimeStamps']);
+            if strcmp(mode,'h5')
+                timestamps = h5read(filename, [strStruct.Name '/ChannelDataTimeStamps']);
+            else
+                timestamps = hdf5read(filename, [strStruct.Name '/ChannelDataTimeStamps']);
+            end
             if size(timestamps,1) ~= 3
                 timestamps = timestamps';
             end
@@ -97,15 +106,28 @@ classdef McsAnalogStream < McsHDF5.McsStream
         %
         % Will read the channel data from file the first time this field is
         % accessed.
-        
+            if exist('h5info','builtin')
+                mode = 'h5';
+            else
+                mode = 'hdf5';
+            end
+            
             if ~str.DataLoaded
                 fprintf('Reading analog data...\n')
-                str.ChannelData = h5read(str.FileName, [str.StructName '/ChannelData'])';
+                if strcmp(mode,'h5')
+                    str.ChannelData = h5read(str.FileName, [str.StructName '/ChannelData'])';
+                else
+                    str.ChannelData = hdf5read(str.FileName, [str.StructName '/ChannelData'])';
+                end
                 str.DataLoaded = true;
                 if ~strcmp(str.DataType,'raw')
                     for ch = 1:length(str.Info.Unit)
-                        [~,unit_prefix] = McsHDF5.ExponentToUnit(str.Info.Exponent(ch),0);
-                        str.DataUnit{ch} = [unit_prefix str.Info.Unit{ch}];
+                        [ignore,unit_prefix] = McsHDF5.ExponentToUnit(str.Info.Exponent(ch),0);
+                        if strcmp(mode,'h5')
+                            str.DataUnit{ch} = [unit_prefix str.Info.Unit{ch}];
+                        else
+                            str.DataUnit{ch} = [unit_prefix str.Info.Unit(ch)];
+                        end
                     end
                     convert_from_raw(str);    
                 else

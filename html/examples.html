@@ -70,10 +70,10 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 </pre><h2>Loading data<a name="3"></a></h2><p>As an example, lets load a data set with 2 analog streams, 1 event stream and 1 segment stream:</p><pre class="language-matlab">data = McsHDF5.McsData(<span class="string">'SOME_DATA_FILE.h5'</span>);
 </pre><p>Up to this point, only the metadata has been read from the file. The actual data within the stream will be loaded as soon as you try to access the stream, for example in a plot function. The recorded data is organized as follows within the data structure:</p><div><ul><li>Top-level: General information and a cell array of McsRecording objects:</li></ul></div><pre class="language-matlab">data
 </pre><div><ul><li>Each recording is stored in its individual cell:</li></ul></div><pre class="language-matlab">data.Recording{1}
-</pre><div><ul><li>Each recording cell contains cell arrays of zero or more analog-, frame-, segment- and event-streams. The only exception is the frame stream which has additional sub-structures, the FrameDataEntities. If we access one of these streams (or a FrameDataEntity for FrameStreams), its data is loaded from the file:</li></ul></div><pre class="language-matlab">data.Recording{1}.AnalogStream{1}
-</pre><h2>Units<a name="7"></a></h2><p>For each stream, the associated data is stored in the field ChannelData (AnalogStream), SegmentData (SegmentStream) or FrameData (FrameDataEntities of FrameStreams). Per default, these values have already been converted during loading from ADC units to more useful units such as Volts. The actual unit it is represented in can be found for each stream in the fields Unit and Exponent (values 'V' and -9, respectively, mean that the data is stored in <img src="examples_eq39414.png" alt="$$ 10^{-9} $$"> V) of its Info structure:</p><pre class="language-matlab">data.Recording{1}.AnalogStream{1}.Info.Unit{1}
+</pre><div><ul><li>Each recording cell contains cell arrays of zero or more analog-, frame-, segment-, event- or timestamp-streams. The only exception is the frame stream which has additional sub-structures, the FrameDataEntities. If we access one of these streams (or a FrameDataEntity for FrameStreams), its data is loaded from the file:</li></ul></div><pre class="language-matlab">data.Recording{1}.AnalogStream{1}
+</pre><h2>Units<a name="7"></a></h2><p>For each stream, the associated data is stored in the field ChannelData (AnalogStream), SegmentData (SegmentStream), FrameData (FrameDataEntities of FrameStreams), Events (EventStream) or TimeStamps (TimestampStream). Per default, these values have already been converted during loading from ADC units to more useful units such as Volts. The actual unit it is represented in can be found for each stream in the fields Unit and Exponent (values 'V' and -9, respectively, mean that the data is stored in <img src="examples_eq39414.png" alt="$$ 10^{-9} $$"> V) of its Info structure:</p><pre class="language-matlab">data.Recording{1}.AnalogStream{1}.Info.Unit{1}
 data.Recording{1}.AnalogStream{1}.Info.Exponent(1)
-</pre><p>The time stamp associated with each sample is stored in the field {Channel,Frame,Segment}DataTimeStamps in microseconds. Similarly, the time stamps of events in the EventStream are stored in microseconds as well.</p><h2>Data types<a name="9"></a></h2><p>For some applications, it might be necessary to change the data type of the data and the time stamps, for example because of memory constraints. The default data type for the {Channel,Frame,Segment}Data is 'double'. By specifying the data type during the loading of the file, you can half the memory requirements by using 'single' instead.</p><pre class="language-matlab">cfg = [];
+</pre><p>The time stamp associated with each sample is stored in the field {Channel,Frame,Segment}DataTimeStamps in microseconds. Similarly, the time stamps of events in the EventStream as well as the timestamps in the TimeStampStream are stored in microseconds as well.</p><h2>Data types<a name="9"></a></h2><p>For some applications, it might be necessary to change the data type of the data and the time stamps, for example because of memory constraints. The default data type for the {Channel,Frame,Segment}Data is 'double'. By specifying the data type during the loading of the file, you can half the memory requirements by using 'single' instead.</p><pre class="language-matlab">cfg = [];
 cfg.dataType = <span class="string">'single'</span>;
 data = McsHDF5.McsData(<span class="string">'SOME_DATA_FILE.h5'</span>,cfg);
 </pre><p>This may, however, lead to very minor inaccuracies and one can encounter problems with Matlab functions that except the data to be in 'double' format.</p><p>Another possibility to potentially save even more memory is to specify</p><pre class="language-matlab">cfg = [];
@@ -88,6 +88,7 @@ converted_data = data.Recording{1}.AnalogStream{1}.getConvertedData(cfg);
 </pre><h2>Plotting the data<a name="13"></a></h2><p>Each stream has simple plot functions to allow a quick check whether the data is all right:</p><pre class="language-matlab">plot(data.Recording{1}.AnalogStream{1},[])
 plot(data.Recording{1}.EventStream{1},[])
 plot(data.Recording{1}.SegmentStream{1},[])
+plot(data.Recording{1}.TimeStampStream{1},[])
 </pre><p>If for example the event stream and the segment streams have not been accessed before, their data is loaded during the execution of the respective plot function.</p><p>Plot functions can also be executed at the recording or top level in order to get an overview over all streams in the recording, or even all streams in the data:</p><pre class="language-matlab">plot(data.Recording{1},[]);
 plot(data,[]);
 </pre><p>If the second parameter of the plot function is empty, the default parameters are used for plotting. Otherwise, one can specify configuration structures for more fine-grained plotting. For example, the following commands will plot channels 1 and 2 of the second analog stream:</p><pre class="language-matlab">cfg = [];
@@ -172,8 +173,9 @@ frameMovie(partialData,cfg);
 
 %% Units
 % For each stream, the associated data is stored in the field ChannelData
-% (AnalogStream), SegmentData (SegmentStream) or FrameData
-% (FrameDataEntities of FrameStreams). Per default, these values have
+% (AnalogStream), SegmentData (SegmentStream), FrameData
+% (FrameDataEntities of FrameStreams), Events (EventStream) or 
+% Timestamps (TimeStampStream). Per default, these values have
 % already been converted during loading from ADC units to more useful units
 % such as Volts. The actual unit it is represented in can be found for each
 % stream in the fields Unit and Exponent (values 'V' and -9, respectively,
@@ -185,8 +187,8 @@ frameMovie(partialData,cfg);
 %%
 % The time stamp associated with each sample is stored in the field
 % {Channel,Frame,Segment}DataTimeStamps in microseconds. Similarly, the
-% time stamps of events in the EventStream are stored in microseconds as
-% well.
+% time stamps of events in the EventStream as well as the timestamps in 
+% the TimeStampStream are stored in microseconds as well.
 
 %% Data types
 % For some applications, it might be necessary to change the data type of
@@ -239,6 +241,7 @@ frameMovie(partialData,cfg);
 %   plot(data.Recording{1}.AnalogStream{1},[])
 %   plot(data.Recording{1}.EventStream{1},[])
 %   plot(data.Recording{1}.SegmentStream{1},[])
+%   plot(data.Recording{1}.TimeStampStream{1},[])
 
 %%
 % If for example the event stream and the segment streams have not been

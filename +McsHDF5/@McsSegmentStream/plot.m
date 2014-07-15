@@ -35,6 +35,9 @@ function plot(segStream,cfg,varargin)
     
     for segi = 1:length(cfg.segments)
         id = cfg.segments(segi);
+        if isempty(segStream.SegmentData{id})
+            continue
+        end
         subplot(2,length(cfg.segments),segi);
         
         if strcmp(segStream.DataType,'double')
@@ -58,26 +61,37 @@ function plot(segStream,cfg,varargin)
 
         data_to_plot = data_to_plot * fact;
         
-        [X,Y] = meshgrid(1:size(data_to_plot,2),1:size(data_to_plot,1));
-        if isempty([varargin{:}])
-            surfl(X,Y,data_to_plot);
+        if all(size(data_to_plot) > 2) 
+            [X,Y] = meshgrid(1:size(data_to_plot,2),1:size(data_to_plot,1));
+            if isempty([varargin{:}])
+                surfl(X,Y,data_to_plot);
+            else
+                surfl(X,Y,data_to_plot,varargin{:});
+            end
+            shading interp
+            xlabel('samples')
+            ylabel('events')
+            unit = segStream.SourceInfoChannel.Unit{channel_idx};
+            zlabel([unit_string unit],'Interpreter','tex')
+            title(['Segment label ' segStream.Info.Label{id}])
         else
-            surfl(X,Y,data_to_plot,varargin{:});
+            if isempty(varargin)
+                plot(data_to_plot');
+            else
+                plot(data_to_plot',varargin{:});
+            end
+            xlabel('samples')
+            unit = segStream.SourceInfoChannel.Unit{channel_idx};
+            ylabel([unit_string unit],'Interpreter','tex')
+            title(['Segment label ' segStream.Info.Label{id}])
         end
-        shading interp
-        xlabel('samples')
-        ylabel('events')
-        unit = segStream.SourceInfoChannel.Unit{channel_idx};
-        zlabel([unit_string unit],'Interpreter','tex')
-        title(['Segment label ' segStream.Info.Label{id}])
-        
         
         subplot(2,length(cfg.segments),segi+length(cfg.segments));
         
         pre = double(segStream.Info.PreInterval(id));
         post = double(segStream.Info.PostInterval(id));
         ts = -pre:double(segStream.SourceInfoChannel.Tick(channel_idx)):post;
-        if length(ts) ~= size(data_to_plot,1)
+        if length(ts) ~= size(data_to_plot,2)
             warning('Pre- and post-interval does not match the number of samples!')
             ts = (1:size(data_to_plot,2)).*double(segStream.SourceInfoChannel.Tick(channel_idx));
         end

@@ -65,16 +65,27 @@ classdef McsSegmentStream < McsHDF5.McsStream
         %               can be either 'int64' (default) or 'double'. Using
         %               'double' is useful for older Matlab version without
         %               int64 arithmetic.
+            if exist('h5info','builtin')
+                mode = 'h5';
+            else
+                mode = 'hdf5';
+            end
             
             str = str@McsHDF5.McsStream(filename,strStruct,'Segment');
             segments = str.Info.SegmentID;
             str.SegmentData = cell(1,length(segments));
             str.SegmentDataTimeStamps = cell(1,length(segments));
-            
             if isempty(varargin) || ~isfield(varargin{1},'timeStampDataType') || strcmpi(varargin{1}.timeStampDataType,'int64')
-                for segi = 1:length(segments)   
-                    str.SegmentDataTimeStamps{segi} = ...
-                        h5read(filename,[strStruct.Name '/SegmentData_ts_' num2str(segments(segi))]);
+                for segi = 1:length(segments)
+                    try
+                        if strcmp(mode,'h5')
+                            str.SegmentDataTimeStamps{segi} = ...
+                                h5read(filename,[strStruct.Name '/SegmentData_ts_' num2str(segments(segi))]);
+                        else
+                            str.SegmentDataTimeStamps{segi} = ...
+                                hdf5read(filename,[strStruct.Name '/SegmentData_ts_' num2str(segments(segi))]);
+                        end
+                    end
                 end
                 str.TimeStampDataType = 'int64';
             else
@@ -82,17 +93,30 @@ classdef McsSegmentStream < McsHDF5.McsStream
                 if ~strcmp(type,'double')
                     error('Only int64 and double are supported for timeStampDataType!');
                 end
-                for segi = 1:length(segments)   
-                    str.SegmentDataTimeStamps{segi} = ...
-                        cast(h5read(filename,[strStruct.Name '/SegmentData_ts_' num2str(segments(segi))]),type);
+                for segi = 1:length(segments)
+                    try
+                        if strcmp(mode,'h5')
+                            str.SegmentDataTimeStamps{segi} = ...
+                                cast(h5read(filename,[strStruct.Name '/SegmentData_ts_' num2str(segments(segi))]),type);
+                        else
+                            str.SegmentDataTimeStamps{segi} = ...
+                                cast(hdf5read(filename,[strStruct.Name '/SegmentData_ts_' num2str(segments(segi))]),type);
+                        end
+                    end
                 end
                 str.TimeStampDataType = type;
             end
-            
-            sourceInfo = h5read(filename,[strStruct.Name '/SourceInfoChannel']);
+
+            if strcmp(mode,'h5')
+                sourceInfo = h5read(filename, [strStruct.Name '/SourceInfoChannel']);
+            else
+                fid = H5F.open(filename,'H5F_ACC_RDONLY','H5P_DEFAULT');
+                did = H5D.open(fid, [strStruct.Name '/SourceInfoChannel']);
+                sourceInfo = H5D.read(did,'H5ML_DEFAULT','H5S_ALL','H5S_ALL','H5P_DEFAULT');
+            end
             fn = fieldnames(sourceInfo);
-            for fields = 1:length(fn)
-                str.SourceInfoChannel.(fn{fields}) = sourceInfo.(fn{fields});
+            for fni = 1:length(fn)
+                str.SourceInfoChannel.(fn{fni}) = sourceInfo.(fn{fni});
             end
             
             if isempty(varargin) || ~isfield(varargin{1},'dataType') || strcmpi(varargin{1}.dataType,'double')
@@ -113,15 +137,33 @@ classdef McsSegmentStream < McsHDF5.McsStream
         %
         % Reads the segment data from the file the first time that the
         % SegmentData field is accessed.
-        
+            if exist('h5info','builtin')
+                mode = 'h5';
+            else
+                mode = 'hdf5';
+            end
+            
             if ~str.DataLoaded
                 fprintf('Reading segment data...\n');
+                emptySegments = false(1,length(str.Info.SegmentID));
                 for segi = 1:length(str.Info.SegmentID)
-                    str.SegmentData{segi} = ...
-                        h5read(str.FileName,[str.StructName '/SegmentData_' num2str(str.Info.SegmentID(segi))]);  
+                    try
+                        if strcmp(mode,'h5')
+                            str.SegmentData{segi} = ...
+                                h5read(str.FileName,[str.StructName '/SegmentData_' num2str(str.Info.SegmentID(segi))]);  
+                        else
+                            str.SegmentData{segi} = ...
+                                hdf5read(str.FileName,[str.StructName '/SegmentData_' num2str(str.Info.SegmentID(segi))]);  
+                        end
+                    catch
+                        emptySegments(segi) = true;
+                    end
                 end 
                 str.DataLoaded = true;
                 for segi = 1:length(str.Info.SegmentID)
+                    if emptySegments(segi)
+                        continue
+                    end
                     if strcmp(str.DataType,'raw')
                         sourceChan = str2double(str.Info.SourceChannelIDs{segi});
                         if length(sourceChan) == 1
@@ -136,14 +178,14 @@ classdef McsSegmentStream < McsHDF5.McsStream
                         sourceChan = str2double(str.Info.SourceChannelIDs{segi});
                         if length(sourceChan) == 1
                             chanidx = str.SourceInfoChannel.ChannelID == sourceChan;
-                            [~,unit_prefix] = McsHDF5.ExponentToUnit(str.SourceInfoChannel.Exponent(chanidx),0);
+                            [ignore,unit_prefix] = McsHDF5.ExponentToUnit(str.SourceInfoChannel.Exponent(chanidx),0);
                             str.DataUnit{segi} = [unit_prefix str.SourceInfoChannel.Unit{chanidx}];
                             str.DataDimensions{segi} = 'samples x segments';
                         else
                             chanidx = arrayfun(@(x)(find(str.SourceInfoChannel.ChannelID == x)),sourceChan);
                             str.DataUnit{segi} = [];
                             for ch = chanidx
-                                [~,unit_prefix] = McsHDF5.ExponentToUnit(str.SourceInfoChannel.Exponent(ch),0);
+                                [ignore,unit_prefix] = McsHDF5.ExponentToUnit(str.SourceInfoChannel.Exponent(ch),0);
                                 str.DataUnit{segi} = [str.DataUnit{segi} {unit_prefix str.SourceInfoChannel.Unit{ch}}];
                             end
                             str.DataDimensions{segi} = 'samples x segments x multisegments';

@@ -56,12 +56,24 @@ classdef McsEventStream < McsHDF5.McsStream
         %
         % Loads the events from the file the first time that the Events
         % field is requested.
-        
+            if exist('h5info','builtin')
+                mode = 'h5';
+            else
+                mode = 'hdf5';
+            end
+            
             if ~str.DataLoaded
                 fprintf('Reading event data...\n')
                 for gidx = 1:length(str.Events)
-                    str.Events{gidx} = ...
-                        h5read(str.FileName,[str.StructName '/EventEntity_' num2str(str.Info.EventID(gidx))])';
+                    try
+                        if strcmp(mode,'h5')
+                            str.Events{gidx} = ...
+                                h5read(str.FileName,[str.StructName '/EventEntity_' num2str(str.Info.EventID(gidx))])';
+                        else
+                            str.Events{gidx} = ...
+                                hdf5read(str.FileName,[str.StructName '/EventEntity_' num2str(str.Info.EventID(gidx))])';
+                        end
+                    end
                     if ~strcmp(str.TimeStampDataType,'int64')
                         str.Events{gidx} = cast(str.Events{gidx},str.TimeStampDataType);
                     end
