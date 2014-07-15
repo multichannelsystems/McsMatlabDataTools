@@ -65,14 +65,27 @@ classdef McsFrameDataEntity < handle
         %               can be either 'int64' (default) or 'double'. Using
         %               'double' is useful for older Matlab version without
         %               int64 arithmetic.
-        
+            if exist('h5info','builtin')
+                mode = 'h5';
+            else
+                mode = 'hdf5';
+            end
+            
             fde.FileName = filename;
             fde.Info = info;
             fde.StructName = fdeStructName;
-            fde.ConversionFactors = h5read(fde.FileName, ...
+            
+            if strcmp(mode,'h5')
+                fde.ConversionFactors = h5read(fde.FileName, ...
                                       [fde.StructName '/ConversionFactors'])';
+                timestamps = h5read(fde.FileName, [fde.StructName '/FrameDataTimeStamps']);
+            else
+                fde.ConversionFactors = hdf5read(fde.FileName, ...
+                                      [fde.StructName '/ConversionFactors'])';
+                timestamps = hdf5read(fde.FileName, [fde.StructName '/FrameDataTimeStamps']);
+            end
             fde.ConversionFactors = double(fde.ConversionFactors);        
-            timestamps = h5read(fde.FileName, [fde.StructName '/FrameDataTimeStamps']);
+            
             if size(timestamps,1) ~= 3
                 timestamps = timestamps';
             end
@@ -117,11 +130,21 @@ classdef McsFrameDataEntity < handle
         %
         % Reads the data from the HDF5 file, but only for the first time
         % FrameData is accessed.
-        
+            if exist('h5info','builtin')
+                mode = 'h5';
+            else
+                mode = 'hdf5';
+            end
+            
             if ~fde.Internal && ~fde.DataLoaded
                 fprintf('Reading frame data...\n');
-                fde.FrameData = h5read(fde.FileName, ...
+                if strcmp(mode,'h5')
+                    fde.FrameData = h5read(fde.FileName, ...
                                       [fde.StructName '/FrameData']);
+                else
+                    fde.FrameData = hdf5read(fde.FileName, ...
+                                      [fde.StructName '/FrameData']);
+                end
                 fde.FrameData = permute(fde.FrameData,[3 2 1]);
                 fde.DataLoaded = true;
                 
