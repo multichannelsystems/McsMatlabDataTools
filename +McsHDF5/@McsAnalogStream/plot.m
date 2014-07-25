@@ -100,9 +100,9 @@ function plot(analogStream,cfg,varargin)
     end
     
     if cfg.spacing
-        mi = min(data_to_plot);
-        ma = max(data_to_plot);
-        offset = cumsum([0 ma(2:end)-mi(1:end-1)]);
+        mi = min(data_to_plot,[],2);
+        ma = max(data_to_plot,[],2);
+        offset = cumsum(vertcat(0, ma(2:end)-mi(1:end-1)));
         data_to_plot = bsxfun(@minus,data_to_plot,offset);
     end
     
