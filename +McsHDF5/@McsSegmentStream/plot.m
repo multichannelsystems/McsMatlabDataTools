@@ -73,7 +73,12 @@ function plot(segStream,cfg,varargin)
             ylabel('events')
             unit = segStream.SourceInfoChannel.Unit{channel_idx};
             zlabel([unit_string unit],'Interpreter','tex')
-            title(['Segment label ' segStream.Info.Label{id}])
+            label = segStream.Info.Label{id};
+            if isempty(label)
+                title(['Segment ID ' num2str(segStream.Info.SegmentID(id))]);
+            else
+                title(['Segment label ' label])
+            end
         else
             if isempty(varargin)
                 plot(data_to_plot');
@@ -83,14 +88,24 @@ function plot(segStream,cfg,varargin)
             xlabel('samples')
             unit = segStream.SourceInfoChannel.Unit{channel_idx};
             ylabel([unit_string unit],'Interpreter','tex')
-            title(['Segment label ' segStream.Info.Label{id}])
+            label = segStream.Info.Label{id};
+            if isempty(label)
+                title(['Segment ID ' num2str(segStream.Info.SegmentID(id))]);
+            else
+                title(['Segment label ' label])
+            end
         end
         
         subplot(2,length(cfg.segments),segi+length(cfg.segments));
         
         pre = double(segStream.Info.PreInterval(id));
         post = double(segStream.Info.PostInterval(id));
-        ts = -pre:double(segStream.SourceInfoChannel.Tick(channel_idx)):post;
+        if pre == 0 && post == 0
+            ts = 0;
+        else
+            tick = double(segStream.SourceInfoChannel.Tick(channel_idx));
+            ts = -pre : tick : (post - tick);
+        end
         if length(ts) ~= size(data_to_plot,2)
             warning('Pre- and post-interval does not match the number of samples!')
             ts = (1:size(data_to_plot,2)).*double(segStream.SourceInfoChannel.Tick(channel_idx));
