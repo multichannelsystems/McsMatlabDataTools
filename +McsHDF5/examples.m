@@ -2,13 +2,42 @@
 % This document gives a short explanation of the usage of the McsHDF5
 % Matlab tools.
 
-%% Importing the package
-% First, add the base path of the +McsHDF5 folder to your matlab path
-%
-%   addpath Path/To/+McsHDF5
+%% Adding the package base bath
+% First, add the base path of the +McsHDF5 folder to your matlab path. The
+% base path is the directory one level below the +McsHDF5 folder. 
 
-%%
-% Then import the package
+%% 
+% *Example 1:* If you saved the package for example to the directory
+% C:\Code\+McsHDF5, you should have the following directory structure:
+%
+% * |C:\Code\+McsHDF5\@McsAnalogStream|
+% * |C:\Code\+McsHDF5\@McsData|
+% * |C:\Code\+McsHDF5\@McsEventStream|
+% * |...|
+%
+% In this case, the base path is the directory C:\Code, so you should call
+% the following command:
+%
+%   addpath C:\Code
+
+%% 
+% *Example 2:* If you saved the package for example to the directory
+% /home/username/Code/+McsHDF5, you should have the following directory
+% structure: 
+%
+% * |/home/username/Code/+McsHDF5/@McsAnalogStream|
+% * |/home/username/Code/+McsHDF5/@McsData| 
+% * |/home/username/Code/+McsHDF5/@McsEventStream|
+% * |...| 
+%
+% In this case, the base path is the directory /home/username/Code/, 
+% so you should call the following command:
+%
+%   addpath /home/username/Code/
+
+
+%% Importing the package
+% After adding the path, import the package as follows:
 %
 %   import McsHDF5.*
 
@@ -37,21 +66,22 @@
 
 %%
 % * Each recording cell contains cell arrays of zero or more analog-,
-% frame-, segment- and event-streams. The only exception is the frame
-% stream which has additional sub-structures, the FrameDataEntities. If we
-% access one of these streams (or a FrameDataEntity for FrameStreams), its
-% data is loaded from the file:
+% frame-, segment-, timestamp- and event-streams. The only exception is the
+% frame stream which has additional sub-structures, the FrameDataEntities.
+% If we access one of these streams (or a FrameDataEntity for
+% FrameStreams), its data is loaded from the file:
 %
 %   data.Recording{1}.AnalogStream{1}
 
 %% Units
 % For each stream, the associated data is stored in the field ChannelData
-% (AnalogStream), SegmentData (SegmentStream) or FrameData
-% (FrameDataEntities of FrameStreams). Per default, these values have
-% already been converted during loading from ADC units to more useful units
-% such as Volts. The actual unit it is represented in can be found for each
-% stream in the fields Unit and Exponent (values 'V' and -9, respectively,
-% mean that the data is stored in $$ 10^{-9} $$ V) of its Info structure:
+% (AnalogStream), SegmentData (SegmentStream), FrameData (FrameDataEntities
+% of FrameStreams), Events (EventStream) of Timestamps (TimeStampStream).
+% Per default, these values have already been converted during loading from
+% ADC units to more useful units such as Volts. The actual unit it is
+% represented in can be found for each stream in the fields Unit and
+% Exponent (values 'V' and -9, respectively, mean that the data is stored
+% in $$ 10^{-9} $$ V) of its Info structure:
 %
 %   data.Recording{1}.AnalogStream{1}.Info.Unit{1}
 %   data.Recording{1}.AnalogStream{1}.Info.Exponent(1)
@@ -113,6 +143,7 @@
 %   plot(data.Recording{1}.AnalogStream{1},[])
 %   plot(data.Recording{1}.EventStream{1},[])
 %   plot(data.Recording{1}.SegmentStream{1},[])
+%   plot(data.Recording{1}.TimeStampStream{1},[])
 
 %%
 % If for example the event stream and the segment streams have not been
