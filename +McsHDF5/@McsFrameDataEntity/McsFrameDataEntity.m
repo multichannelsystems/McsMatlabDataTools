@@ -65,7 +65,7 @@ classdef McsFrameDataEntity < handle
         %               can be either 'int64' (default) or 'double'. Using
         %               'double' is useful for older Matlab version without
         %               int64 arithmetic.
-            if exist('h5info','builtin')
+            if exist('h5info')
                 mode = 'h5';
             else
                 mode = 'hdf5';
@@ -130,7 +130,7 @@ classdef McsFrameDataEntity < handle
         %
         % Reads the data from the HDF5 file, but only for the first time
         % FrameData is accessed.
-            if exist('h5info','builtin')
+            if exist('h5info')
                 mode = 'h5';
             else
                 mode = 'hdf5';

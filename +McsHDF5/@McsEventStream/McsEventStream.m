@@ -56,7 +56,7 @@ classdef McsEventStream < McsHDF5.McsStream
         %
         % Loads the events from the file the first time that the Events
         % field is requested.
-            if exist('h5info','builtin')
+            if exist('h5info')
                 mode = 'h5';
             else
                 mode = 'hdf5';

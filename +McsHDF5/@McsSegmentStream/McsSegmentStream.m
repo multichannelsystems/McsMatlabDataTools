@@ -65,7 +65,7 @@ classdef McsSegmentStream < McsHDF5.McsStream
         %               can be either 'int64' (default) or 'double'. Using
         %               'double' is useful for older Matlab version without
         %               int64 arithmetic.
-            if exist('h5info','builtin')
+            if exist('h5info')
                 mode = 'h5';
             else
                 mode = 'hdf5';
@@ -137,7 +137,7 @@ classdef McsSegmentStream < McsHDF5.McsStream
         %
         % Reads the segment data from the file the first time that the
         % SegmentData field is accessed.
-            if exist('h5info','builtin')
+            if exist('h5info')
                 mode = 'h5';
             else
                 mode = 'hdf5';

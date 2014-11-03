@@ -48,7 +48,7 @@ classdef McsAnalogStream < McsHDF5.McsStream
         %               can be either 'int64' (default) or 'double'. Using
         %               'double' is useful for older Matlab version without
         %               int64 arithmetic.
-            if exist('h5info','builtin')
+            if exist('h5info')
                 mode = 'h5';
             else
                 mode = 'hdf5';
@@ -106,7 +106,7 @@ classdef McsAnalogStream < McsHDF5.McsStream
         %
         % Will read the channel data from file the first time this field is
         % accessed.
-            if exist('h5info','builtin')
+            if exist('h5info')
                 mode = 'h5';
             else
                 mode = 'hdf5';

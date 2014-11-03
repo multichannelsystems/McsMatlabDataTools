@@ -56,7 +56,7 @@ classdef McsTimeStampStream < McsHDF5.McsStream
         %
         % Loads the time stamps from the file the first time that the TimeStamps
         % field is requested.
-            if exist('h5info','builtin')
+            if exist('h5info')
                 mode = 'h5';
             else
                 mode = 'hdf5';

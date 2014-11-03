@@ -58,7 +58,7 @@ classdef McsData
         %
         % Output:
         %   md          -   A McsData object
-            if exist('h5info','builtin')
+            if exist('h5info')
                 mode = 'h5';
             else
                 mode = 'hdf5';
