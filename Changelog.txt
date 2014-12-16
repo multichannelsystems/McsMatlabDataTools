@@ -1,0 +1,21 @@
+McsMatlabDataTools
+==================
+
+Version 0.2.0 (2014-12-16)
+--------------------------
+
+- New: Loading of segments of analog streams
+- New: Custom disp function for all streams. With this, just displaying the stream 
+       information (e.g. data.Recoring{1}.Analogstream{1}) will not trigger reading
+	   the data from the file.
+
+Version 0.1.1 (2014-11-03)
+--------------------------
+
+- Bug fix for detecting, whether the hdf5read or the h5read function should be used.
+- Updated the documentation
+
+Version 0.1.0 (2014-07-24)
+--------------------------
+
+- first release

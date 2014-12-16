@@ -66,10 +66,8 @@
 
 %%
 % * Each recording cell contains cell arrays of zero or more analog-,
-% frame-, segment-, timestamp- and event-streams. The only exception is the
+% frame-, segment-, timestamp- and event streams. The only exception is the
 % frame stream which has additional sub-structures, the FrameDataEntities.
-% If we access one of these streams (or a FrameDataEntity for
-% FrameStreams), its data is loaded from the file:
 %
 %   data.Recording{1}.AnalogStream{1}
 
@@ -77,6 +75,7 @@
 % For each stream, the associated data is stored in the field ChannelData
 % (AnalogStream), SegmentData (SegmentStream), FrameData (FrameDataEntities
 % of FrameStreams), Events (EventStream) of Timestamps (TimeStampStream).
+% Accessing one of these will load the data from the file.
 % Per default, these values have already been converted during loading from
 % ADC units to more useful units such as Volts. The actual unit it is
 % represented in can be found for each stream in the fields Unit and
@@ -89,14 +88,14 @@
 %%
 % The time stamp associated with each sample is stored in the field
 % {Channel,Frame,Segment}DataTimeStamps in microseconds. Similarly, the
-% time stamps of events in the EventStream are stored in microseconds as
-% well.
+% time stamps of events in the EventStream or time stamps in the
+% TimeStampStream are stored in microseconds as well.
 
 %% Data types
 % For some applications, it might be necessary to change the data type of
 % the data and the time stamps, for example because of memory constraints.
 % The default data type for the {Channel,Frame,Segment}Data is 'double'. By
-% specifying the data type during the loading of the file, you can half the
+% specifying the data type during the loading of the file, you can halve the
 % memory requirements by using 'single' instead. 
 %
 %   cfg = [];
@@ -135,6 +134,33 @@
 %   cfg = [];
 %   cfg.dataType = 'double';
 %   converted_data = data.Recording{1}.AnalogStream{1}.getConvertedData(cfg);
+
+%% Loading segments of analog streams
+% For some applications, it can be beneficial to load only segments of an
+% AnalogStream or FrameStream instead of the full data. For example, due to
+% the file size and the amount of available memory, loading a full
+% AnalogStream or FrameStream into Matlab might not be possible. Or,
+% one might only be interested in a portion of the data.
+
+%%
+% For analog streams, this can be achieved by first loading the metadata:
+%
+%   data = McsHDF5.McsData('SOME_DATA_FILE.h5');
+
+%%
+% and then loading only a subset of channels and/or a specified time
+% window. This results in a new McsAnalogStream object, which can, for
+% example, still be accessed as usual by the plot function:
+%
+%   cfg = [];
+%   cfg.channel = [5 15]; % channel index 5 to 15
+%   cfg.window = [42 1093]; % time range 42 s to 1093 s
+%   partialData = data.Recording{1}.AnalogStream{1}.readPartialChannelData(cfg);
+%   plot(partialData,[]); % plot the analog stream segment
+
+%%
+% The procedure for partial loading of frame streams is described at the
+% end of this document in section "Frame Streams".
 
 %% Plotting the data
 % Each stream has simple plot functions to allow a quick check whether the
