@@ -144,7 +144,7 @@ classdef McsSegmentStream < McsHDF5.McsStream
             end
             
             if ~str.DataLoaded
-                fprintf('Reading segment data...\n');
+                fprintf('Reading segment data...');
                 emptySegments = false(1,length(str.Info.SegmentID));
                 for segi = 1:length(str.Info.SegmentID)
                     try
@@ -159,9 +159,12 @@ classdef McsSegmentStream < McsHDF5.McsStream
                         emptySegments(segi) = true;
                     end
                 end 
+                fprintf('done!\n');
                 str.DataLoaded = true;
                 for segi = 1:length(str.Info.SegmentID)
                     if emptySegments(segi)
+                        str.DataUnit{segi} = [];
+                        str.DataDimensions{segi} = [];
                         continue
                     end
                     if strcmp(str.DataType,'raw')
@@ -195,6 +198,57 @@ classdef McsSegmentStream < McsHDF5.McsStream
                 end
             end
             data = str.SegmentData;
+        end
+        
+        function s = disp(str)
+            s = 'McsSegmentStream object\n\n';
+            s = [s 'Properties:\n'];
+            s = [s '\tStream Label:\t\t\t ' strtrim(str.Label) '\n'];
+            s = [s '\tNumber of Segments:\t\t ' num2str(length(str.Info.SegmentID)) '\n'];
+            s = [s '\tData Loaded:\t\t\t '];
+            if str.DataLoaded
+                s = [s 'true\n'];
+            else
+                s = [s 'false\n'];
+            end
+            s = [s '\n'];
+            
+            s = [s 'Available Fields:\n'];
+            s = [s '\tSegmentData:\t\t\t [1x' num2str(length(str.Info.SegmentID))];
+            if str.DataLoaded
+                s = [s ' ' class(str.SegmentData) '}'];
+            else
+                s = [s ', not loaded}'];
+            end
+            s = [s '\n'];
+            s = [s '\tSegmentDataTimeStamps:\t {' num2str(size(str.SegmentDataTimeStamps,1))...
+                'x' num2str(size(str.SegmentDataTimeStamps,2)) ' cell}'];
+            s = [s '\n'];
+            s = [s '\tSourceInfoChannel:\t\t [1x1 struct]'];
+            s = [s '\n'];
+            s = [s '\tDataDimensions:\t\t\t {' num2str(size(str.DataDimensions,1)) 'x' num2str(size(str.DataDimensions,2)) ' cell}'];
+            s = [s '\n'];
+            s = [s '\tDataUnit:\t\t\t\t {' num2str(size(str.DataUnit,1)) 'x' num2str(size(str.DataUnit,2)) ' cell}'];
+            s = [s '\n'];
+            s = [s '\tDataType:\t\t\t\t ' str.DataType];
+            s = [s '\n'];
+            s = [s '\tTimeStampDataType:\t\t ' str.TimeStampDataType];
+            s = [s '\n'];
+            s = [s '\tStreamInfoVersion:\t\t ' num2str(str.StreamInfoVersion)];
+            s = [s '\n'];
+            s = [s '\tStreamGUID:\t\t\t\t ' str.StreamGUID];
+            s = [s '\n'];
+            s = [s '\tStreamType:\t\t\t\t ' str.StreamType];
+            s = [s '\n'];
+            s = [s '\tSourceStreamGUID:\t\t ' str.SourceStreamGUID];
+            s = [s '\n'];
+            s = [s '\tLabel:\t\t\t\t\t ' str.Label];
+            s = [s '\n'];
+            s = [s '\tDataSubType:\t\t\t ' str.DataSubType];
+            s = [s '\n'];
+            s = [s '\tInfo:\t\t\t\t\t [1x1 struct]'];
+            s = [s '\n\n'];
+            fprintf(s);
         end
         
         function data = getConvertedData(seg,idx,cfg)

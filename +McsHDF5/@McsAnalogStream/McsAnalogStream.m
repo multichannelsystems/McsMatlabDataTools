@@ -140,6 +140,57 @@ classdef McsAnalogStream < McsHDF5.McsStream
             data = str.ChannelData;
         end
         
+        function s = disp(str)
+            s = 'McsAnalogStream object\n\n';
+            s = [s 'Properties:\n'];
+            s = [s '\tStream Label:\t\t\t ' strtrim(str.Label) '\n'];
+            s = [s '\tNumber of Channels:\t\t ' num2str(length(str.Info.ChannelID)) '\n'];
+            s = [s '\tTime Range:\t\t\t\t ' num2str(McsHDF5.TickToSec(str.ChannelDataTimeStamps(1))) ...
+                ' - ' num2str(McsHDF5.TickToSec(str.ChannelDataTimeStamps(end))) ' s\n'];
+            s = [s '\tData Loaded:\t\t\t '];
+            if str.DataLoaded
+                s = [s 'true\n'];
+            else
+                s = [s 'false\n'];
+            end
+            s = [s '\n'];
+            
+            s = [s 'Available Fields:\n'];
+            s = [s '\tChannelData:\t\t\t [' num2str(length(str.Info.ChannelID)) 'x' num2str(length(str.ChannelDataTimeStamps))];
+            if str.DataLoaded
+                s = [s ' ' class(str.ChannelData) ']'];
+            else
+                s = [s ', not loaded]'];
+            end
+            s = [s '\n'];
+            s = [s '\tChannelDataTimeStamps:\t [' num2str(size(str.ChannelDataTimeStamps,1))...
+                'x' num2str(size(str.ChannelDataTimeStamps,2)) ' ' class(str.ChannelDataTimeStamps) ']'];
+            s = [s '\n'];
+            s = [s '\tDataDimensions:\t\t\t ' str.DataDimensions];
+            s = [s '\n'];
+            s = [s '\tDataUnit:\t\t\t\t {' num2str(size(str.DataUnit,1)) 'x' num2str(size(str.DataUnit,2)) ' cell}'];
+            s = [s '\n'];
+            s = [s '\tDataType:\t\t\t\t ' str.DataType];
+            s = [s '\n'];
+            s = [s '\tTimeStampDataType:\t\t ' str.TimeStampDataType];
+            s = [s '\n'];
+            s = [s '\tStreamInfoVersion:\t\t ' num2str(str.StreamInfoVersion)];
+            s = [s '\n'];
+            s = [s '\tStreamGUID:\t\t\t\t ' str.StreamGUID];
+            s = [s '\n'];
+            s = [s '\tStreamType:\t\t\t\t ' str.StreamType];
+            s = [s '\n'];
+            s = [s '\tSourceStreamGUID:\t\t ' str.SourceStreamGUID];
+            s = [s '\n'];
+            s = [s '\tLabel:\t\t\t\t\t ' str.Label];
+            s = [s '\n'];
+            s = [s '\tDataSubType:\t\t\t ' str.DataSubType];
+            s = [s '\n'];
+            s = [s '\tInfo:\t\t\t\t\t [1x1 struct]'];
+            s = [s '\n\n'];
+            fprintf(s);
+        end
+        
         function data = getConvertedData(str,cfg)
         % Returns the converted data
         %

@@ -17,6 +17,7 @@ classdef McsStream < handle
         FileName
         StructName
         DataLoaded = false;
+        Internal = false;
     end
     
     methods
@@ -45,17 +46,19 @@ classdef McsStream < handle
             for fni = 1:length(fn)
                 str.Info(1).(fn{fni}) = inf.(fn{fni});
             end
-
-            dataAttributes = strStruct.Attributes;
-            for fni = 1:length(dataAttributes)
-                if strcmp(mode,'h5')
-                    str.(dataAttributes(fni).Name) = dataAttributes(fni).Value;
-                else
-                    name = regexp(dataAttributes(fni).Name,'/\w+$','match');
-                    if isa(dataAttributes(fni).Value,'hdf5.h5string')
-                        str.(name{length(name)}(2:end)) = dataAttributes(fni).Value.Data;
+            
+            if isfield(strStruct,'Attributes')
+                dataAttributes = strStruct.Attributes;
+                for fni = 1:length(dataAttributes)
+                    if strcmp(mode,'h5')
+                        str.(dataAttributes(fni).Name) = dataAttributes(fni).Value;
                     else
-                        str.(name{length(name)}(2:end)) = dataAttributes(fni).Value;
+                        name = regexp(dataAttributes(fni).Name,'/\w+$','match');
+                        if isa(dataAttributes(fni).Value,'hdf5.h5string')
+                            str.(name{length(name)}(2:end)) = dataAttributes(fni).Value.Data;
+                        else
+                            str.(name{length(name)}(2:end)) = dataAttributes(fni).Value;
+                        end
                     end
                 end
             end

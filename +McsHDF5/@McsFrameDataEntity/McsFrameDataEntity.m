@@ -137,7 +137,7 @@ classdef McsFrameDataEntity < handle
             end
             
             if ~fde.Internal && ~fde.DataLoaded
-                fprintf('Reading frame data...\n');
+                fprintf('Reading frame data...');
                 if strcmp(mode,'h5')
                     fde.FrameData = h5read(fde.FileName, ...
                                       [fde.StructName '/FrameData']);
@@ -146,6 +146,7 @@ classdef McsFrameDataEntity < handle
                                       [fde.StructName '/FrameData']);
                 end
                 fde.FrameData = permute(fde.FrameData,[3 2 1]);
+                fprintf('done!\n');
                 fde.DataLoaded = true;
                 
                 if ~strcmp(fde.DataType,'raw')
@@ -160,6 +161,49 @@ classdef McsFrameDataEntity < handle
             data = fde.FrameData;
         end
         
+        function s = disp(str)
+            s = 'McsFrameDataEntity object\n\n';
+            s = [s 'Properties:\n'];
+            s = [s '\tNumber of Channels:\t\t ' num2str(str.Info.FrameBottom - str.Info.FrameTop + 1) ...
+                'x' num2str(str.Info.FrameRight - str.Info.FrameLeft + 1) '\n'];
+            s = [s '\tTime Range:\t\t\t\t ' num2str(McsHDF5.TickToSec(str.FrameDataTimeStamps(1))) ...
+                ' - ' num2str(McsHDF5.TickToSec(str.FrameDataTimeStamps(end))) ' s\n'];
+            s = [s '\tData Loaded:\t\t\t '];
+            if str.DataLoaded
+                s = [s 'true\n'];
+            else
+                s = [s 'false\n'];
+            end
+            s = [s '\n'];
+            
+            s = [s 'Available Fields:\n'];
+            s = [s '\tFrameData:\t\t\t\t [' num2str(str.Info.FrameBottom - str.Info.FrameTop + 1) ...
+                'x' num2str(str.Info.FrameRight - str.Info.FrameLeft + 1) ...
+                'x' num2str(length(str.FrameDataTimeStamps))];
+            if str.DataLoaded
+                s = [s ' ' class(str.FrameData) ']'];
+            else
+                s = [s ', not loaded]'];
+            end
+            s = [s '\n'];
+            s = [s '\tFrameDataTimeStamps:\t [' num2str(size(str.FrameDataTimeStamps,1))...
+                'x' num2str(size(str.FrameDataTimeStamps,2)) ' ' class(str.FrameDataTimeStamps) ']'];
+            s = [s '\n'];
+            s = [s '\tDataDimensions:\t\t\t ' str.DataDimensions];
+            s = [s '\n'];
+            s = [s '\tDataUnit:\t\t\t\t ' str.DataUnit];
+            s = [s '\n'];
+            s = [s '\tDataType:\t\t\t\t ' str.DataType];
+            s = [s '\n'];
+            s = [s '\tTimeStampDataType:\t\t ' str.TimeStampDataType];
+            s = [s '\n'];
+            s = [s '\tConversionFactors:\t\t [' num2str(size(str.ConversionFactors,1)) ...
+                'x' num2str(size(str.ConversionFactors,2)) ' ' class(str.ConversionFactors) ']'];
+            s = [s '\n'];
+            s = [s '\tInfo:\t\t\t\t\t [' numel(size(str.Info)) 'x' ']'];
+            s = [s '\n\n'];
+            fprintf(s);
+        end
         
         function data = getConvertedData(fde,cfg)
         %
@@ -210,7 +254,6 @@ classdef McsFrameDataEntity < handle
         end
 
         function out_fde = readPartialFrame(fde,cfg)
-
         % Read a hyperslab from the fde.
         %
         % function out_fde = readPartialFrame(fde,cfg)
@@ -304,9 +347,11 @@ classdef McsFrameDataEntity < handle
             H5S.select_hyperslab(file_space_id,'H5S_SELECT_SET',offset,[],[],dims);
             
             out_fde.Internal = true;
-
+            
+            fprintf('Reading partial frame data...');
             out_fde.FrameData = H5D.read(did,'H5ML_DEFAULT',mem_space_id,file_space_id,'H5P_DEFAULT');
             out_fde.FrameData = permute(out_fde.FrameData,[3 2 1]);
+            fprintf('done!\n');
             out_fde.Info.FrameRight = out_fde.Info.FrameLeft + cfg.channel_x(end) - 1;
             out_fde.Info.FrameBottom = out_fde.Info.FrameTop + cfg.channel_y(end) - 1;
             out_fde.Info.FrameLeft = out_fde.Info.FrameLeft + cfg.channel_x(1) - 1;

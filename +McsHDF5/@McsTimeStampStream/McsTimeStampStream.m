@@ -63,7 +63,7 @@ classdef McsTimeStampStream < McsHDF5.McsStream
             end
             
             if ~str.DataLoaded
-                fprintf('Reading time stamp data...\n')
+                fprintf('Reading time stamp data...')
                 for gidx = 1:length(str.TimeStamps)
                     try
                         if strcmp(mode,'h5')
@@ -78,9 +78,50 @@ classdef McsTimeStampStream < McsHDF5.McsStream
                         str.TimeStamps{gidx} = cast(str.TimeStamps{gidx},str.TimeStampDataType);
                     end
                 end
+                fprintf('done!\n');
                 str.DataLoaded = true;
             end
             data = str.TimeStamps;
+        end
+        
+        function s = disp(str)
+            s = 'McsTimeStampStream object\n\n';
+            s = [s 'Properties:\n'];
+            s = [s '\tStream Label:\t\t\t ' strtrim(str.Label) '\n'];
+            s = [s '\tNumber of Entities:\t\t ' num2str(length(str.Info.TimeStampEntityID)) '\n'];
+            s = [s '\tData Loaded:\t\t\t '];
+            if str.DataLoaded
+                s = [s 'true\n'];
+            else
+                s = [s 'false\n'];
+            end
+            s = [s '\n'];
+            
+            s = [s 'Available Fields:\n'];
+            s = [s '\tTimeStamps:\t\t\t\t {1x' num2str(length(str.Info.TimeStampEntityID))];
+            if str.DataLoaded
+                s = [s ' ' class(str.TimeStamps) '}'];
+            else
+                s = [s ', not loaded}'];
+            end
+            s = [s '\n'];
+            s = [s '\tTimeStampDataType:\t\t ' str.TimeStampDataType];
+            s = [s '\n'];
+            s = [s '\tStreamInfoVersion:\t\t ' num2str(str.StreamInfoVersion)];
+            s = [s '\n'];
+            s = [s '\tStreamGUID:\t\t\t\t ' str.StreamGUID];
+            s = [s '\n'];
+            s = [s '\tStreamType:\t\t\t\t ' str.StreamType];
+            s = [s '\n'];
+            s = [s '\tSourceStreamGUID:\t\t ' str.SourceStreamGUID];
+            s = [s '\n'];
+            s = [s '\tLabel:\t\t\t\t\t ' str.Label];
+            s = [s '\n'];
+            s = [s '\tDataSubType:\t\t\t ' str.DataSubType];
+            s = [s '\n'];
+            s = [s '\tInfo:\t\t\t\t\t [1x1 struct]'];
+            s = [s '\n\n'];
+            fprintf(s);
         end
     end
 end
