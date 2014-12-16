@@ -112,13 +112,14 @@ classdef McsAnalogStream < McsHDF5.McsStream
                 mode = 'hdf5';
             end
             
-            if ~str.DataLoaded
-                fprintf('Reading analog data...\n')
+            if ~str.Internal && ~str.DataLoaded
+                fprintf('Reading analog data...')
                 if strcmp(mode,'h5')
                     str.ChannelData = h5read(str.FileName, [str.StructName '/ChannelData'])';
                 else
                     str.ChannelData = hdf5read(str.FileName, [str.StructName '/ChannelData'])';
                 end
+                fprintf('done!\n');
                 str.DataLoaded = true;
                 if ~strcmp(str.DataType,'raw')
                     for ch = 1:length(str.Info.Unit)
@@ -184,6 +185,121 @@ classdef McsAnalogStream < McsHDF5.McsStream
                 data = bsxfun(@minus,data,adzero);
                 data = bsxfun(@times,data,conv_factor);
             end
+        end
+       
+        function out_str = readPartialChannelData(str,cfg)
+        % Read a hyperslab from the stream.
+        %
+        % function out_str = readPartialChannelData(str,cfg)
+        %
+        % Reads a segment of the channel data from the HDF5 file and
+        % returns the McsAnalogStream object containing only the specific
+        % segment. Useful, if the data has not yet been read from the file
+        % and the user is only interested in a specific segment.
+        %
+        % Input:
+        %   str       -   A McsAnalogStream object
+        %
+        %   cfg       -   Either empty (for default parameters) or a
+        %                 structure with (some of) the following fields:
+        %                 'window': If empty, the whole time interval, otherwise
+        %                   [start end] in seconds
+        %                 'channel': channel range, given as [first last]
+        %                 channel index. If empty, all channels are used.
+        %
+        % Output:
+        %   out_str     -   The McsAnalogStream with the requested data
+        %                   segment
+        
+            ts = str.ChannelDataTimeStamps;
+            defaultChannel = 1:length(str.Info.ChannelID);
+            defaultWindow = 1:length(ts);
+            
+            if isempty(cfg)
+                cfg.channel = [];
+                cfg.window = [];
+            end
+            
+            if ~isfield(cfg,'channel') || isempty(cfg.channel)
+                cfg.channel = defaultChannel;
+            else
+                cfg.channel = cfg.channel(1):cfg.channel(2);
+            end
+            
+            if ~isfield(cfg,'window') || isempty(cfg.window)
+                cfg.window = defaultWindow;
+            else
+                t = find(ts >= McsHDF5.SecToTick(cfg.window(1)) & ts <= McsHDF5.SecToTick(cfg.window(2)));
+                if McsHDF5.TickToSec(ts(t(1)) - str.Info.Tick(1)) > cfg.window(1) || ...
+                        McsHDF5.TickToSec(ts(t(end)) + str.Info.Tick(1)) < cfg.window(2)
+                    warning(['Using only time range between ' num2str(McsHDF5.TickToSec(ts(t(1)))) ...
+                        ' and ' num2str(McsHDF5.TickToSec(ts(t(end)))) ' s!']);
+                elseif isempty(t)
+                    error('No time range found!');
+                end
+                cfg.window = t;
+            end
+            
+            if any(cfg.channel < 1 | cfg.channel > length(defaultChannel))
+                cfg.channel = cfg.channel(cfg.channel >= 1 & cfg.channel <= length(defaultChannel));
+                if isempty(cfg.channel)
+                    error('No channels found for channel!');
+                else
+                    warning(['Using only indices between ' num2str(cfg.channel(1)) ' and ' num2str(cfg.channel(end)) ' for channel_x!']);
+                end
+            end
+            
+            % read metadata
+            tmpStruct.Name = str.StructName;
+            out_str = McsHDF5.McsAnalogStream(str.FileName, tmpStruct);
+            
+            % read data segment
+            fid = H5F.open(str.FileName);
+            gid = H5G.open(fid,str.StructName);
+            did = H5D.open(gid,'ChannelData');
+            dims = [length(cfg.channel) length(cfg.window)];
+            offset = [cfg.channel(1)-1 cfg.window(1)-1];
+            mem_space_id = H5S.create_simple(2,dims,[]);
+            file_space_id = H5D.get_space(did);
+            H5S.select_hyperslab(file_space_id,'H5S_SELECT_SET',offset,[],[],dims);
+            
+            out_str.Internal = true;
+            fprintf('Reading partial analog data...');
+            out_str.ChannelData = H5D.read(did,'H5ML_DEFAULT',mem_space_id,file_space_id,'H5P_DEFAULT')';
+            fprintf('done!\n');
+            fns = fieldnames(out_str.Info);
+            for fni = 1:length(fns)
+                info = str.Info.(fns{fni});
+                out_str.Info.(fns{fni}) = info(cfg.channel);
+            end
+            
+            out_str.ChannelDataTimeStamps = ts(cfg.window);
+            out_str.DataLoaded = true;
+            type = str.DataType;
+            out_str.DataType = type;
+            out_str.TimeStampDataType = str.TimeStampDataType;
+            if ~strcmp(type,'raw')
+                convert_from_raw(out_str);
+            end
+            out_str.StreamInfoVersion = str.StreamInfoVersion;
+            out_str.StreamGUID = str.StreamGUID;
+            out_str.StreamType = str.StreamType;
+            out_str.SourceStreamGUID = str.SourceStreamGUID;
+            out_str.Label = str.Label;
+            out_str.DataSubType = str.DataSubType;
+            out_str.Internal = false;
+            if ~isempty(str.DataUnit)
+                out_str.DataUnit = repmat({str.DataUnit},length(cfg.channel),1);
+            elseif strcmp(type,'raw')
+                out_str.DataUnit = repmat({'ADC'},length(cfg.channel),1);
+            else
+                [ignore,unit_prefix] = McsHDF5.ExponentToUnit(out_str.Info.Exponent(1),0);
+                out_str.DataUnit = repmat({[unit_prefix out_str.Info.Unit{1}]},length(cfg.channel),1);
+            end
+            
+            H5D.close(did);
+            H5G.close(gid);
+            H5F.close(fid);
         end
         
     end
