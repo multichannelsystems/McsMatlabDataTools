@@ -1,10 +1,10 @@
 classdef McsEventStream < McsHDF5.McsStream
 % Holds the contents of an EventStream
 %
-% Fields:
-%   Events      -   (1xn) cell array, each cell holding either a (events x
-%                   1) vector of time stamps for each event or a (events x
-%                   2) matrix, where the first column are time stamps and
+% Important fields:
+%   Events      -   (1xn) cell array, each cell holding either a (1 x events)
+%                   vector of time stamps for each event or a (2 x events)
+%                   matrix, where the first column are time stamps and
 %                   the second column are durations. Both are given in
 %                   microseconds.
 %
@@ -12,8 +12,12 @@ classdef McsEventStream < McsHDF5.McsStream
 %   about the event stream.
     
     properties (SetAccess = private)
-        Events = {};
-        TimeStampDataType
+        % Events - (cell array) Each cell holds either a (1 x events)
+        % vector of time stamps for each event entity or a (2 x events)
+        % matrix, where the first columns are event time stamps and the second
+        % column are event durations. Both are given in microseconds.
+        Events = {}; 
+        TimeStampDataType % (string) The type of the time stamps, 'double' or 'int64'
     end
     
     methods

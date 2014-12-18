@@ -11,7 +11,7 @@ function plot(analogStream,cfg,varargin)
 %
 %   cfg             -   Either empty (for default parameters) or a
 %                       structure with (some of) the following fields:
-%                       'channels': empty for all channels, otherwise a
+%                       'channel': empty for all channels, otherwise a
 %                           vector of channel indices (default: all)
 %                       'window': empty for the whole time range, otherwise
 %                           a vector with two entries: [start end] of the 
@@ -28,7 +28,13 @@ function plot(analogStream,cfg,varargin)
 %                           valid for the first channel
 %                       If fields are missing, their default values are used.
 %
-%   optional inputs in varargin are passed to the plot function.
+%   Optional inputs in varargin are passed to the plot function.
+%
+% Usage:
+%   plot(analogStream, cfg);
+%   plot(analogStream, cfg, ...);
+%   analogStream.plot(cfg);
+%   analogStream.plot(cfg, ...);
     
     clf
     
@@ -60,9 +66,9 @@ function plot(analogStream,cfg,varargin)
         conv_cfg = [];
         conv_cfg.dataType = 'double';
         data_to_plot = analogStream.getConvertedData(conv_cfg);
-        data_to_plot = data_to_plot(cfg.channels,start_index:end_index);
+        data_to_plot = data_to_plot(cfg.channel,start_index:end_index);
     else
-        data_to_plot = analogStream.ChannelData(cfg.channels,start_index:end_index);
+        data_to_plot = analogStream.ChannelData(cfg.channel,start_index:end_index);
     end
     
     orig_exp = log10(max(abs(data_to_plot(:))));
@@ -96,7 +102,7 @@ function plot(analogStream,cfg,varargin)
     end
     
     hold off
-    chan_names = analogStream.Info.Label(cfg.channels);
+    chan_names = analogStream.Info.Label(cfg.channel);
     if cfg.legend
         legend(chan_names);
     end

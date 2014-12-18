@@ -1,7 +1,7 @@
 classdef McsFrameDataEntity < handle
 % Holds the contents of a single FrameDataEntity
 %
-% Fields:
+% Important fields:
 %   FrameData       -   (channels_x x channels_y x samples) array of data
 %                       values.
 %
@@ -21,14 +21,26 @@ classdef McsFrameDataEntity < handle
 %   while the other fields describe data types, units and dimensions.
 
     properties (SetAccess = private)
-        FrameData = [];
-        FrameDataTimeStamps = int64([]);
-        Info
-        DataDimensions = 'channels_x x channels_y x samples';
-        DataUnit
-        DataType
-        TimeStampDataType
-        ConversionFactors = [];
+        FrameData = []; % (channels_x x channels_y x samples) Data array
+        FrameDataTimeStamps = int64([]); % (1 x samples) Vector of time stamps in microseconds
+        Info % (struct) Information about the frame entity
+        DataDimensions = 'channels_x x channels_y x samples'; % (string) The data dimensions
+        
+        % DataUnit - (1 x channels) Cell array with the unit of each sample (e.g. 'nV'). 
+        % 'ADC', if the data is not yet converted to voltages.
+        DataUnit 
+        DataType % (string) The data type, e.g. 'double', 'single' or 'raw'
+        TimeStampDataType % (string) The type of the time stamps, 'double' or 'int64'
+        
+        % ConversionFactors - (channels_x x channels_y) Matrix of conversion factors
+        % If the DataType is 'raw', conversion from ADC steps to voltages
+        % can be perfomed by
+        %
+        %   (FrameData(i,j,t) - Info.ADZero) * ConversionFactors(i,j)
+        %
+        % Note: This is unnecessary if the DataType is not 'raw' as the
+        % FrameData has been converted already in this case.
+        ConversionFactors = []; 
     end
     
     properties (Access = private)
@@ -200,7 +212,7 @@ classdef McsFrameDataEntity < handle
             s = [s '\tConversionFactors:\t\t [' num2str(size(str.ConversionFactors,1)) ...
                 'x' num2str(size(str.ConversionFactors,2)) ' ' class(str.ConversionFactors) ']'];
             s = [s '\n'];
-            s = [s '\tInfo:\t\t\t\t\t [' numel(size(str.Info)) 'x' ']'];
+            s = [s '\tInfo:\t\t\t\t\t [' num2str(size(str.Info,1)) 'x' num2str(size(str.Info,2)) ' struct]'];
             s = [s '\n\n'];
             fprintf(s);
         end

@@ -27,6 +27,13 @@ function frameMovie(fde,cfg,varargin)
 %
 % Further optional inputs in varargin are interpreted as parameters for
 % gca. -> set(gca,varargin{:}).
+%
+% Usage:
+%
+%   frameMovie(fde, cfg);
+%   frameMovie(fde, cfg, ...);
+%   fde.frameMovie(cfg);
+%   fde.frameMovie(cfg, ...);
 
     cfg = McsHDF5.checkParameter(cfg, 'start', McsHDF5.TickToSec(fde.FrameDataTimeStamps(1)));
     cfg = McsHDF5.checkParameter(cfg, 'end', McsHDF5.TickToSec(fde.FrameDataTimeStamps(end)));

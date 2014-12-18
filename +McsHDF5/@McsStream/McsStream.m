@@ -3,14 +3,19 @@ classdef McsStream < handle
 %
 % Reads and stores the Info struct and the other data attributes.
     
-    properties 
-        StreamInfoVersion
-        StreamGUID
-        StreamType
-        SourceStreamGUID
-        Label
-        DataSubType
-        Info
+    properties (SetAccess = protected)
+        StreamInfoVersion   % (scalar) Version of the stream protocol
+        StreamGUID          % (string) The stream GUID
+        StreamType          % (string) The stream type (Analog, Event,...)
+        SourceStreamGUID    % (string) The GUID of the source stream
+        Label               % (string) The stream label
+        DataSubType         % (string) The type of data (Electrode, Auxiliary,...)
+        
+        % Info - (struct) Information about the stream
+        % The fields depend on the stream type and hold information about
+        % each channel/entity in the stream, such as their IDs, labels,
+        % etc.
+        Info                
     end
     
     properties (Access = protected)

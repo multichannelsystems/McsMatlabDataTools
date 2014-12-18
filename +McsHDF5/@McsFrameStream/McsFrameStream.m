@@ -4,8 +4,8 @@ classdef McsFrameStream < McsHDF5.McsStream
 % Contains one or more FrameDataEntities in a cell array. The other fields
 % and the Info field provide general information about the frame stream.
     
-    properties 
-        FrameDataEntities = {}
+    properties (SetAccess = private)
+        FrameDataEntity = {} % (cell array) McsFrameDataEntity objects
     end
     
     methods
@@ -24,22 +24,16 @@ classdef McsFrameStream < McsHDF5.McsStream
             
             % check if entities are present
             if ~isempty(strStruct.Groups)
-                str.FrameDataEntities = cell(1,length(strStruct.Groups));
+                str.FrameDataEntity = cell(1,length(strStruct.Groups));
                 for gidx = 1:length(strStruct.Groups)
                     info = structfun(@(x)(x(gidx)),str.Info,'UniformOutput',false);
                     if isempty(varargin)
-                        str.FrameDataEntities{gidx} = McsHDF5.McsFrameDataEntity(filename,info,strStruct.Groups(gidx).Name);
+                        str.FrameDataEntity{gidx} = McsHDF5.McsFrameDataEntity(filename,info,strStruct.Groups(gidx).Name);
                     else
-                        str.FrameDataEntities{gidx} = McsHDF5.McsFrameDataEntity(filename,info,strStruct.Groups(gidx).Name,varargin{:});
+                        str.FrameDataEntity{gidx} = McsHDF5.McsFrameDataEntity(filename,info,strStruct.Groups(gidx).Name,varargin{:});
                     end
                 end
-            end
-         
-            
+            end     
         end
-        
-        
-        
     end
-    
 end

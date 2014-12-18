@@ -27,6 +27,13 @@ function plot(frame,cfg,varargin)
 %               If fields are missing, their default values are used.
 %
 %   Optional inputs in varargin are passed to the plot function.
+%
+% Usage:
+%
+%   plot(frame, cfg);
+%   plot(frame, cfg, ...);
+%   frame.plot(cfg);
+%   frame.plot(cfg, ...);
 
     clf
     
@@ -54,7 +61,7 @@ function plot(frame,cfg,varargin)
         if strcmp(frame.DataType,'raw')
             cfg_part = [];
             cfg_part.window = McsHDF5.TickToSec([frame.FrameDataTimeStamps(idx) frame.FrameDataTimeStamps(idx) + frame.Info.Tick - 1]);
-            tmp_frame = frame.readPartialFrame(cfg_part);
+            tmp_frame = frame.readPartialFrameData(cfg_part);
             cfg_conv = [];
             cfg_conv.dataType = 'double';
             data_to_plot = tmp_frame.getConvertedData(cfg_conv);

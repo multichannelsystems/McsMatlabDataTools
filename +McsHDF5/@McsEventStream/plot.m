@@ -13,6 +13,13 @@ function plot(evtStream,cfg,varargin)
 %   cfg          -   Reserved for future use, currently unused
 %
 %   Optional inputs in varargin are passed to the plot function.
+%
+% Usage:
+%
+%   plot(evtStream, cfg);
+%   plot(evtStream, cfg, ...);
+%   evtStream.plot(cfg);
+%   evtStream.plot(cfg, ...);
 
     lineLength = 0.3;
     M = cell(length(evtStream.Events),2);

@@ -1,14 +1,15 @@
 classdef McsSegmentStream < McsHDF5.McsStream
 % Holds the contents of a SegmentStream.
 %
-% Fields:
-%   SegmentData     -   (1xn) cell array, each cell holding arrays of
-%                       (events x samples) values, where 'samples' is the
+% Important fields:
+%   SegmentData     -   (1xn) cell array, each cell holding either arrays of
+%                       (samples x segments) values, where 'samples' is the
 %                       time range between Pre- and PostInterval of the
-%                       cutout. The values are in units of 10 ^ Info.Exponent 
+%                       cutout, or arrays of (samples x segments x multisegments)
+%                       values. The values are in units of 10 ^ Info.Exponent 
 %                       [Info.Unit].
 %
-%   SegmentDataTimeStamps-(1xn) cell array, each cell holding a (events x 1)
+%   SegmentDataTimeStamps-(1xn) cell array, each cell holding a (1 x samples)
 %                       vector of time stamps for each event. The time
 %                       stamps are given in microseconds.
 %
@@ -30,13 +31,20 @@ classdef McsSegmentStream < McsHDF5.McsStream
 %   data dimensions.
     
     properties (SetAccess = private)
-        SegmentData = {};
-        SegmentDataTimeStamps = {};
-        SourceInfoChannel
-        DataDimensions = {};
-        DataUnit = {};
-        DataType
-        TimeStampDataType
+        
+        % SegmentData - (cell array) Each cell holds either a 
+        % (samples x segments) data matrix, or, in the case of multisegments,
+        % a (samples x segments x multisegments) data array.
+        SegmentData = {}; 
+        SegmentDataTimeStamps = {}; % (cell array) Each cell holds a (1 x samples) vector of timestamps in microseconds
+        
+        % (struct) Information about the source channel(s) of the segment. 
+        % Same as the McsAnalogStream.Info field
+        SourceInfoChannel 
+        DataDimensions = {}; % (cell array) The data dimensions for each segment entity
+        DataUnit = {}; % (cell array) The data unit for each segment entity
+        DataType % (string) The data type, e.g. 'double', 'single' or 'raw'
+        TimeStampDataType % (string) The type of the time stamps, 'double' or 'int64'
     end
     
     methods
@@ -63,7 +71,7 @@ classdef McsSegmentStream < McsHDF5.McsStream
         %               example by using the getConvertedData function.
         %               'timeStampDataType': The type of the time stamps,
         %               can be either 'int64' (default) or 'double'. Using
-        %               'double' is useful for older Matlab version without
+        %               'double' is useful for older Matlab versions without
         %               int64 arithmetic.
             if exist('h5info')
                 mode = 'h5';
@@ -80,10 +88,10 @@ classdef McsSegmentStream < McsHDF5.McsStream
                     try
                         if strcmp(mode,'h5')
                             str.SegmentDataTimeStamps{segi} = ...
-                                h5read(filename,[strStruct.Name '/SegmentData_ts_' num2str(segments(segi))]);
+                                h5read(filename,[strStruct.Name '/SegmentData_ts_' num2str(segments(segi))])';
                         else
                             str.SegmentDataTimeStamps{segi} = ...
-                                hdf5read(filename,[strStruct.Name '/SegmentData_ts_' num2str(segments(segi))]);
+                                hdf5read(filename,[strStruct.Name '/SegmentData_ts_' num2str(segments(segi))])';
                         end
                     end
                 end
@@ -97,10 +105,10 @@ classdef McsSegmentStream < McsHDF5.McsStream
                     try
                         if strcmp(mode,'h5')
                             str.SegmentDataTimeStamps{segi} = ...
-                                cast(h5read(filename,[strStruct.Name '/SegmentData_ts_' num2str(segments(segi))]),type);
+                                cast(h5read(filename,[strStruct.Name '/SegmentData_ts_' num2str(segments(segi))]),type)';
                         else
                             str.SegmentDataTimeStamps{segi} = ...
-                                cast(hdf5read(filename,[strStruct.Name '/SegmentData_ts_' num2str(segments(segi))]),type);
+                                cast(hdf5read(filename,[strStruct.Name '/SegmentData_ts_' num2str(segments(segi))]),type)';
                         end
                     end
                 end

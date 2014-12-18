@@ -35,6 +35,13 @@ function plot(frameStream,cfg,varargin)
 %                       on the 'window' and the 'channelMatrix' parameter
 %
 %   Optional inputs in varargin are passed to the plot function.
+%
+% Usage:
+%
+%   plot(frameStream, cfg);
+%   plot(frameStream, cfg, ...);
+%   frameStream.plot(cfg);
+%   frameStream.plot(cfg, ...);
 
     cfg = McsHDF5.checkParameter(cfg, 'entities', 1:length(frameStream.FrameDataEntities));
     [cfg, isDefault] = McsHDF5.checkParameter(cfg, 'window', repmat({[]},1,length(cfg.entities)));

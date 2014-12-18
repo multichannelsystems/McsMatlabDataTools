@@ -1,5 +1,5 @@
 function tick = SecToTick(sec)
-% Converts seconds to tick in µs
+% Converts seconds to tick in microseconds
 %
 % function tick = SecToTick(sec)
 %
@@ -7,7 +7,7 @@ function tick = SecToTick(sec)
 %   sec     -   Time in seconds
 %
 % Output:
-%   tick    -   seconds converted to µs.
+%   tick    -   seconds converted to microseconds.
 
     tick = sec * 1e6;
 end

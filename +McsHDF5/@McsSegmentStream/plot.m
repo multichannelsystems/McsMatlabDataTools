@@ -12,11 +12,18 @@ function plot(segStream,cfg,varargin)
 %
 %   cfg           -   Either empty (for default parameters) or a
 %                     structure with (some of) the following fields:
-%                     'segments': empty for all segments, otherwise a
+%                     'segment': empty for all segments, otherwise a
 %                       vector of segment indices (default: all)
 %                     If fields are missing, their default values are used.
 %
 %   Optional inputs in varargin are passed to the plot function.
+%
+% Usage:
+%
+%   plot(segStream, cfg);
+%   plot(segStream, cfg, ...);
+%   segStream.plot(cfg);
+%   segStream.plot(cfg, ...);
 
     clf
     
@@ -28,12 +35,12 @@ function plot(segStream,cfg,varargin)
         end
     end
     
-    for segi = 1:length(cfg.segments)
-        id = cfg.segments(segi);
+    for segi = 1:length(cfg.segment)
+        id = cfg.segment(segi);
         if isempty(segStream.SegmentData{id})
             continue
         end
-        subplot(2,length(cfg.segments),segi);
+        subplot(2,length(cfg.segment),segi);
         
         if strcmp(segStream.DataType,'double')
             data_to_plot = segStream.SegmentData{id};
@@ -45,7 +52,7 @@ function plot(segStream,cfg,varargin)
         
         orig_exp = log10(max(abs(data_to_plot(:))));
         sourceChan = str2double(segStream.Info.SourceChannelIDs{segi});
-        if length(sourceChan) > 1
+        if length(sourceChan) > 1 || numel(size(data_to_plot)) > 2
             warning('Plots of multisegments are not yet supported!');
             return;
         end
@@ -54,7 +61,7 @@ function plot(segStream,cfg,varargin)
 
         [fact,unit_string] = McsHDF5.ExponentToUnit(orig_exp+unit_exp,orig_exp);
 
-        data_to_plot = data_to_plot * fact;
+        data_to_plot = data_to_plot' * fact;
         
         if all(size(data_to_plot) > 2) 
             [X,Y] = meshgrid(1:size(data_to_plot,2),1:size(data_to_plot,1));
@@ -91,7 +98,7 @@ function plot(segStream,cfg,varargin)
             end
         end
         
-        subplot(2,length(cfg.segments),segi+length(cfg.segments));
+        subplot(2,length(cfg.segment),segi+length(cfg.segment));
         
         pre = double(segStream.Info.PreInterval(id));
         post = double(segStream.Info.PostInterval(id));

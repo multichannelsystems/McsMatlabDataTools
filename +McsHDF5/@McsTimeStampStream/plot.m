@@ -13,6 +13,13 @@ function plot(timeStream,cfg,varargin)
 %   cfg          -   Reserved for future use, currently unused
 %
 %   Optional inputs in varargin are passed to the plot function.
+%
+% Usage:
+%
+%   plot(timeStream, cfg);
+%   plot(timeStream, cfg, ...);
+%   timeStream.plot(cfg);
+%   timeStream.plot(cfg, ...);
 
     lineLength = 0.3;
     M = cell(length(timeStream.TimeStamps),2);

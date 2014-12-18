@@ -1,24 +1,27 @@
 classdef McsAnalogStream < McsHDF5.McsStream
 % Holds the contents of an AnalogStream. 
 %
-% Fields:
-%   ChannelData         -   (samples x channels) array of the sampled data.
+% Important fields:
+%   ChannelData         -   (channels x samples) array of the sampled data.
 %                           Samples are given in units of 10 ^ Info.Exponent 
 %                           [Info.Unit]
 %
-%   ChannelDataTimeStamps - (samples x 1) vector of time stamps given in
+%   ChannelDataTimeStamps - (1 x samples) vector of time stamps given in
 %                           microseconds.
 %
 % The other fields and the Info field provide general information about the
 % analog stream.
 
     properties (SetAccess = private)
-        ChannelData = [];
-        ChannelDataTimeStamps = int64([]);
-        DataDimensions = 'channels x samples';
+        ChannelData = []; % (channels x samples) Data matrix
+        ChannelDataTimeStamps = int64([]); % (1 x samples) Vector of time stamps in microseconds
+        DataDimensions = 'channels x samples'; % (string) The data dimensions
+        
+        % DataUnit - (1 x channels) Cell array with the unit of each sample (e.g. 'nV'). 
+        % 'ADC', if the data is not yet converted to voltages.
         DataUnit = {};
-        DataType
-        TimeStampDataType
+        DataType % (string) The data type, e.g. 'double', 'single' or 'raw'
+        TimeStampDataType % (string) The type of the time stamps, 'double' or 'int64'
     end
     
     methods
@@ -233,7 +236,7 @@ classdef McsAnalogStream < McsHDF5.McsStream
         end
        
         function out_str = readPartialChannelData(str,cfg)
-        % Read a hyperslab from the stream.
+        % Read a segment from the stream.
         %
         % function out_str = readPartialChannelData(str,cfg)
         %

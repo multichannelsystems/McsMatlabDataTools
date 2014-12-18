@@ -1,5 +1,5 @@
 function sec = TickToSec(tick)
-% Converts tick in µs to seconds
+% Converts tick in microseconds to seconds
 %
 % function sec = TickToSec(tick)
 %

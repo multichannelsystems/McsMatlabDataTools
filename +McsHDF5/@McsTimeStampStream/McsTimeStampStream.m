@@ -2,18 +2,15 @@ classdef McsTimeStampStream < McsHDF5.McsStream
 % Holds the contents of an TimeStampStream
 %
 % Fields:
-%   Events      -   (1xn) cell array, each cell holding either a (events x
-%                   1) vector of time stamps for each event or a (events x
-%                   2) matrix, where the first column are time stamps and
-%                   the second column are durations. Both are given in
-%                   microseconds.
+%   TimeStamps -   (1xn) cell array, each cell holding a (1 x timestamps)
+%                   vector of time stamps for each time stamp entity.
 %
 %   The Info field and the other attributes provide general information
-%   about the event stream.
+%   about the time stamp stream.
     
     properties (SetAccess = private)
-        TimeStamps = {};
-        TimeStampDataType
+        TimeStamps = {}; % (cell array) Each cell holding a vector of time stamps in microseconds
+        TimeStampDataType  % (string) The type of the time stamps, 'double' or 'int64'
     end
     
     methods
@@ -24,7 +21,7 @@ classdef McsTimeStampStream < McsHDF5.McsStream
         % function str = McsTimeStampStream(filename, strStruct, cfg)
         %
         % Reads the meta-information from the file but does not read the
-        % actual event data. This is performed the first time that the
+        % actual time stamp data. This is performed the first time that the
         % TimeStamps field is accessed.
         %
         % % Optional input:

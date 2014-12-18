@@ -1,11 +1,11 @@
-function plot(md,cfg,varargin)
+function plot(data,cfg,varargin)
 % Function to plot the contents of a McsData object.
 %
-% function plot(md,cfg,varargin)
+% function plot(data,cfg,varargin)
 %
 % Input:
 %
-%   md      -   A McsData object
+%   data    -   A McsData object
 %
 %   cfg     -   Either empty (for default parameters) or a structure with
 %               (some of) the following fields:
@@ -22,6 +22,13 @@ function plot(md,cfg,varargin)
 %
 %   Optional inputs in varargin are passed to the plot functions. Warning: 
 %   might produce error if segments / frames are mixed with analog streams.
+%
+% Usage:
+%
+%   plot(data, cfg);
+%   plot(data, cfg, ...);
+%   data.plot(cfg);
+%   data.plot(cfg, ...);
     
     cfg = McsHDF5.checkParameter(cfg, 'recordings', 1:length(data.Recording));
     [cfg,isDefault] = McsHDF5.checkParameter(cfg, 'conf', repmat({[]},1,length(cfg.recordings)));
@@ -33,7 +40,7 @@ function plot(md,cfg,varargin)
     
     for reci = 1:length(cfg.recordings)
         id = cfg.recordings(reci);
-        plot(md.Recording{id},cfg.conf{id},varargin{:});
+        plot(data.Recording{id},cfg.conf{id},varargin{:});
     end
 
 end

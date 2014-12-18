@@ -2,21 +2,21 @@ classdef McsRecording
 % Stores a single recording.
 %
 % The different streams present in the recording are sorted into the
-% {Analog,Frame,Event,Segment}Stream fields where they are stored as cell
-% arrays.
+% {Analog,Frame,Event,Segment,TimeStamp}Stream fields where they are stored
+% as cell arrays.
     
-    properties
-        RecordingID = 0
-        RecordingType
-        TimeStamp
-        Duration
-        Label
-        Comment
-        AnalogStream = {};
-        FrameStream = {};
-        EventStream = {};
-        SegmentStream = {};
-        TimeStampStream = {};
+    properties (SetAccess = private)
+        RecordingID = 0         % (scalar) The recording ID
+        RecordingType           % (string) The recording type
+        TimeStamp               % (scalar) Time stamp of the start date of the recording, in 10^{-7} s
+        Duration                % (scalar) Duration of the recording, in 10^{-7} s
+        Label                   % (string) The recording label
+        Comment                 % (string) Comment
+        AnalogStream = {};      % (cell array) McsAnalogStream objects, one for each analog stream
+        FrameStream = {};       % (cell array) McsFrameStream objects, one for each frame stream
+        EventStream = {};       % (cell array) McsEventStream objects, one for each event stream
+        SegmentStream = {};     % (cell array) McsSegmentStream objects, one for each segment stream
+        TimeStampStream = {};   % (cell array) McsTimeStampStream objects, one for each time stamp stream
     end
     
     methods
@@ -120,13 +120,8 @@ classdef McsRecording
                             rec.TimeStampStream{streams} = McsHDF5.McsTimeStampStream(filename, recStruct.Groups(gidx).Groups(streams), varargin{:});
                         end
                     end
-                end 
-                
-            end
-            
-            
+                end      
+            end    
         end
-        
     end
-    
 end
