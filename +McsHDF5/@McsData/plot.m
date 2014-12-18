@@ -22,21 +22,13 @@ function plot(md,cfg,varargin)
 %
 %   Optional inputs in varargin are passed to the plot functions. Warning: 
 %   might produce error if segments / frames are mixed with analog streams.
-
-    if isempty(cfg) || ~isfield(cfg,'recordings')
-        cfg.recordings = [];
-    end
     
-    if isempty(cfg.recordings)
-        cfg.recordings = 1:length(md.Recording);
-    end
-    
-    if ~isfield(cfg,'conf')
-        cfg.conf = [];
-    end
-    
-    if ~iscell(cfg.conf)
-        cfg.conf = repmat({cfg.conf},1,length(cfg.recordings));
+    cfg = McsHDF5.checkParameter(cfg, 'recordings', 1:length(data.Recording));
+    [cfg,isDefault] = McsHDF5.checkParameter(cfg, 'conf', repmat({[]},1,length(cfg.recordings)));
+    if ~isDefault
+        if ~iscell(cfg.conf)
+            cfg.conf = repmat({cfg.conf},1,length(cfg.recordings));
+        end
     end
     
     for reci = 1:length(cfg.recordings)

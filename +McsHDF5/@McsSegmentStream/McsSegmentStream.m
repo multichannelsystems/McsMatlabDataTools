@@ -252,13 +252,7 @@ classdef McsSegmentStream < McsHDF5.McsStream
         end
         
         function data = getConvertedData(seg,idx,cfg)
-            if isempty(cfg)
-                cfg.dataType = 'double';
-            end
-            
-            if ~isfield(cfg,'dataType')
-                cfg.dataType = 'double';
-            end
+            cfg = McsHDF5.checkParameter(cfg, 'dataType', 'double');
             
             if ~strcmp(seg.DataType,'raw')
                 if ~strcmp(seg.DataType,cfg.dataType)

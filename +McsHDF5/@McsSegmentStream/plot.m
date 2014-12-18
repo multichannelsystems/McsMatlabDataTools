@@ -20,17 +20,12 @@ function plot(segStream,cfg,varargin)
 
     clf
     
-    if isempty(cfg) || ~isfield(cfg,'segments')
-        cfg.segments = [];
-    end
-    
-    if isempty(cfg.segments)
-        cfg.segments = 1:length(segStream.SegmentData);
-    end
-    
-    if any(cfg.segments < 1 | cfg.segments > length(segStream.SegmentData))
-        warning(['Using only segment indices between 1 and ' num2str(length(segStream.SegmentData)) '!'])
-        cfg.segments = cfg.segments(cfg.segments >= 1 & cfg.segments <= length(segStream.SegmentData));
+    [cfg, isDefault] = McsHDF5.checkParameter(cfg, 'segment', 1:length(segStream.SegmentData));
+    if ~isDefault
+        if any(cfg.segment < 1 | cfg.segment > length(segStream.SegmentData))
+            warning(['Using only segment indices between 1 and ' num2str(length(segStream.SegmentData)) '!'])
+            cfg.segment = cfg.segment(cfg.segment >= 1 & cfg.segment <= length(segStream.SegmentData));
+        end
     end
     
     for segi = 1:length(cfg.segments)

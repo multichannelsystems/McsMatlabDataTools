@@ -215,13 +215,7 @@ classdef McsAnalogStream < McsHDF5.McsStream
         %               conversion from ADC units to units of 10 ^
         %               Info.Exponent [Info.Unit]
             
-            if isempty(cfg)
-                cfg.dataType = 'double';
-            end
-            
-            if ~isfield(cfg,'dataType')
-                cfg.dataType = 'double';
-            end
+            cfg = McsHDF5.checkParameter(cfg, 'dataType', 'double');
             
             if ~strcmp(str.DataType,'raw')
                 if ~strcmp(str.DataType,cfg.dataType)
@@ -266,20 +260,21 @@ classdef McsAnalogStream < McsHDF5.McsStream
             defaultChannel = 1:length(str.Info.ChannelID);
             defaultWindow = 1:length(ts);
             
-            if isempty(cfg)
-                cfg.channel = [];
-                cfg.window = [];
-            end
-            
-            if ~isfield(cfg,'channel') || isempty(cfg.channel)
-                cfg.channel = defaultChannel;
-            else
+            [cfg, isDefault] = McsHDF5.checkParameter(cfg, 'channel', defaultChannel);
+            if ~isDefault
                 cfg.channel = cfg.channel(1):cfg.channel(2);
+                if any(cfg.channel < 1 | cfg.channel > length(defaultChannel))
+                    cfg.channel = cfg.channel(cfg.channel >= 1 & cfg.channel <= length(defaultChannel));
+                    if isempty(cfg.channel)
+                        error('No channel indices found!');
+                    else
+                        warning(['Using only channel indices between ' num2str(cfg.channel(1)) ' and ' num2str(cfg.channel(end)) '!']);
+                    end
+                end
             end
             
-            if ~isfield(cfg,'window') || isempty(cfg.window)
-                cfg.window = defaultWindow;
-            else
+            [cfg, isDefault] = McsHDF5.checkParameter(cfg, 'window', defaultWindow);
+            if ~isDefault
                 t = find(ts >= McsHDF5.SecToTick(cfg.window(1)) & ts <= McsHDF5.SecToTick(cfg.window(2)));
                 if McsHDF5.TickToSec(ts(t(1)) - str.Info.Tick(1)) > cfg.window(1) || ...
                         McsHDF5.TickToSec(ts(t(end)) + str.Info.Tick(1)) < cfg.window(2)
@@ -289,15 +284,6 @@ classdef McsAnalogStream < McsHDF5.McsStream
                     error('No time range found!');
                 end
                 cfg.window = t;
-            end
-            
-            if any(cfg.channel < 1 | cfg.channel > length(defaultChannel))
-                cfg.channel = cfg.channel(cfg.channel >= 1 & cfg.channel <= length(defaultChannel));
-                if isempty(cfg.channel)
-                    error('No channels found for channel!');
-                else
-                    warning(['Using only indices between ' num2str(cfg.channel(1)) ' and ' num2str(cfg.channel(end)) ' for channel_x!']);
-                end
             end
             
             % read metadata

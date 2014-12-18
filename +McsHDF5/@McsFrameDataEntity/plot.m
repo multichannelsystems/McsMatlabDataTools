@@ -30,28 +30,13 @@ function plot(frame,cfg,varargin)
 
     clf
     
-    if isempty(cfg)
-        cfg.window = [];
-        cfg.channelMatrix = [];
-    end
-    
-    if ~isfield(cfg,'window')
-        cfg.window = [];
-    end
-    
-    if ~isfield(cfg,'channelMatrix')
-        cfg.channelMatrix = [];
-    end
-    
-    if isempty(cfg.window)
-        cfg.window = McsHDF5.TickToSec([frame.FrameDataTimeStamps(1) frame.FrameDataTimeStamps(end)]);
-    end
-    if isempty(cfg.channelMatrix)
-        cfg.channelMatrix = true(size(frame.FrameData,1),size(frame.FrameData,2));
-    end
-    
-    if size(cfg.channelMatrix,1) ~= size(frame.FrameData,1) || size(cfg.channelMatrix,2) ~= size(frame.FrameData,2)
-        error('Size of cfg.channelMatrix does not match the number of channels in the file!');
+    cfg = McsHDF5.checkParameter(cfg, 'window', ...
+        McsHDF5.TickToSec([frame.FrameDataTimeStamps(1) frame.FrameDataTimeStamps(end)]));
+    [cfg, isDefault] = McsHDF5.checkParameter(cfg, 'channelMatrix', true(size(frame.FrameData,1),size(frame.FrameData,2)));
+    if ~isDefault
+        if size(cfg.channelMatrix,1) ~= size(frame.FrameData,1) || size(cfg.channelMatrix,2) ~= size(frame.FrameData,2)
+            error('Size of cfg.channelMatrix does not match the number of channels in the file!');
+        end
     end
     
     if numel(cfg.window) == 1 || cfg.window(1) == cfg.window(2)

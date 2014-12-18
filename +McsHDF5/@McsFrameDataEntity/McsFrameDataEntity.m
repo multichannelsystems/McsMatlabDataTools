@@ -231,13 +231,7 @@ classdef McsFrameDataEntity < handle
         %               cfg.dataType and it contains the FrameData values
         %               in units of 10 ^ Info.Exponent [Info.Unit]
             
-            if isempty(cfg)
-                cfg.dataType = 'double';
-            end
-
-            if ~isfield(cfg,'dataType')
-                cfg.dataType = 'double';
-            end
+            cfg = McsHDF5.checkParameter(cfg, 'dataType', 'double');
 
             if ~strcmp(fde.DataType,'raw')
                 if ~strcmp(fde.DataType,cfg.dataType)
@@ -283,27 +277,34 @@ classdef McsFrameDataEntity < handle
             defaultChannelY = double(1:(fde.Info.FrameBottom - fde.Info.FrameTop + 1));
             defaultWindow = 1:length(ts);
             
-            if isempty(cfg)
-                cfg.channel_x = [];
-                cfg.channel_y = [];
-                cfg.window = [];
+            [cfg, isDefault] = McsHDF5.checkParameter(cfg, 'channel_x', defaultChannelX);
+            if ~isDefault
+                cfg.channel_x = min(cfg.channel_x):max(cfg.channel_x);
+                if any(cfg.channel_x < 1 | cfg.channel_x > length(defaultChannelX))
+                    cfg.channel_x = cfg.channel_x(cfg.channel_x >= 1 & cfg.channel_x <= length(defaultChannelX));
+                    if isempty(cfg.channel_x)
+                        error('No channels found for channel_x!');
+                    else
+                        warning(['Using only indices between ' num2str(cfg.channel_x(1)) ' and ' num2str(cfg.channel_x(end)) ' for channel_x!']);
+                    end
+                end
             end
             
-            if ~isfield(cfg,'channel_x') || isempty(cfg.channel_x)
-                cfg.channel_x = defaultChannelX;
-            else
-                cfg.channel_x = cfg.channel_x(1):cfg.channel_x(2);
+            [cfg, isDefault] = McsHDF5.checkParameter(cfg, 'channel_y', defaultChannelY);
+            if ~isDefault
+                cfg.channel_y = min(cfg.channel_y):max(cfg.channel_y);
+                if any(cfg.channel_y < 1 | cfg.channel_y > length(defaultChannelY))
+                    cfg.channel_y = cfg.channel_y(cfg.channel_y >= 1 & cfg.channel_y <= length(defaultChannelY));
+                    if isempty(cfg.channel_y)
+                        error('No channels found for channel_y!');
+                    else
+                        warning(['Using only indices between ' num2str(cfg.channel_y(1)) ' and ' num2str(cfg.channel_y(end)) ' for channel_y!']);
+                    end
+                end
             end
             
-            if ~isfield(cfg,'channel_y') || isempty(cfg.channel_y)
-                cfg.channel_y = defaultChannelY;
-            else
-                cfg.channel_y = cfg.channel_y(1):cfg.channel_y(2);
-            end
-            
-            if ~isfield(cfg,'window') || isempty(cfg.window)
-                cfg.window = defaultWindow;
-            else
+            [cfg, isDefault] = McsHDF5.checkParameter(cfg, 'window', defaultWindow);
+            if ~isDefault
                 t = find(ts >= McsHDF5.SecToTick(cfg.window(1)) & ts <= McsHDF5.SecToTick(cfg.window(2)));
                 if McsHDF5.TickToSec(ts(t(1)) - fde.Info.Tick) > cfg.window(1) || ...
                         McsHDF5.TickToSec(ts(t(end)) + fde.Info.Tick) < cfg.window(2)
@@ -313,24 +314,6 @@ classdef McsFrameDataEntity < handle
                     error('No time range found!');
                 end
                 cfg.window = t;
-            end
-            
-            if any(cfg.channel_x < 1 | cfg.channel_x > length(defaultChannelX))
-                cfg.channel_x = cfg.channel_x(cfg.channel_x >= 1 & cfg.channel_x <= length(defaultChannelX));
-                if isempty(cfg.channel_x)
-                    error('No channels found for channel_x!');
-                else
-                    warning(['Using only indices between ' num2str(cfg.channel_x(1)) ' and ' num2str(cfg.channel_x(end)) ' for channel_x!']);
-                end
-            end
-            
-            if any(cfg.channel_y < 1 | cfg.channel_y > length(defaultChannelY))
-                cfg.channel_y = cfg.channel_y(cfg.channel_y >= 1 & cfg.channel_y <= length(defaultChannelY));
-                if isempty(cfg.channel_y)
-                    error('No channels found for channel_y!');
-                else
-                    warning(['Using only indices between ' num2str(cfg.channel_y(1)) ' and ' num2str(cfg.channel_y(end)) ' for channel_y!']);
-                end
             end
             
             % read metadata

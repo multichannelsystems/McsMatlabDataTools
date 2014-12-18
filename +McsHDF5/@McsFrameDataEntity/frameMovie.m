@@ -28,28 +28,10 @@ function frameMovie(fde,cfg,varargin)
 % Further optional inputs in varargin are interpreted as parameters for
 % gca. -> set(gca,varargin{:}).
 
-    if isempty(cfg);
-        cfg.start = McsHDF5.TickToSec(fde.FrameDataTimeStamps(1));
-        cfg.end = McsHDF5.TickToSec(fde.FrameDataTimeStamps(end));
-        cfg.step = McsHDF5.TickToSec(fde.Info.Tick);
-        cfg.fps = 10;
-    end
-    
-    if ~isfield(cfg,'start')
-        cfg.start = McsHDF5.TickToSec(fde.FrameDataTimeStamps(1));
-    end
-        
-    if ~isfield(cfg,'end')
-        cfg.end = McsHDF5.TickToSec(fde.FrameDataTimeStamps(end));
-    end
-    
-    if ~isfield(cfg,'step')
-        cfg.step = McsHDF5.TickToSec(fde.Info.Tick);
-    end
-    
-    if ~isfield(cfg,'fps')
-        cfg.fps = 10;
-    end
+    cfg = McsHDF5.checkParameter(cfg, 'start', McsHDF5.TickToSec(fde.FrameDataTimeStamps(1)));
+    cfg = McsHDF5.checkParameter(cfg, 'end', McsHDF5.TickToSec(fde.FrameDataTimeStamps(end)));
+    cfg = McsHDF5.checkParameter(cfg, 'step', McsHDF5.TickToSec(fde.Info.Tick));
+    cfg = McsHDF5.checkParameter(cfg, 'fps', 10);
     
     cfg.window = cfg.start;
    

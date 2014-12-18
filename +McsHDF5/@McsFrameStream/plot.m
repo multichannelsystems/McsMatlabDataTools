@@ -36,46 +36,27 @@ function plot(frameStream,cfg,varargin)
 %
 %   Optional inputs in varargin are passed to the plot function.
 
-    if isempty(cfg)
-        cfg.entities = [];
-        cfg.window = [];
-        cfg.channelMatrix = [];
+    cfg = McsHDF5.checkParameter(cfg, 'entities', 1:length(frameStream.FrameDataEntities));
+    [cfg, isDefault] = McsHDF5.checkParameter(cfg, 'window', repmat({[]},1,length(cfg.entities)));
+    if ~isDefault
+        if length(cfg.window) <= 2 && ~iscell(cfg.window)
+            cfg.window = repmat({cfg.window},1,length(cfg.entities));
+        end
+
+        if length(cfg.window) ~= length(cfg.entities) && ~iscell(cfg.window)
+            error('cfg.window not specified properly');
+        end
     end
     
-    if ~isfield(cfg,'entities')
-        cfg.entities = [];
-    end
-    
-    if ~isfield(cfg,'window')
-        cfg.window = [];
-    end
-    
-    if ~isfield(cfg,'channelMatrix')
-        cfg.channelMatrix = [];
-    end
-    
-    if isempty(cfg.entities)
-        cfg.entities = 1:length(frameStream.FrameDataEntities);
-    end
-    
-    if length(cfg.window) <= 2 && ~iscell(cfg.window)
-        cfg.window = repmat({cfg.window},1,length(cfg.entities));
-    end
-    
-    if length(cfg.window) ~= length(cfg.entities) && ~iscell(cfg.window)
-        error('cfg.window not specified properly');
-    end
-    
-    if isempty(cfg.channelMatrix)
-        cfg.channelMatrix = repmat({[]},1,length(cfg.entities));
-    end
-    
-    if ~iscell(cfg.channelMatrix)
-        cfg.channelMatrix = repmat({cfg.channelMatrix},1,length(cfg.entities));
-    end
-    
-    if length(cfg.channelMatrix) ~= length(cfg.entities) && ~iscell(cfg.channelMatrix)
-        error('cfg.channelMatrix not specified properly');
+    [cfg, isDefault] = McsHDF5.checkParameter(cfg, 'channelMatrix', repmat({[]},1,length(cfg.entities)));
+    if ~isDefault
+        if ~iscell(cfg.channelMatrix)
+            cfg.channelMatrix = repmat({cfg.channelMatrix},1,length(cfg.entities));
+        end
+
+        if length(cfg.channelMatrix) ~= length(cfg.entities) && ~iscell(cfg.channelMatrix)
+            error('cfg.channelMatrix not specified properly');
+        end
     end
     
     for enti = 1:length(cfg.entities)

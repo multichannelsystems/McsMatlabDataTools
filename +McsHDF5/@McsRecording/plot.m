@@ -1,13 +1,13 @@
-function plot(mr,cfg,varargin)
+function plot(recording,cfg,varargin)
 % Plot the contents of a McsRecording object.
 %
-% function plot(mr,cfg,varargin)
+% function plot(recording,cfg,varargin)
 %
 % Input:
 %
-%   mr      -   A McsRecording object
+%   recording-  A McsRecording object
 %
-%   cfg     -   Either empty (for default parameters) or a structure with
+%   cfg      -  Either empty (for default parameters) or a structure with
 %               (some of) the following fields:
 %               'analog': Configuration structure for McsAnalogStream.plot:
 %                   []: default parameters
@@ -39,118 +39,77 @@ function plot(mr,cfg,varargin)
 %   Optional inputs in varargin are passed to the plot functions. Warning: 
 %   might produce error if segments / frames are mixed with analog / event
 %   streams.
+%
+% Usage:
+%
+%   plot(recording, cfg);
+%   plot(recording, cfg, ...);
+%   recording.plot(cfg);
+%   recording.plot(cfg, ...);
 
-    if isempty(cfg)
-        cfg.analog = [];
-        cfg.frame = [];
-        cfg.segment = [];
-        cfg.event = [];
-        cfg.timestamp = [];
-    end
-    
-    if ~isempty(mr.AnalogStream)
+    if ~isempty(recording.AnalogStream)
         
-        if ~isfield(cfg,'analog') || isempty(cfg.analog)
-            cfg.analog = repmat({[]},1,length(mr.AnalogStream));
-        end
-        
-        if ~isfield(cfg,'analogstreams') || isempty(cfg.analogstreams)
-            cfg.analogstreams = 1:length(mr.AnalogStream);
-        end
-        
-        if ~iscell(cfg.analog)
-            cfg.analog = repmat({cfg.analog},1,length(mr.AnalogStream));
-        end
+        cfg = doParameterCheck(cfg, 'analog', recording.AnalogStream);
         
         for stri = 1:length(cfg.analogstreams)
             figure
-            plot(mr.AnalogStream{cfg.analogstreams(stri)},cfg.analog{stri},varargin{:});
+            plot(recording.AnalogStream{cfg.analogstreams(stri)},cfg.analog{stri},varargin{:});
             set(gcf,'Name',['Analog Stream ' num2str(cfg.analogstreams(stri))]);
         end
     end
     
-    if ~isempty(mr.FrameStream)
+    if ~isempty(recording.FrameStream)
         
-        if ~isfield(cfg,'frame') || isempty(cfg.frame)
-            cfg.frame = repmat({[]},1,length(mr.FrameStream));
-        end
-        
-        if ~isfield(cfg,'framestreams') || isempty(cfg.framestreams)
-            cfg.framestreams = 1:length(mr.FrameStream);
-        end
-        
-        if ~iscell(cfg.frame)
-            cfg.frame = repmat({cfg.frame},1,length(mr.FrameStream));
-        end
+        cfg = doParameterCheck(cfg, 'frame', recording.FrameStream);
         
         for stri = 1:length(cfg.framestreams)
             figure
-            plot(mr.FrameStream{cfg.framestreams(stri)},cfg.frame{stri},varargin{:});
+            plot(recording.FrameStream{cfg.framestreams(stri)},cfg.frame{stri},varargin{:});
             set(gcf,'Name',['Frame Stream ' num2str(cfg.framestreams(stri))]);
         end
     end
     
-    if ~isempty(mr.SegmentStream)
+    if ~isempty(recording.SegmentStream)
         
-        if ~isfield(cfg,'segment') || isempty(cfg.segment)
-            cfg.segment = repmat({[]},1,length(mr.SegmentStream));
-        end
-        
-        if ~isfield(cfg,'segmentstreams') || isempty(cfg.segmentstreams)
-            cfg.segmentstreams = 1:length(mr.SegmentStream);
-        end
-        
-        if ~iscell(cfg.segment)
-            cfg.segment = repmat({cfg.segment},1,length(mr.SegmentStream));
-        end
+        cfg = doParameterCheck(cfg, 'segment', recording.SegmentStream);
         
         for stri = 1:length(cfg.segmentstreams)
             figure
-            plot(mr.SegmentStream{cfg.segmentstreams(stri)},cfg.segment{stri},varargin{:});
+            plot(recording.SegmentStream{cfg.segmentstreams(stri)},cfg.segment{stri},varargin{:});
             set(gcf,'Name',['Segment Stream ' num2str(cfg.segmentstreams(stri))]);
         end
     end
     
-    if ~isempty(mr.EventStream)
+    if ~isempty(recording.EventStream)
         
-        if ~isfield(cfg,'event') || isempty(cfg.event)
-            cfg.event = repmat({[]},1,length(mr.EventStream));
-        end
-        
-        if ~isfield(cfg,'eventstreams') || isempty(cfg.eventstreams)
-            cfg.eventstreams = 1:length(mr.EventStream);
-        end
-        
-        if ~iscell(cfg.event)
-            cfg.event = repmat({cfg.event},1,length(mr.EventStream));
-        end
+        cfg = doParameterCheck(cfg, 'event', recording.EventStream);
         
         for stri = 1:length(cfg.eventstreams)
             figure
-            plot(mr.EventStream{cfg.eventstreams(stri)},cfg.event{stri},varargin{:});
+            plot(recording.EventStream{cfg.eventstreams(stri)},cfg.event{stri},varargin{:});
             set(gcf,'Name',['Event Stream ' num2str(cfg.eventstreams(stri))]);
         end
     end
     
-    if ~isempty(mr.TimeStampStream)
+    if ~isempty(recording.TimeStampStream)
         
-        if ~isfield(cfg,'timestamp') || isempty(cfg.timestamp)
-            cfg.timestamp = repmat({[]},1,length(mr.TimeStampStream));
-        end
-        
-        if ~isfield(cfg,'timestampstreams') || isempty(cfg.timestampstreams)
-            cfg.timestampstreams = 1:length(mr.TimeStampStream);
-        end
-        
-        if ~iscell(cfg.timestamp)
-            cfg.timestamp = repmat({cfg.timestamp},1,length(mr.TimeStampStream));
-        end
+        cfg = doParameterCheck(cfg, 'timestamp', recording.TimeStampStream);
         
         for stri = 1:length(cfg.timestampstreams)
             figure
-            plot(mr.TimeStampStream{cfg.timestampstreams(stri)},cfg.timestamp{stri},varargin{:});
+            plot(recording.TimeStampStream{cfg.timestampstreams(stri)},cfg.timestamp{stri},varargin{:});
             set(gcf,'Name',['Time Stamp Stream ' num2str(cfg.timestampstreams(stri))]);
         end
     end
+end
 
+function cfg = doParameterCheck(cfg, streamType, stream)
+    [cfg, isDefault] = McsHDF5.checkParameter(cfg, streamType, repmat({[]},1,length(stream)));
+    if ~isDefault
+        if ~iscell(cfg.(streamType))
+            cfg.(streamType) = repmat({cfg.(streamType)},1,length(stream));
+        end
+    end
+
+    cfg = McsHDF5.checkParameter(cfg, [streamType 'streams'], 1:length(stream));
 end

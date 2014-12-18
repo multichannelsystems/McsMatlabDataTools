@@ -31,51 +31,26 @@ function plot(analogStream,cfg,varargin)
 %   optional inputs in varargin are passed to the plot function.
     
     clf
-
-    if isempty(cfg)
-        cfg.channels = [];
-        cfg.window = [];
-        cfg.legend = true;
-        cfg.spacing = false;
-    end
     
-    if ~isfield(cfg,'legend') || isempty(cfg.legend)
-        cfg.legend = true;
-    end
-    
-    if ~isfield(cfg,'channels') 
-        cfg.channels = []; 
-    end
-    
-    if ~isfield(cfg,'window') 
-        cfg.window = []; 
-    end
-    
-    if ~isfield(cfg,'spacing') || isempty(cfg.spacing)
-        cfg.spacing = false;
-    end
-    
-    if isempty(cfg.channels)
-        cfg.channels = 1:size(analogStream.ChannelData,1);
-    end
-    
-    if isempty(cfg.window)
-        cfg.window = McsHDF5.TickToSec([analogStream.ChannelDataTimeStamps(1) ...
-                      analogStream.ChannelDataTimeStamps(end)]);
-    end
-    
-    if any(cfg.channels < 1 | cfg.channels > size(analogStream.ChannelData,1))
-        cfg.channels = cfg.channels(cfg.channels >= 1 & cfg.channels <= size(analogStream.ChannelData,1));
-        if isempty(cfg.channels)
-            error('No channels found!');
-        else
-            warning(['Using only channel indices between ' num2str(cfg.channels(1)) ' and ' num2str(cfg.channels(end)) '!']);
+    cfg = McsHDF5.checkParameter(cfg, 'legend', true);
+    cfg = McsHDF5.checkParameter(cfg, 'spacing', false);
+    [cfg, isDefault] = McsHDF5.checkParameter(cfg, 'channel', 1:size(analogStream.ChannelData,1));
+    if ~isDefault
+        if any(cfg.channel < 1 | cfg.channel > size(analogStream.ChannelData,1))
+            cfg.channel = cfg.channel(cfg.channel >= 1 & cfg.channel <= size(analogStream.ChannelData,1));
+            if isempty(cfg.channel)
+                error('No channels found!');
+            else
+                warning(['Using only channel indices between ' num2str(cfg.channel(1)) ' and ' num2str(cfg.channel(end)) '!']);
+            end
         end
     end
-
+    
+    cfg = McsHDF5.checkParameter(cfg, 'window', McsHDF5.TickToSec([analogStream.ChannelDataTimeStamps(1) ...
+                      analogStream.ChannelDataTimeStamps(end)]));
     start_index = find(analogStream.ChannelDataTimeStamps >= McsHDF5.SecToTick(cfg.window(1)),1,'first');
     end_index = find(analogStream.ChannelDataTimeStamps <= McsHDF5.SecToTick(cfg.window(2)),1,'last');
-    
+
     if end_index < start_index
         warning('No time range found')
         return
