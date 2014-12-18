@@ -41,9 +41,15 @@
 %
 %   import McsHDF5.*
 
+%% 
+% In addition to the usual help functions of the Matlab command line,
+% documentation for all functions and classes in this package is provided
+% by the Matlab help browser:
+%
+%   doc McsHDF5
+
 %% Loading data
-% As an example, lets load a data set with 2 analog streams, 1 event stream
-% and 1 segment stream:
+% As an example, lets load a data set with at least 1 analog stream:
 %
 %   data = McsHDF5.McsData('SOME_DATA_FILE.h5');
 
@@ -135,15 +141,14 @@
 %   cfg.dataType = 'double';
 %   converted_data = data.Recording{1}.AnalogStream{1}.getConvertedData(cfg);
 
-%% Loading segments of analog streams
-% For some applications, it can be beneficial to load only segments of an
-% AnalogStream or FrameStream instead of the full data. For example, due to
-% the file size and the amount of available memory, loading a full
-% AnalogStream or FrameStream into Matlab might not be possible. Or,
-% one might only be interested in a portion of the data.
+%% Loading segments of streams
+% For some applications, it can be beneficial to load only segments of a
+% stream instead of the full data. For example, due to the file size and
+% the amount of available memory, loading a full AnalogStream might not be
+% possible. Or, one might only be interested in a portion of the data.
 
 %%
-% For analog streams, this can be achieved by first loading the metadata:
+% This can be achieved by first loading the metadata:
 %
 %   data = McsHDF5.McsData('SOME_DATA_FILE.h5');
 
@@ -159,8 +164,14 @@
 %   plot(partialData,[]); % plot the analog stream segment
 
 %%
-% The procedure for partial loading of frame streams is described at the
-% end of this document in section "Frame Streams".
+% Similar functions that allow loading parts of the full data set are
+% available for all stream types: 
+%
+%   data.Recording{1}.AnalogStream{1}.readPartialChannelData(cfg)
+%   data.Recording{1}.EventStream{1}.readPartialEventData(cfg)
+%   data.Recording{1}.FrameStream{1}.FrameDataEntity{1}.readPartialFrameData(cfg)
+%   data.Recording{1}.SegmentStream{1}.readPartialSegmentData(cfg)
+%   data.Recording{1}.TimeStampStream{1}.readPartialTimeStampData(cfg)
 
 %% Plotting the data
 % Each stream has simple plot functions to allow a quick check whether the
@@ -191,7 +202,7 @@
 % stream:
 %
 %   cfg = [];
-%   cfg.channels = [1 2];
+%   cfg.channel = [1 2];
 %   plot(data.Recording{1}.AnalogStream{2},cfg);
 
 %%
@@ -205,11 +216,11 @@
 % functions to achieve the same thing:
 %
 %   cfg = [];
-%   cfg.analog{2}.channels = [1 2];
+%   cfg.analog{2}.channel = [1 2];
 %   plot(data.Recording{1},cfg);
 %
 %   cfg = [];
-%   cfg.conf.analog{2}.channels = [1 2];
+%   cfg.conf.analog{2}.channel = [1 2];
 %   plot(data,cfg);
 
 %%
@@ -237,7 +248,6 @@
 % If we would execute one of the following commands, the whole frame would
 % be loaded, which we want to avoid to save memory.
 %
-%   frameData.Recording{1}.FrameStream{1}.FrameDataEntity{1}
 %   size(frameData.Recording{1}.FrameStream{1}.FrameDataEntity{1}.FrameData)
 %   plot(frameData.Recording{1}.FrameStream{1}.FrameDataEntity{1},[])
 %   plot(frameData,[]) 
@@ -246,21 +256,21 @@
 % To avoid memory problems, you can load a region of interest as follows:
 %
 %   cfg = [];
-%   cfg.time = [0 0.5]; % 0 to 0.5 s
+%   cfg.window = [0 0.5]; % 0 to 0.5 s
 %   cfg.channel_x = [10 30]; % channel "rows" 10 to 30
 %   cfg.channel_y = []; % all channel "columns"
 %   partialData = frameData.Recording{1}.FrameStream{1}.FrameDataEntities{1}.readPartialFrame(cfg);
 
 %%
-% where 'time', 'channel_x' and 'channel_y' are 2x1 vectors of [start end]
-% indices. For 'time', these are given in seconds with respect to the
+% where 'window', 'channel_x' and 'channel_y' are 2x1 vectors of [start end]
+% indices. For 'window', these are given in seconds with respect to the
 % FrameDataTimeStamps, for the channels these are channel indices. If any
 % of these is an empty array, the whole dimension is used. partialFrame
 % contains only the specified subregion of the frame.
 
 %% Plotting frame data
 % Due to the high dimensionality, finding useful plotting functions for
-% frame data with several thousand channels can be tricky. Three options
+% frame data with several thousands of channels can be tricky. Three options
 % are provided here:
 
 %%
