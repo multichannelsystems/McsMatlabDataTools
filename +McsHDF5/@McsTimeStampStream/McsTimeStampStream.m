@@ -62,7 +62,7 @@ classdef McsTimeStampStream < McsHDF5.McsStream
                 mode = 'hdf5';
             end
             
-            if ~str.DataLoaded
+            if ~str.Internal && ~str.DataLoaded
                 fprintf('Reading time stamp data...')
                 for gidx = 1:length(str.TimeStamps)
                     try
@@ -122,6 +122,78 @@ classdef McsTimeStampStream < McsHDF5.McsStream
             s = [s '\tInfo:\t\t\t\t\t [1x1 struct]'];
             s = [s '\n\n'];
             fprintf(s);
+        end
+        
+        function out_str = readPartialTimeStampData(str, cfg)
+        % Read a subset of the time stamp entities from the stream.
+        %
+        % function out_str = readPartialTimeStampData(str, cfg)
+        %
+        % Reads a subset of the time stamp entities from the HDF5 file and
+        % returns the McsTimeStampStream object containing only the
+        % specific time stamps. Useful, if the data has not yet been read
+        % from the file and the user is only interested in a few time stamp
+        % entities.
+        %
+        % Input:
+        %   str       -   A McsTimeStampStream object
+        %
+        %   cfg       -   Either empty (for default parameters) or a
+        %                 structure with the field:
+        %                 'timestamp': Vector of timestamp entity indices
+        %
+        % Output:
+        %   out_str     -   The McsTimeStampStream with the requested
+        %                   time stamp entities
+            if exist('h5info')
+                mode = 'h5';
+            else
+                mode = 'hdf5';
+            end
+            
+            defaultTimeStamp = 1:length(str.Info.TimeStampEntityID);
+            [cfg, isDefault] = McsHDF5.checkParameter(cfg, 'timestamp', defaultTimeStamp);
+            if ~isDefault
+                if any(cfg.timestamp < 1 | cfg.timestamp > length(defaultTimeStamp) )
+                    cfg.timestamp = cfg.timestamp(cfg.timestamp >= 1 & cfg.timestamp <= length(defaultTimeStamp));
+                    if isempty(cfg.timestamp)
+                        error('No timestamp indices found!');
+                    else
+                        warning(['Using only timestamp indices between ' ...
+                            num2str(cfg.timestamp(1)) ' and ' num2str(cfg.timestamp(end)) '!']);
+                    end
+                end
+            end
+            
+            % read metadata
+            tmpStruct.Name = str.StructName;
+            out_str = McsHDF5.McsTimeStampStream(str.FileName, tmpStruct);
+            out_str.Internal = true;
+            if str.DataLoaded
+                out_str.TimeStamps = str.TimeStamps(1:length(cfg.timestamp));
+            else
+                out_str.TimeStamps = out_str.TimeStamps(1:length(cfg.timestamp));
+                fprintf('Reading partial time stamp data...')
+                for gidx = 1:length(cfg.timestamp)
+                    try
+                        if strcmp(mode,'h5')
+                            out_str.TimeStamps{gidx} = ...
+                                h5read(out_str.FileName,[out_str.StructName '/TimeStampEntity_' num2str(str.Info.TimeStampEntityID(cfg.timestamp(gidx)))])';
+                        else
+                            out_str.TimeStamps{gidx} = ...
+                                hdf5read(out_str.FileName,[out_str.StructName '/TimeStampEntity_' num2str(str.Info.TimeStampEntityID(cfg.timestamp(gidx)))])';
+                        end
+                    end
+                    if ~strcmp(str.TimeStampDataType,'int64')
+                        out_str.TimeStamps{gidx} = cast(out_str.TimeStamps{gidx},str.TimeStampDataType);
+                    end
+                end
+                fprintf('done!\n');
+            end
+            out_str.DataLoaded = true;
+            out_str.TimeStampDataType = str.TimeStampDataType;
+            out_str.copyFields(str, cfg.timestamp);
+            out_str.Internal = false;
         end
     end
 end

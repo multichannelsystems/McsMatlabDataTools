@@ -290,55 +290,46 @@ classdef McsAnalogStream < McsHDF5.McsStream
             tmpStruct.Name = str.StructName;
             out_str = McsHDF5.McsAnalogStream(str.FileName, tmpStruct);
             
-            % read data segment
-            fid = H5F.open(str.FileName);
-            gid = H5G.open(fid,str.StructName);
-            did = H5D.open(gid,'ChannelData');
-            dims = [length(cfg.channel) length(cfg.window)];
-            offset = [cfg.channel(1)-1 cfg.window(1)-1];
-            mem_space_id = H5S.create_simple(2,dims,[]);
-            file_space_id = H5D.get_space(did);
-            H5S.select_hyperslab(file_space_id,'H5S_SELECT_SET',offset,[],[],dims);
-            
             out_str.Internal = true;
-            fprintf('Reading partial analog data...');
-            out_str.ChannelData = H5D.read(did,'H5ML_DEFAULT',mem_space_id,file_space_id,'H5P_DEFAULT')';
-            fprintf('done!\n');
-            fns = fieldnames(out_str.Info);
-            for fni = 1:length(fns)
-                info = str.Info.(fns{fni});
-                out_str.Info.(fns{fni}) = info(cfg.channel);
+            if str.DataLoaded
+                out_str.ChannelData = str.ChannelData(cfg.channel, cfg.window);
+            else
+                % read data segment
+                fid = H5F.open(str.FileName);
+                gid = H5G.open(fid,str.StructName);
+                did = H5D.open(gid,'ChannelData');
+                dims = [length(cfg.channel) length(cfg.window)];
+                offset = [cfg.channel(1)-1 cfg.window(1)-1];
+                mem_space_id = H5S.create_simple(2,dims,[]);
+                file_space_id = H5D.get_space(did);
+                H5S.select_hyperslab(file_space_id,'H5S_SELECT_SET',offset,[],[],dims);
+                
+                fprintf('Reading partial analog data...');
+                out_str.ChannelData = H5D.read(did,'H5ML_DEFAULT',mem_space_id,file_space_id,'H5P_DEFAULT')';
+                fprintf('done!\n');
+                
+                H5D.close(did);
+                H5G.close(gid);
+                H5F.close(fid);
             end
-            
             out_str.ChannelDataTimeStamps = ts(cfg.window);
             out_str.DataLoaded = true;
-            type = str.DataType;
-            out_str.DataType = type;
+            out_str.DataType = str.DataType;
             out_str.TimeStampDataType = str.TimeStampDataType;
-            if ~strcmp(type,'raw')
+            out_str.copyFields(str, cfg.channel);
+            if ~strcmp(str.DataType,'raw')
                 convert_from_raw(out_str);
             end
-            out_str.StreamInfoVersion = str.StreamInfoVersion;
-            out_str.StreamGUID = str.StreamGUID;
-            out_str.StreamType = str.StreamType;
-            out_str.SourceStreamGUID = str.SourceStreamGUID;
-            out_str.Label = str.Label;
-            out_str.DataSubType = str.DataSubType;
             out_str.Internal = false;
             if ~isempty(str.DataUnit)
                 out_str.DataUnit = repmat({str.DataUnit},length(cfg.channel),1);
-            elseif strcmp(type,'raw')
+            elseif strcmp(out_str.DataType,'raw')
                 out_str.DataUnit = repmat({'ADC'},length(cfg.channel),1);
             else
                 [ignore,unit_prefix] = McsHDF5.ExponentToUnit(out_str.Info.Exponent(1),0);
                 out_str.DataUnit = repmat({[unit_prefix out_str.Info.Unit{1}]},length(cfg.channel),1);
             end
-            
-            H5D.close(did);
-            H5G.close(gid);
-            H5F.close(fid);
         end
-        
     end
     
     methods (Access = private)

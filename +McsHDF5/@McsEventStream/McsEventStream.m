@@ -62,7 +62,7 @@ classdef McsEventStream < McsHDF5.McsStream
                 mode = 'hdf5';
             end
             
-            if ~str.DataLoaded
+            if ~str.Internal && ~str.DataLoaded
                 fprintf('Reading event data...')
                 for gidx = 1:length(str.Events)
                     try
@@ -122,6 +122,76 @@ classdef McsEventStream < McsHDF5.McsStream
             s = [s '\tInfo:\t\t\t\t\t [1x1 struct]'];
             s = [s '\n\n'];
             fprintf(s);
+        end
+        
+        function out_str = readPartialEventData(str, cfg)
+        % Read a subset of the event entities from the stream.
+        %
+        % function out_str = readPartialEventData(str, cfg)
+        %
+        % Reads a subset of the event entities from the HDF5 file and
+        % returns the McsEventStream object containing only the specific
+        % events. Useful, if the data has not yet been read from the file
+        % and the user is only interested in a few events.
+        %
+        % Input:
+        %   str       -   A McsEventStream object
+        %
+        %   cfg       -   Either empty (for default parameters) or a
+        %                 structure with the field:
+        %                 'event': Vector of event entity indices
+        %
+        % Output:
+        %   out_str     -   The McsEventStream with the requested event
+        %                   entities
+            if exist('h5info')
+                mode = 'h5';
+            else
+                mode = 'hdf5';
+            end
+            
+            defaultEvent = 1:length(str.Info.EventID);
+            [cfg, isDefault] = McsHDF5.checkParameter(cfg, 'event', defaultEvent);
+            if ~isDefault
+                if any(cfg.event < 1 | cfg.event > length(defaultEvent) )
+                    cfg.event = cfg.event(cfg.event >= 1 & cfg.event <= length(defaultEvent));
+                    if isempty(cfg.event)
+                        error('No event indices found!');
+                    else
+                        warning(['Using only event indices between ' num2str(cfg.event(1)) ' and ' num2str(cfg.event(end)) '!']);
+                    end
+                end
+            end
+            
+            % read metadata
+            tmpStruct.Name = str.StructName;
+            out_str = McsHDF5.McsEventStream(str.FileName, tmpStruct);
+            out_str.Internal = true;
+            if str.DataLoaded
+                out_str.Events = str.Events(1:length(cfg.event));
+            else
+                out_str.Events = out_str.Events(1:length(cfg.event));
+                fprintf('Reading partial event data...')
+                for gidx = 1:length(cfg.event)
+                    try
+                        if strcmp(mode,'h5')
+                            out_str.Events{gidx} = ...
+                                h5read(out_str.FileName,[out_str.StructName '/EventEntity_' num2str(str.Info.EventID(cfg.event(gidx)))])';
+                        else
+                            out_str.Events{gidx} = ...
+                                hdf5read(out_str.FileName,[out_str.StructName '/EventEntity_' num2str(str.Info.EventID(cfg.event(gidx)))])';
+                        end
+                    end
+                    if ~strcmp(str.TimeStampDataType,'int64')
+                        out_str.Events{gidx} = cast(out_str.Events{gidx},str.TimeStampDataType);
+                    end
+                end
+                fprintf('done!\n');
+            end
+            out_str.DataLoaded = true;
+            out_str.TimeStampDataType = str.TimeStampDataType;
+            out_str.copyFields(str, cfg.event);
+            out_str.Internal = false;
         end
     end
 end

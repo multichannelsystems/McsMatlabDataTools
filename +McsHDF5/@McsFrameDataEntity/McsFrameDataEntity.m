@@ -247,10 +247,10 @@ classdef McsFrameDataEntity < handle
             end
         end
 
-        function out_fde = readPartialFrame(fde,cfg)
+        function out_fde = readPartialFrameData(fde,cfg)
         % Read a hyperslab from the fde.
         %
-        % function out_fde = readPartialFrame(fde,cfg)
+        % function out_fde = readPartialFrameData(fde,cfg)
         %
         % Reads a segment of the frame from the HDF5 file and returns the
         % FrameDataEntity object containing only the specific segment.
@@ -319,22 +319,29 @@ classdef McsFrameDataEntity < handle
             % read metadata
             out_fde = McsHDF5.McsFrameDataEntity(fde.FileName, fde.Info, fde.StructName);
             
-            % read data segment
-            fid = H5F.open(fde.FileName);
-            gid = H5G.open(fid,fde.StructName);
-            did = H5D.open(gid,'FrameData');
-            dims = [length(cfg.channel_x) length(cfg.channel_y) length(cfg.window)];
-            offset = [cfg.channel_x(1)-1 cfg.channel_y(1)-1 cfg.window(1)-1];
-            mem_space_id = H5S.create_simple(3,dims,[]);
-            file_space_id = H5D.get_space(did);
-            H5S.select_hyperslab(file_space_id,'H5S_SELECT_SET',offset,[],[],dims);
-            
             out_fde.Internal = true;
-            
-            fprintf('Reading partial frame data...');
-            out_fde.FrameData = H5D.read(did,'H5ML_DEFAULT',mem_space_id,file_space_id,'H5P_DEFAULT');
-            out_fde.FrameData = permute(out_fde.FrameData,[3 2 1]);
-            fprintf('done!\n');
+            if fde.DataLoaded
+                out_fde.FrameData = fde.FrameData(cfg.channel_x, cfg.channel_y, cfg.window);
+            else
+                % read data segment
+                fid = H5F.open(fde.FileName);
+                gid = H5G.open(fid,fde.StructName);
+                did = H5D.open(gid,'FrameData');
+                dims = [length(cfg.channel_x) length(cfg.channel_y) length(cfg.window)];
+                offset = [cfg.channel_x(1)-1 cfg.channel_y(1)-1 cfg.window(1)-1];
+                mem_space_id = H5S.create_simple(3,dims,[]);
+                file_space_id = H5D.get_space(did);
+                H5S.select_hyperslab(file_space_id,'H5S_SELECT_SET',offset,[],[],dims);
+
+                fprintf('Reading partial frame data...');
+                out_fde.FrameData = H5D.read(did,'H5ML_DEFAULT',mem_space_id,file_space_id,'H5P_DEFAULT');
+                out_fde.FrameData = permute(out_fde.FrameData,[3 2 1]);
+                fprintf('done!\n');
+                
+                H5D.close(did);
+                H5G.close(gid);
+                H5F.close(fid);
+            end
             out_fde.Info.FrameRight = out_fde.Info.FrameLeft + cfg.channel_x(end) - 1;
             out_fde.Info.FrameBottom = out_fde.Info.FrameTop + cfg.channel_y(end) - 1;
             out_fde.Info.FrameLeft = out_fde.Info.FrameLeft + cfg.channel_x(1) - 1;
@@ -358,10 +365,6 @@ classdef McsFrameDataEntity < handle
                 [ignore,unit_prefix] = McsHDF5.ExponentToUnit(out_fde.Info.Exponent,0);
                 out_fde.DataUnit = [unit_prefix out_fde.Info.Unit{1}];
             end
-            
-            H5D.close(did);
-            H5G.close(gid);
-            H5F.close(fid);
         end
         
     end

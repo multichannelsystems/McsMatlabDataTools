@@ -130,6 +130,95 @@ classdef McsSegmentStream < McsHDF5.McsStream
             end
         end
         
+        function out_str = readPartialSegmentData(str, cfg)
+        % Read a subset of the segment entities from the stream.
+        %
+        % function out_str = readPartialSegmentData(str, cfg)
+        %
+        % Reads a subset of the segment entities from the HDF5 file and
+        % returns the McsSegmentStream object containing only the specific
+        % segments. Useful, if the data has not yet been read from the file
+        % and the user is only interested in a few segments.
+        %
+        % Input:
+        %   str       -   A McsSegmentStream object
+        %
+        %   cfg       -   Either empty (for default parameters) or a
+        %                 structure with the field:
+        %                 'segment': Vector of segment entity indices
+        %
+        % Output:
+        %   out_str     -   The McsSegmentStream with the requested segment
+        %                   entities
+            if exist('h5info')
+                mode = 'h5';
+            else
+                mode = 'hdf5';
+            end
+            
+            defaultSegment = 1:length(str.Info.SegmentID);
+            [cfg, isDefault] = McsHDF5.checkParameter(cfg, 'segment', defaultSegment);
+            if ~isDefault
+                if any(cfg.segment < 1 | cfg.segment > length(defaultSegment) )
+                    cfg.segment = cfg.segment(cfg.segment >= 1 & cfg.segment <= length(defaultSegment));
+                    if isempty(cfg.segment)
+                        error('No segment indices found!');
+                    else
+                        warning(['Using only segment indices between ' num2str(cfg.segment(1)) ' and ' num2str(cfg.segment(end)) '!']);
+                    end
+                end
+            end
+            
+            tmpStruct.Name = str.StructName;
+            out_str = McsHDF5.McsSegmentStream(str.FileName, tmpStruct);
+            out_str.Internal = true;
+            if str.DataLoaded
+                out_str.SegmentData = str.SegmentData(cfg.segment);
+                out_str.SegmentDataTimeStamps = str.SegmentDataTimeStamps(cfg.segment);
+                emptySegments = cellfun(@isempty, str.SegmentData);
+            else
+                out_str.SegmentData = out_str.SegmentData(cfg.segment);
+                out_str.SegmentDataTimeStamps = out_str.SegmentDataTimeStamps(cfg.segment);
+                fprintf('Reading partial segment data...')
+                emptySegments = false(1,length(cfg.segment));
+                for gidx = 1:length(cfg.segment)
+                    try
+                        if strcmp(mode,'h5')
+                            out_str.SegmentData{gidx} = ...
+                                h5read(out_str.FileName,[out_str.StructName '/SegmentData_' num2str(str.Info.SegmentID(cfg.segment(gidx)))])';
+                        else
+                            out_str.SegmentData{gidx} = ...
+                                hdf5read(out_str.FileName,[out_str.StructName '/SegmentData_' num2str(str.Info.SegmentID(cfg.segment(gidx)))])';
+                        end
+                        if numel(size(out_str.SegmentData{segi})) == 2
+                            out_str.SegmentData{segi} = out_str.SegmentData{segi}';
+                        elseif numel(size(out_str.SegmentData{segi})) == 3
+                           out_str.SegmentData{segi} = permute(out_str.SegmentData{segi},[3 2 1]); 
+                        end
+                    catch
+                        emptySegments(gidx) = true;
+                    end
+                end
+                fprintf('done!\n');
+            end
+            fns = fieldnames(out_str.SourceInfoChannel);
+            for fni = 1:length(fns)
+                info = out_str.SourceInfoChannel.(fns{fni});
+                out_str.SourceInfoChannel.(fns{fni}) = info(cfg.segment);
+            end
+            out_str.DataLoaded = true;
+            out_str.DataType = str.DataType;
+            out_str.TimeStampDataType = str.TimeStampDataType;
+            out_str.copyFields(str, cfg.segment);
+            if ~strcmp(str.DataType,'raw')
+                for segi = 1:length(out_str.Info.SegmentID)
+                    convert_from_raw(out_str, segi);
+                end
+            end
+            out_str.set_data_unit_dimension(emptySegments);
+            out_str.Internal = false;
+        end
+        
         function data = get.SegmentData(str)
         % Accessor function for the SegmentData field.
         %
@@ -143,7 +232,7 @@ classdef McsSegmentStream < McsHDF5.McsStream
                 mode = 'hdf5';
             end
             
-            if ~str.DataLoaded
+            if ~str.Internal && ~str.DataLoaded
                 fprintf('Reading segment data...');
                 emptySegments = false(1,length(str.Info.SegmentID));
                 for segi = 1:length(str.Info.SegmentID)
@@ -155,47 +244,18 @@ classdef McsSegmentStream < McsHDF5.McsStream
                             str.SegmentData{segi} = ...
                                 hdf5read(str.FileName,[str.StructName '/SegmentData_' num2str(str.Info.SegmentID(segi))]);  
                         end
+                        if numel(size(str.SegmentData{segi})) == 2
+                            str.SegmentData{segi} = str.SegmentData{segi}';
+                        elseif numel(size(str.SegmentData{segi})) == 3
+                           str.SegmentData{segi} = permute(str.SegmentData{segi},[3 2 1]); 
+                        end
                     catch
                         emptySegments(segi) = true;
                     end
                 end 
                 fprintf('done!\n');
                 str.DataLoaded = true;
-                for segi = 1:length(str.Info.SegmentID)
-                    if emptySegments(segi)
-                        str.DataUnit{segi} = [];
-                        str.DataDimensions{segi} = [];
-                        continue
-                    end
-                    if strcmp(str.DataType,'raw')
-                        sourceChan = str2double(str.Info.SourceChannelIDs{segi});
-                        if length(sourceChan) == 1
-                            str.DataUnit{segi} = 'ADC';
-                            str.DataDimensions{segi} = 'samples x segments';
-                        else
-                            str.DataUnit{segi} = repmat({'ADC'},length(sourceChan),1);
-                            str.DataDimensions{segi} = 'samples x segments x multisegments';
-                        end
-                    else
-                        convert_from_raw(str,segi);
-                        sourceChan = str2double(str.Info.SourceChannelIDs{segi});
-                        if length(sourceChan) == 1
-                            chanidx = str.SourceInfoChannel.ChannelID == sourceChan;
-                            [ignore,unit_prefix] = McsHDF5.ExponentToUnit(str.SourceInfoChannel.Exponent(chanidx),0);
-                            str.DataUnit{segi} = [unit_prefix str.SourceInfoChannel.Unit{chanidx}];
-                            str.DataDimensions{segi} = 'samples x segments';
-                        else
-                            chanidx = arrayfun(@(x)(find(str.SourceInfoChannel.ChannelID == x)),sourceChan);
-                            str.DataUnit{segi} = [];
-                            for ch = chanidx
-                                [ignore,unit_prefix] = McsHDF5.ExponentToUnit(str.SourceInfoChannel.Exponent(ch),0);
-                                str.DataUnit{segi} = [str.DataUnit{segi} {unit_prefix str.SourceInfoChannel.Unit{ch}}];
-                            end
-                            str.DataDimensions{segi} = 'samples x segments x multisegments';
-                        end
-                        
-                    end
-                end
+                str.set_data_unit_dimension(emptySegments);
             end
             data = str.SegmentData;
         end
@@ -304,7 +364,44 @@ classdef McsSegmentStream < McsHDF5.McsStream
                 seg.SegmentData{idx} = bsxfun(@minus,seg.SegmentData{idx},adzero);
                 seg.SegmentData{idx} = bsxfun(@times,seg.SegmentData{idx},conv_factor);
             end
-            
+        end
+        
+        function set_data_unit_dimension(str, emptySegments)    
+            for segi = 1:length(str.Info.SegmentID)
+                if emptySegments(segi)
+                    str.DataUnit{segi} = [];
+                    str.DataDimensions{segi} = [];
+                    continue
+                end
+                if strcmp(str.DataType,'raw')
+                    sourceChan = str2double(str.Info.SourceChannelIDs{segi});
+                    if length(sourceChan) == 1
+                        str.DataUnit{segi} = 'ADC';
+                        str.DataDimensions{segi} = 'samples x segments';
+                    else
+                        str.DataUnit{segi} = repmat({'ADC'},length(sourceChan),1);
+                        str.DataDimensions{segi} = 'samples x segments x multisegments';
+                    end
+                else
+                    convert_from_raw(str,segi);
+                    sourceChan = str2double(str.Info.SourceChannelIDs{segi});
+                    if length(sourceChan) == 1
+                        chanidx = str.SourceInfoChannel.ChannelID == sourceChan;
+                        [ignore,unit_prefix] = McsHDF5.ExponentToUnit(str.SourceInfoChannel.Exponent(chanidx),0);
+                        str.DataUnit{segi} = [unit_prefix str.SourceInfoChannel.Unit{chanidx}];
+                        str.DataDimensions{segi} = 'samples x segments';
+                    else
+                        chanidx = arrayfun(@(x)(find(str.SourceInfoChannel.ChannelID == x)),sourceChan);
+                        str.DataUnit{segi} = [];
+                        for ch = chanidx
+                            [ignore,unit_prefix] = McsHDF5.ExponentToUnit(str.SourceInfoChannel.Exponent(ch),0);
+                            str.DataUnit{segi} = [str.DataUnit{segi} {unit_prefix str.SourceInfoChannel.Unit{ch}}];
+                        end
+                        str.DataDimensions{segi} = 'samples x segments x multisegments';
+                    end
+
+                end
+            end
         end
     end
     

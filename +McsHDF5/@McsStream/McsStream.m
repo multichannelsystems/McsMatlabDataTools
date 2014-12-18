@@ -14,8 +14,8 @@ classdef McsStream < handle
     end
     
     properties (Access = protected)
-        FileName
-        StructName
+        FileName            
+        StructName          
         DataLoaded = false;
         Internal = false;
     end
@@ -86,4 +86,19 @@ classdef McsStream < handle
         
     end
     
+    methods (Access = protected)
+        function copyFields(to, from, index)
+            to.StreamInfoVersion = from.StreamInfoVersion;
+            to.StreamGUID = from.StreamGUID;
+            to.StreamType = from.StreamType;
+            to.SourceStreamGUID = from.SourceStreamGUID;
+            to.Label = from.Label;
+            to.DataSubType = from.DataSubType;
+            fns = fieldnames(to.Info);
+            for fni = 1:length(fns)
+                info = from.Info.(fns{fni});
+                to.Info.(fns{fni}) = info(index);
+            end
+        end
+    end
 end
