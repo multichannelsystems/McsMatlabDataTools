@@ -1,8 +1,0 @@
-/* Created by mdot for Matlab */
-digraph m2html {
-  McsFrameStream -> McsFrameStream;
-  plot -> plot;
-
-  McsFrameStream [URL="McsFrameStream.html"];
-  plot [URL="plot.html"];
-}

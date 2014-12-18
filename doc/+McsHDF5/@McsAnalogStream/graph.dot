@@ -1,8 +1,0 @@
-/* Created by mdot for Matlab */
-digraph m2html {
-  McsAnalogStream -> McsAnalogStream;
-  plot -> plot;
-
-  McsAnalogStream [URL="McsAnalogStream.html"];
-  plot [URL="plot.html"];
-}
