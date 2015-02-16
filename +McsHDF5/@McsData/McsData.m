@@ -70,14 +70,14 @@ classdef McsData
                             validFile = true;
                         end
                     elseif strcmp(inf.Attributes(att).Name,'McsHdf5ProtocolVersion')
-                        if inf.Attributes(att).Value ~= 1
-                            error('Only MCS HDF5 version 1 is supported!');
+                        if inf.Attributes(att).Value > 2
+                            error('Only MCS HDF5 up to version 2 is supported!');
                         else
                             data.McsHdf5Version = inf.Attributes(att).Value;
                         end
                     elseif strcmp(inf.Attributes(att).Name,'McsHdf5Version')
                         if inf.Attributes(att).Value ~= 1
-                            error('Only MCS HDF5 version 1 is supported!');
+                            error('Only MCS HDF5 up to version 2 is supported!');
                         else
                             validFile = true;
                             data.McsHdf5Version = inf.Attributes(att).Value;
@@ -93,12 +93,12 @@ classdef McsData
                             validFile = true;
                         end
                     elseif strcmp(inf.Attributes(att).Name,'/McsHdf5ProtocolVersion')
-                        if inf.Attributes(att).Value ~= 1
-                            error('Only MCS HDF5 version 1 is supported!');
+                        if inf.Attributes(att).Value > 2
+                            error('Only MCS HDF5 up to version 2 is supported!');
                         end
                     elseif strcmp(inf.Attributes(att).Name,'/McsHdf5Version')
                         if inf.Attributes(att).Value ~= 1
-                            error('Only MCS HDF5 version 1 is supported!');
+                            error('Only MCS HDF5 up to version 2 is supported!');
                         else
                             validFile = true;
                             data.McsHdf5Version = inf.Attributes(att).Value;
