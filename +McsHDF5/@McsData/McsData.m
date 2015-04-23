@@ -65,19 +65,28 @@ classdef McsData
                 for att = 1:length(inf.Attributes)
                     if strcmp(inf.Attributes(att).Name,'McsHdf5ProtocolType')
                         if ~strcmp(inf.Attributes(att).Value,'RawData')
-                            error('Only the RawData protocol type is supported!');
+                            error(['Only the RawData protocol type is supported! '...
+                                'Please see \n\n'...
+                                '\thttp://www.multichannelsystems.com/software/multi-channel-datamanager \n\n' ...
+                                ' for an update of the HDF5 Matlab Tools.']);
                         else
                             validFile = true;
                         end
                     elseif strcmp(inf.Attributes(att).Name,'McsHdf5ProtocolVersion')
-                        if inf.Attributes(att).Value > 2
-                            error('Only MCS HDF5 up to version 2 is supported!');
+                        if inf.Attributes(att).Value > 3
+                            error(['Only MCS HDF5 up to version 3 is supported! '...
+                                'Please see \n\n'...
+                                '\thttp://www.multichannelsystems.com/software/multi-channel-datamanager \n\n' ...
+                                ' for an update of the HDF5 Matlab Tools.']);
                         else
                             data.McsHdf5Version = inf.Attributes(att).Value;
                         end
                     elseif strcmp(inf.Attributes(att).Name,'McsHdf5Version')
                         if inf.Attributes(att).Value ~= 1
-                            error('Only MCS HDF5 up to version 2 is supported!');
+                            error(['Only MCS HDF5 up to version 3 is supported! '...
+                                'Please see \n\n'...
+                                '\thttp://www.multichannelsystems.com/software/multi-channel-datamanager \n\n' ...
+                                ' for an update of the HDF5 Matlab Tools.']);
                         else
                             validFile = true;
                             data.McsHdf5Version = inf.Attributes(att).Value;
@@ -88,17 +97,26 @@ classdef McsData
                 for att = 1:length(inf.Attributes)
                     if strcmp(inf.Attributes(att).Name,'/McsHdf5ProtocolType')
                         if ~strcmp(inf.Attributes(att).Value.Data,'RawData')
-                            error('Only the RawData protocol type is supported!');
+                            error(['Only the RawData protocol type is supported! '...
+                                'Please see \n\n'...
+                                '\thttp://www.multichannelsystems.com/software/multi-channel-datamanager \n\n' ...
+                                ' for an update of the HDF5 Matlab Tools.']);
                         else
                             validFile = true;
                         end
                     elseif strcmp(inf.Attributes(att).Name,'/McsHdf5ProtocolVersion')
-                        if inf.Attributes(att).Value > 2
-                            error('Only MCS HDF5 up to version 2 is supported!');
+                        if inf.Attributes(att).Value > 3
+                            error(['Only MCS HDF5 up to version 3 is supported! '...
+                                'Please see \n\n'...
+                                '\thttp://www.multichannelsystems.com/software/multi-channel-datamanager \n\n' ...
+                                ' for an update of the HDF5 Matlab Tools.']);
                         end
                     elseif strcmp(inf.Attributes(att).Name,'/McsHdf5Version')
                         if inf.Attributes(att).Value ~= 1
-                            error('Only MCS HDF5 up to version 2 is supported!');
+                            error(['Only MCS HDF5 up to version 3 is supported! '...
+                                'Please see \n\n'...
+                                '\thttp://www.multichannelsystems.com/software/multi-channel-datamanager \n\n' ...
+                                ' for an update of the HDF5 Matlab Tools.']);
                         else
                             validFile = true;
                             data.McsHdf5Version = inf.Attributes(att).Value;
