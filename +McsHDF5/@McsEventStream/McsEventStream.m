@@ -144,6 +144,8 @@ classdef McsEventStream < McsHDF5.McsStream
         %   cfg       -   Either empty (for default parameters) or a
         %                 structure with the field:
         %                 'event': Vector of event entity indices
+        %                 'window': Empty for all timestamps, otherwise a
+        %                   vector [start end] in seconds
         %
         % Output:
         %   out_str     -   The McsEventStream with the requested event
@@ -166,6 +168,7 @@ classdef McsEventStream < McsHDF5.McsStream
                     end
                 end
             end
+            cfg = McsHDF5.checkParameter(cfg, 'window', [-Inf Inf]);
             
             % read metadata
             tmpStruct.Name = str.StructName;
@@ -188,6 +191,11 @@ classdef McsEventStream < McsHDF5.McsStream
                     end
                     if ~strcmp(str.TimeStampDataType,'int64')
                         out_str.Events{gidx} = cast(out_str.Events{gidx},str.TimeStampDataType);
+                    end
+                    if ~isempty(out_str.Events{gidx})
+                        idx = McsHDF5.TickToSec(out_str.Events{gidx}(1,:)) >= cfg.window(1) ...
+                            & McsHDF5.TickToSec(out_str.Events{gidx}(1,:)) <= cfg.window(2);
+                        out_str.Events{gidx} = out_str.Events{gidx}(:,idx);
                     end
                 end
                 fprintf('done!\n');

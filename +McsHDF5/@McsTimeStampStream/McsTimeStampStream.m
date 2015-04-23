@@ -138,6 +138,8 @@ classdef McsTimeStampStream < McsHDF5.McsStream
         %   cfg       -   Either empty (for default parameters) or a
         %                 structure with the field:
         %                 'timestamp': Vector of timestamp entity indices
+        %                 'window': Empty for all timestamps, otherwise a
+        %                   vector [start end] in seconds
         %
         % Output:
         %   out_str     -   The McsTimeStampStream with the requested
@@ -161,6 +163,7 @@ classdef McsTimeStampStream < McsHDF5.McsStream
                     end
                 end
             end
+            cfg = McsHDF5.checkParameter(cfg, 'window', [-Inf Inf]);
             
             % read metadata
             tmpStruct.Name = str.StructName;
@@ -184,6 +187,9 @@ classdef McsTimeStampStream < McsHDF5.McsStream
                     if ~strcmp(str.TimeStampDataType,'int64')
                         out_str.TimeStamps{gidx} = cast(out_str.TimeStamps{gidx},str.TimeStampDataType);
                     end
+                    idx = McsHDF5.TickToSec(out_str.TimeStamps{gidx}) >= cfg.window(1) ...
+                        & McsHDF5.TickToSec(out_str.TimeStamps{gidx}) <= cfg.window(2);
+                    out_str.TimeStamps{gidx} = out_str.TimeStamps{gidx}(idx);
                 end
                 fprintf('done!\n');
             end
