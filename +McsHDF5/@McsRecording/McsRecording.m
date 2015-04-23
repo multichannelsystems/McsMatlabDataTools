@@ -105,9 +105,9 @@ classdef McsRecording
                     % read segment streams
                     for streams = 1:length(recStruct.Groups(gidx).Groups)
                         if isempty(varargin)
-                            rec.SegmentStream{streams} = McsHDF5.McsSegmentStream(filename, recStruct.Groups(gidx).Groups(streams));
+                            rec.SegmentStream{streams} = McsHDF5.McsSegmentStream.makeSegmentStream(filename, recStruct.Groups(gidx).Groups(streams));
                         else
-                            rec.SegmentStream{streams} = McsHDF5.McsSegmentStream(filename, recStruct.Groups(gidx).Groups(streams), varargin{:});
+                            rec.SegmentStream{streams} = McsHDF5.McsSegmentStream.makeSegmentStream(filename, recStruct.Groups(gidx).Groups(streams), varargin{:});
                         end
                     end
                 

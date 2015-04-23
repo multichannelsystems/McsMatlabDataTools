@@ -79,14 +79,15 @@
 
 %% Units
 % For each stream, the associated data is stored in the field ChannelData
-% (AnalogStream), SegmentData (SegmentStream), FrameData (FrameDataEntities
-% of FrameStreams), Events (EventStream) of Timestamps (TimeStampStream).
-% Accessing one of these will load the data from the file.
-% Per default, these values have already been converted during loading from
-% ADC units to more useful units such as Volts. The actual unit it is
-% represented in can be found for each stream in the fields Unit and
-% Exponent (values 'V' and -9, respectively, mean that the data is stored
-% in $$ 10^{-9} $$ V) of its Info structure:
+% (AnalogStream), SegmentData (SegmentStream with spike cutouts),
+% AverageDataMean (SegmentStream with averages) FrameData
+% (FrameDataEntities of FrameStreams), Events (EventStream) of Timestamps
+% (TimeStampStream). Accessing one of these will load the data from the
+% file. Per default, these values have already been converted during
+% loading from ADC units to more useful units such as Volts. The actual
+% unit it is represented in can be found for each stream in the fields Unit
+% and Exponent (values 'V' and -9, respectively, mean that the data is
+% stored in $$ 10^{-9} $$ V) of its Info structure:
 %
 %   data.Recording{1}.AnalogStream{1}.Info.Unit{1}
 %   data.Recording{1}.AnalogStream{1}.Info.Exponent(1)
@@ -95,14 +96,16 @@
 % The time stamp associated with each sample is stored in the field
 % {Channel,Frame,Segment}DataTimeStamps in microseconds. Similarly, the
 % time stamps of events in the EventStream or time stamps in the
-% TimeStampStream are stored in microseconds as well.
+% TimeStampStream are stored in microseconds as well. For segment streams
+% with averages, the field AverageDataTimeStamps denotes the time range
+% used to compute the averages.
 
 %% Data types
 % For some applications, it might be necessary to change the data type of
 % the data and the time stamps, for example because of memory constraints.
-% The default data type for the {Channel,Frame,Segment}Data is 'double'. By
-% specifying the data type during the loading of the file, you can halve the
-% memory requirements by using 'single' instead. 
+% The default data type for the {Channel,Frame,Segment,Average}Data
+% is 'double'. By specifying the data type during the loading of the file,
+% you can halve the memory requirements by using 'single' instead.
 %
 %   cfg = [];
 %   cfg.dataType = 'single';
