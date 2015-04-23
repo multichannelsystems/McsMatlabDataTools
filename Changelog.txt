@@ -1,5 +1,21 @@
 McsMatlabDataTools
 ==================
+--------------------------
+Version 0.3.0 (2015-04-23)
+--------------------------
+
+- New features:
+	* Segment stream subtype Average is treated independently from subtype Spike.
+		Depending on the DataSubType of a McsSegmentStream, averages are handled by
+		the McsAverageSegment class and (spike) cutouts by the McsCutoutSegment class,
+		both having their own plot function.
+	* Added option 'window' to readPartialEventData and readPartialTimeStampData to 
+		read in events and time stamps from a particular time range
+	* Accept McsHdf5ProtocolVersion 3
+
+- Bug fixes:
+	* Fixed option 'event' in readPartialEventData to work as a vector of event indices
+	* Fixed option 'timestamp' in readPartialTimeStampData to work as a vector of time stamp indices
 
 --------------------------
 Version 0.2.1 (2015-02-16)
