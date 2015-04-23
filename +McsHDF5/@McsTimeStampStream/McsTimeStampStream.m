@@ -170,9 +170,9 @@ classdef McsTimeStampStream < McsHDF5.McsStream
             out_str = McsHDF5.McsTimeStampStream(str.FileName, tmpStruct);
             out_str.Internal = true;
             if str.DataLoaded
-                out_str.TimeStamps = str.TimeStamps(1:length(cfg.timestamp));
+                out_str.TimeStamps = str.TimeStamps(cfg.timestamp);
             else
-                out_str.TimeStamps = out_str.TimeStamps(1:length(cfg.timestamp));
+                out_str.TimeStamps = out_str.TimeStamps(cfg.timestamp);
                 fprintf('Reading partial time stamp data...')
                 for gidx = 1:length(cfg.timestamp)
                     try

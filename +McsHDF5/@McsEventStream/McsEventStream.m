@@ -175,9 +175,9 @@ classdef McsEventStream < McsHDF5.McsStream
             out_str = McsHDF5.McsEventStream(str.FileName, tmpStruct);
             out_str.Internal = true;
             if str.DataLoaded
-                out_str.Events = str.Events(1:length(cfg.event));
+                out_str.Events = str.Events(cfg.event);
             else
-                out_str.Events = out_str.Events(1:length(cfg.event));
+                out_str.Events = out_str.Events(cfg.event);
                 fprintf('Reading partial event data...')
                 for gidx = 1:length(cfg.event)
                     try
