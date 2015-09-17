@@ -43,7 +43,7 @@ function plot(frameStream,cfg,varargin)
 %   frameStream.plot(cfg);
 %   frameStream.plot(cfg, ...);
 
-    cfg = McsHDF5.checkParameter(cfg, 'entities', 1:length(frameStream.FrameDataEntities));
+    cfg = McsHDF5.checkParameter(cfg, 'entities', 1:length(frameStream.FrameDataEntity));
     [cfg, isDefault] = McsHDF5.checkParameter(cfg, 'window', repmat({[]},1,length(cfg.entities)));
     if ~isDefault
         if length(cfg.window) <= 2 && ~iscell(cfg.window)
@@ -74,7 +74,7 @@ function plot(frameStream,cfg,varargin)
         cfg_ent.window = cfg.window{enti};
         cfg_ent.channelMatrix = cfg.channelMatrix{enti};
         
-        plot(frameStream.FrameDataEntities{id},cfg_ent,varargin);
+        plot(frameStream.FrameDataEntity{id},cfg_ent,varargin);
     end
 
 end
