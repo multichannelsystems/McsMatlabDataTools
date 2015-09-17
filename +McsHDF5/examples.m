@@ -81,7 +81,7 @@
 % For each stream, the associated data is stored in the field ChannelData
 % (AnalogStream), SegmentData (SegmentStream with spike cutouts),
 % AverageDataMean (SegmentStream with averages) FrameData
-% (FrameDataEntities of FrameStreams), Events (EventStream) of Timestamps
+% (FrameDataEntity of FrameStreams), Events (EventStream) of Timestamps
 % (TimeStampStream). Accessing one of these will load the data from the
 % file. Per default, these values have already been converted during
 % loading from ADC units to more useful units such as Volts. The actual
@@ -262,7 +262,7 @@
 %   cfg.window = [0 0.5]; % 0 to 0.5 s
 %   cfg.channel_x = [10 30]; % channel "rows" 10 to 30
 %   cfg.channel_y = []; % all channel "columns"
-%   partialData = frameData.Recording{1}.FrameStream{1}.FrameDataEntities{1}.readPartialFrame(cfg);
+%   partialData = frameData.Recording{1}.FrameStream{1}.FrameDataEntity{1}.readPartialFrame(cfg);
 
 %%
 % where 'window', 'channel_x' and 'channel_y' are 2x1 vectors of [start end]
