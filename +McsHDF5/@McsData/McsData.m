@@ -143,14 +143,14 @@ classdef McsData
             end
             
             % Recordings
-            for recs = 1:length(inf.Groups)
-                if isempty(inf.Groups(recs).Groups)
+            for recs = 1:length(inf.Groups.Groups)
+                if isempty(inf.Groups.Groups(recs))
                     continue
                 end
                 if isempty(varargin)
-                    data.Recording{recs} = McsHDF5.McsRecording(filename, inf.Groups(recs).Groups);
+                    data.Recording{recs} = McsHDF5.McsRecording(filename, inf.Groups.Groups(recs));
                 else
-                    data.Recording{recs} = McsHDF5.McsRecording(filename, inf.Groups(recs).Groups, varargin{:});
+                    data.Recording{recs} = McsHDF5.McsRecording(filename, inf.Groups.Groups(recs), varargin{:});
                 end
             end
         end
