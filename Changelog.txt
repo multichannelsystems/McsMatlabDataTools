@@ -1,6 +1,14 @@
 McsMatlabDataTools
 ==================
 --------------------------
+Version 0.3.1 (2015-09-21)
+--------------------------
+
+- Bug fixes:
+	* Fixed reading of files with multiple recordings
+	* Renamed 'FrameDataEntities' to 'FrameDataEntity' in McsFrameStream.plot
+
+--------------------------
 Version 0.3.0 (2015-04-23)
 --------------------------
 
