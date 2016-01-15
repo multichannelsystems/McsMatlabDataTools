@@ -66,9 +66,9 @@ function plot(segStream,cfg,varargin)
         if all(size(data_to_plot) > 2) 
             [X,Y] = meshgrid(1:size(data_to_plot,2),1:size(data_to_plot,1));
             if isempty([varargin{:}])
-                surfl(X,Y,data_to_plot);
+                surf(X,Y,data_to_plot);
             else
-                surfl(X,Y,data_to_plot,varargin{:});
+                surf(X,Y,data_to_plot,varargin{:});
             end
             shading interp
             xlabel('samples')
