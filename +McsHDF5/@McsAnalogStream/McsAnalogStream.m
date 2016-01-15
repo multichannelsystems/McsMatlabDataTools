@@ -320,7 +320,7 @@ classdef McsAnalogStream < McsHDF5.McsStream
             out_str.DataType = str.DataType;
             out_str.TimeStampDataType = str.TimeStampDataType;
             out_str.copyFields(str, cfg.channel);
-            if ~strcmp(str.DataType,'raw')
+            if ~strcmp(str.DataType,'raw') && ~str.DataLoaded
                 convert_from_raw(out_str);
             end
             out_str.Internal = false;

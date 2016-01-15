@@ -394,6 +394,7 @@ classdef McsAverageSegment < McsHDF5.McsSegmentStream
             
             out_str.AverageDataTimeStamps = out_str.AverageDataTimeStamps(cfg.segment);
             out_str.AverageDataCount = out_str.AverageDataCount(cfg.segment);
+            out_str.DataType = str.DataType;
             
             if str.MeanLoaded
                 out_str.AverageDataMean = str.AverageDataMean(cfg.segment);
@@ -445,7 +446,6 @@ classdef McsAverageSegment < McsHDF5.McsSegmentStream
             end
             out_str.MeanLoaded = true;
             out_str.StdDevLoaded = true;
-            out_str.DataType = str.DataType;
             out_str.TimeStampDataType = str.TimeStampDataType;
             out_str.copyFields(str, cfg.segment);
             out_str.set_data_unit_dimension(emptySegments);
@@ -511,7 +511,9 @@ classdef McsAverageSegment < McsHDF5.McsSegmentStream
             H5S.select_hyperslab(file_space_id,'H5S_SELECT_SET',offset,[],[],dims);
             str.AverageDataMean{storageIndex} = H5D.read(did,'H5ML_DEFAULT',mem_space_id,file_space_id,'H5P_DEFAULT');
             str.AverageDataMean{storageIndex} = reshape(str.AverageDataMean{storageIndex}, fliplr(dims(2:3)))';
-            convert_mean_from_raw(str,storageIndex);
+            if ~strcmp(str.DataType,'raw')
+                convert_mean_from_raw(str,storageIndex);
+            end
             H5D.close(did);
             str.Internal = false;
         end
@@ -528,7 +530,9 @@ classdef McsAverageSegment < McsHDF5.McsSegmentStream
             H5S.select_hyperslab(file_space_id,'H5S_SELECT_SET',offset,[],[],dims);
             str.AverageDataStdDev{storageIndex} = H5D.read(did,'H5ML_DEFAULT',mem_space_id,file_space_id,'H5P_DEFAULT');
             str.AverageDataStdDev{storageIndex} = reshape(str.AverageDataStdDev{storageIndex}, fliplr(dims(2:3)))';
-            convert_stddev_from_raw(str,storageIndex);
+            if ~strcmp(str.DataType,'raw')
+                convert_stddev_from_raw(str,storageIndex);
+            end
             H5D.close(did);
             str.Internal = false;
         end

@@ -365,7 +365,7 @@ classdef McsFrameDataEntity < handle
             out_fde.TimeStampDataType = fde.TimeStampDataType;
             type = fde.DataType;
             out_fde.DataType = type;
-            if ~strcmp(type,'raw')
+            if ~strcmp(type,'raw') && ~fde.DataLoaded
                 convert_from_raw(out_fde);
             end
             out_fde.Internal = false;

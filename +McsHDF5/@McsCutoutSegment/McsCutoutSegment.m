@@ -144,6 +144,11 @@ classdef McsCutoutSegment < McsHDF5.McsSegmentStream
                 end 
                 fprintf('done!\n');
                 str.DataLoaded = true;
+                if ~strcmp(str.DataType,'raw')
+                    for segi = 1:length(str.Info.SegmentID)
+                        convert_from_raw(str, segi);
+                    end
+                end
                 str.set_data_unit_dimension(emptySegments);
             end
             data = str.SegmentData;
@@ -307,10 +312,10 @@ classdef McsCutoutSegment < McsHDF5.McsSegmentStream
                     try
                         if strcmp(mode,'h5')
                             out_str.SegmentData{gidx} = ...
-                                h5read(out_str.FileName,[out_str.StructName '/SegmentData_' num2str(str.Info.SegmentID(cfg.segment(gidx)))])';
+                                h5read(out_str.FileName,[out_str.StructName '/SegmentData_' num2str(str.Info.SegmentID(cfg.segment(gidx)))]);
                         else
                             out_str.SegmentData{gidx} = ...
-                                hdf5read(out_str.FileName,[out_str.StructName '/SegmentData_' num2str(str.Info.SegmentID(cfg.segment(gidx)))])';
+                                hdf5read(out_str.FileName,[out_str.StructName '/SegmentData_' num2str(str.Info.SegmentID(cfg.segment(gidx)))]);
                         end
                         if numel(size(out_str.SegmentData{gidx})) == 2
                             out_str.SegmentData{gidx} = out_str.SegmentData{gidx}';
@@ -332,7 +337,7 @@ classdef McsCutoutSegment < McsHDF5.McsSegmentStream
             out_str.DataType = str.DataType;
             out_str.TimeStampDataType = str.TimeStampDataType;
             out_str.copyFields(str, cfg.segment);
-            if ~strcmp(str.DataType,'raw')
+            if ~strcmp(str.DataType,'raw') && ~str.DataLoaded
                 for segi = 1:length(out_str.Info.SegmentID)
                     convert_from_raw(out_str, segi);
                 end
@@ -384,7 +389,6 @@ classdef McsCutoutSegment < McsHDF5.McsSegmentStream
                         str.DataDimensions{segi} = 'samples x segments x multisegments';
                     end
                 else
-                    convert_from_raw(str,segi);
                     sourceChan = str2double(str.Info.SourceChannelIDs{segi});
                     if length(sourceChan) == 1
                         chanidx = str.SourceInfoChannel.ChannelID == sourceChan;
