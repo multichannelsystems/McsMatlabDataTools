@@ -11,6 +11,8 @@ classdef McsAnalogStream < McsHDF5.McsStream
 %
 % The other fields and the Info field provide general information about the
 % analog stream.
+%
+% (c) 2016 by Multi Channel Systems MCS GmbH
 
     properties (SetAccess = private)
         ChannelData = []; % (channels x samples) Data matrix

@@ -8,6 +8,8 @@ function tick = SecToTick(sec)
 %
 % Output:
 %   tick    -   seconds converted to microseconds.
+%
+% (c) 2016 by Multi Channel Systems MCS GmbH
 
     tick = sec * 1e6;
 end

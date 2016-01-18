@@ -4,6 +4,8 @@ classdef McsRecording
 % The different streams present in the recording are sorted into the
 % {Analog,Frame,Event,Segment,TimeStamp}Stream fields where they are stored
 % as cell arrays.
+%
+% (c) 2016 by Multi Channel Systems MCS GmbH
     
     properties (SetAccess = private)
         RecordingID = 0         % (scalar) The recording ID

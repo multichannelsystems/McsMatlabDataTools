@@ -10,6 +10,8 @@ classdef McsEventStream < McsHDF5.McsStream
 %
 %   The Info field and the other attributes provide general information
 %   about the event stream.
+%
+% (c) 2016 by Multi Channel Systems MCS GmbH
     
     properties (SetAccess = private)
         % Events - (cell array) Each cell holds either a (1 x events)

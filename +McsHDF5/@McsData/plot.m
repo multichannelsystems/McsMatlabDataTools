@@ -29,6 +29,8 @@ function plot(data,cfg,varargin)
 %   plot(data, cfg, ...);
 %   data.plot(cfg);
 %   data.plot(cfg, ...);
+%
+% (c) 2016 by Multi Channel Systems MCS GmbH
     
     cfg = McsHDF5.checkParameter(cfg, 'recordings', 1:length(data.Recording));
     [cfg,isDefault] = McsHDF5.checkParameter(cfg, 'conf', repmat({[]},1,length(cfg.recordings)));

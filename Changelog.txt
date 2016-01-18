@@ -1,6 +1,15 @@
 McsMatlabDataTools
 ==================
 --------------------------
+Version 1.0.0 (2016-01-15)
+--------------------------
+
+- New installation package for Matlab 2015b and newer
+- Use "surf" instead of "surfl" for McsSegmentStream.plot
+- Bug fix:
+	* Fixed bugs in the readPartial* functions where the conversion factor was not applied properly
+	
+--------------------------
 Version 0.3.1 (2015-09-21)
 --------------------------
 

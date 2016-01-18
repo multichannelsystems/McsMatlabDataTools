@@ -32,6 +32,8 @@ function plot(segStream, cfg, varargin)
 %   plot(segStream, cfg, ...);
 %   segStream.plot(cfg);
 %   segStream.plot(cfg, ...);
+%
+% (c) 2016 by Multi Channel Systems MCS GmbH
 
     clf
     

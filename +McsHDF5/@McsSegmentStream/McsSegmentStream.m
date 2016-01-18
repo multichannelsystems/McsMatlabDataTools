@@ -1,5 +1,7 @@
 classdef McsSegmentStream < McsHDF5.McsStream
-% Holds the contents of a SegmentStream, either spike data or averagers
+% Holds the contents of a SegmentStream, either spike data or averages
+%
+% (c) 2016 by Multi Channel Systems MCS GmbH
     
     properties (SetAccess = protected)
         % (struct) Information about the source channel(s) of the segment. 

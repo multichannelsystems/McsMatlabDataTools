@@ -20,6 +20,8 @@ function plot(evtStream,cfg,varargin)
 %   plot(evtStream, cfg, ...);
 %   evtStream.plot(cfg);
 %   evtStream.plot(cfg, ...);
+%
+% (c) 2016 by Multi Channel Systems MCS GmbH
 
     lineLength = 0.3;
     M = cell(length(evtStream.Events),2);

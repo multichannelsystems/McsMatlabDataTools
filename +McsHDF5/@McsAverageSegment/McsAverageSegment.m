@@ -43,6 +43,8 @@ classdef McsAverageSegment < McsHDF5.McsSegmentStream
 %
 %   The other attributes provide information about the data types and the
 %   data dimensions.
+%
+% (c) 2016 by Multi Channel Systems MCS GmbH
 
     properties (SetAccess = private)
         AverageDataMean = {}; % (cell array) Each cell holds a (samples x averages) data matrix with mean values

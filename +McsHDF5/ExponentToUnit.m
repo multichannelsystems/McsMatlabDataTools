@@ -18,6 +18,8 @@ function [fact,unit_string] = ExponentToUnit(e,o)
 %
 %   unit_string -   depending on the output range, the unit prefix (n, µ,
 %                   m, ...)
+%
+% (c) 2016 by Multi Channel Systems MCS GmbH
 
     poss_strings = {'n','\mu','m','','k','M','G'};
     poss_exp = [-9,-6,-3,0,3,6,9];

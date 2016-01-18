@@ -29,6 +29,8 @@ classdef McsCutoutSegment < McsHDF5.McsSegmentStream
 %
 %   The other attributes provide information about the data types and the
 %   data dimensions.
+%
+% (c) 2016 by Multi Channel Systems MCS GmbH
     
     properties (SetAccess = private)
         % SegmentData - (cell array) Each cell holds either a 

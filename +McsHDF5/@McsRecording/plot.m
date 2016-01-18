@@ -46,6 +46,8 @@ function plot(recording,cfg,varargin)
 %   plot(recording, cfg, ...);
 %   recording.plot(cfg);
 %   recording.plot(cfg, ...);
+%
+% (c) 2016 by Multi Channel Systems MCS GmbH
 
     if ~isempty(recording.AnalogStream)
         

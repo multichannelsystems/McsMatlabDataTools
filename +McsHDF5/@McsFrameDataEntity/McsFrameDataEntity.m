@@ -19,6 +19,8 @@ classdef McsFrameDataEntity < handle
 %
 %   The Info field provides general information about the frame stream,
 %   while the other fields describe data types, units and dimensions.
+%
+% (c) 2016 by Multi Channel Systems MCS GmbH
 
     properties (SetAccess = private)
         FrameData = []; % (channels_x x channels_y x samples) Data array

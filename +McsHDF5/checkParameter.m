@@ -7,6 +7,8 @@ function [cfg, isDefault] = checkParameter(cfg, fieldname, default)
 % if it is empty, sets it to default, otherwise leaves it unchanged.
 % isDefault is true if the default settings have been set in cfg, otherwise
 % false if the field is unchanged.
+%
+% (c) 2016 by Multi Channel Systems MCS GmbH
 
     isDefault = false;
 

@@ -34,6 +34,8 @@ function frameMovie(fde,cfg,varargin)
 %   frameMovie(fde, cfg, ...);
 %   fde.frameMovie(cfg);
 %   fde.frameMovie(cfg, ...);
+%
+% (c) 2016 by Multi Channel Systems MCS GmbH
 
     cfg = McsHDF5.checkParameter(cfg, 'start', McsHDF5.TickToSec(fde.FrameDataTimeStamps(1)));
     cfg = McsHDF5.checkParameter(cfg, 'end', McsHDF5.TickToSec(fde.FrameDataTimeStamps(end)));

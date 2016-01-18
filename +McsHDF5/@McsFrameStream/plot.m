@@ -42,6 +42,8 @@ function plot(frameStream,cfg,varargin)
 %   plot(frameStream, cfg, ...);
 %   frameStream.plot(cfg);
 %   frameStream.plot(cfg, ...);
+%
+% (c) 2016 by Multi Channel Systems MCS GmbH
 
     cfg = McsHDF5.checkParameter(cfg, 'entities', 1:length(frameStream.FrameDataEntity));
     [cfg, isDefault] = McsHDF5.checkParameter(cfg, 'window', repmat({[]},1,length(cfg.entities)));

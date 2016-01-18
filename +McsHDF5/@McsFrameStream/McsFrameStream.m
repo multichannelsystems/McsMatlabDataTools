@@ -3,6 +3,8 @@ classdef McsFrameStream < McsHDF5.McsStream
 %
 % Contains one or more FrameDataEntity in a cell array. The other fields
 % and the Info field provide general information about the frame stream.
+%
+% (c) 2016 by Multi Channel Systems MCS GmbH
     
     properties (SetAccess = private)
         FrameDataEntity = {} % (cell array) McsFrameDataEntity objects

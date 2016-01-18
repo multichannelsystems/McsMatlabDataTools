@@ -34,6 +34,8 @@ function plot(frame,cfg,varargin)
 %   plot(frame, cfg, ...);
 %   frame.plot(cfg);
 %   frame.plot(cfg, ...);
+%
+% (c) 2016 by Multi Channel Systems MCS GmbH
 
     clf
     

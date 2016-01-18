@@ -8,5 +8,7 @@ function plot(segStream, cfg, varargin)
 %   help McsHDF5.McsCutoutSegment.plot
 %
 % for plotting of the contents of a segment stream with spike cutouts.
+%
+% (c) 2016 by Multi Channel Systems MCS GmbH
 
 end

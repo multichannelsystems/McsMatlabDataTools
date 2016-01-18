@@ -10,6 +10,8 @@ classdef McsData
     %     plot(data,[]);
     %
     % See help McsData.plot for more information
+    %
+    % (c) 2016 by Multi Channel Systems MCS GmbH
 
     properties (SetAccess = private)
         FileName        % (string) Name of the loaded file

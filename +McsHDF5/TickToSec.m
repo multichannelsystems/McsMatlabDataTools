@@ -7,7 +7,9 @@ function sec = TickToSec(tick)
 %   tick     -   Time in microseconds
 %
 % Output:
-%   sec    -   microseconds converted to seonds.
+%   sec    -   microseconds converted to seconds.
+%
+% (c) 2016 by Multi Channel Systems MCS GmbH
 
     sec = double(tick) * 1e-6;
 end

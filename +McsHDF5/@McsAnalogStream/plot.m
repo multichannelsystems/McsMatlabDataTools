@@ -35,6 +35,8 @@ function plot(analogStream,cfg,varargin)
 %   plot(analogStream, cfg, ...);
 %   analogStream.plot(cfg);
 %   analogStream.plot(cfg, ...);
+%
+% (c) 2016 by Multi Channel Systems MCS GmbH
     
     clf
     
