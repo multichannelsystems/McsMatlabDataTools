@@ -75,16 +75,23 @@ classdef McsRecording
                 
                 if ~isempty(strfind(groupname,'AnalogStream'))
                     % read analog streams
+                    count = 1;
                     for streams = 1:length(recStruct.Groups(gidx).Groups)
-                        if isempty(varargin)
-                            rec.AnalogStream{streams} = McsHDF5.McsAnalogStream(filename, recStruct.Groups(gidx).Groups(streams));
-                        else
-                            rec.AnalogStream{streams} = McsHDF5.McsAnalogStream(filename, recStruct.Groups(gidx).Groups(streams), varargin{:});
+                        if length(recStruct.Groups(gidx).Groups(streams).Datasets) <= 1
+                            continue;
                         end
+                        if isempty(varargin)
+                            rec.AnalogStream{count} = McsHDF5.McsAnalogStream(filename, recStruct.Groups(gidx).Groups(streams));
+                        else
+                            rec.AnalogStream{count} = McsHDF5.McsAnalogStream(filename, recStruct.Groups(gidx).Groups(streams), varargin{:});
+                        end
+                        count = count + 1;
                     end
                     
                 elseif ~isempty(strfind(groupname,'FrameStream'))
                     % read frame streams
+                    % can't do the data set count here because the frame
+                    % data entities are below the frame stream
                     for streams = 1:length(recStruct.Groups(gidx).Groups)
                         if isempty(varargin)
                             rec.FrameStream{streams} = McsHDF5.McsFrameStream(filename, recStruct.Groups(gidx).Groups(streams));
@@ -95,32 +102,47 @@ classdef McsRecording
                     
                 elseif ~isempty(strfind(groupname,'EventStream'))
                     % read event streams
+                    count = 1;
                     for streams = 1:length(recStruct.Groups(gidx).Groups)
-                        if isempty(varargin)
-                            rec.EventStream{streams} = McsHDF5.McsEventStream(filename, recStruct.Groups(gidx).Groups(streams));
-                        else
-                            rec.EventStream{streams} = McsHDF5.McsEventStream(filename, recStruct.Groups(gidx).Groups(streams), varargin{:});
+                        if length(recStruct.Groups(gidx).Groups(streams).Datasets) <= 1
+                            continue;
                         end
+                        if isempty(varargin)
+                            rec.EventStream{count} = McsHDF5.McsEventStream(filename, recStruct.Groups(gidx).Groups(streams));
+                        else
+                            rec.EventStream{count} = McsHDF5.McsEventStream(filename, recStruct.Groups(gidx).Groups(streams), varargin{:});
+                        end
+                        count = count + 1;
                     end
                     
                 elseif ~isempty(strfind(groupname,'SegmentStream'))
                     % read segment streams
+                    count = 1;
                     for streams = 1:length(recStruct.Groups(gidx).Groups)
-                        if isempty(varargin)
-                            rec.SegmentStream{streams} = McsHDF5.McsSegmentStream.makeSegmentStream(filename, recStruct.Groups(gidx).Groups(streams));
-                        else
-                            rec.SegmentStream{streams} = McsHDF5.McsSegmentStream.makeSegmentStream(filename, recStruct.Groups(gidx).Groups(streams), varargin{:});
+                        if length(recStruct.Groups(gidx).Groups(streams).Datasets) <= 1
+                            continue;
                         end
+                        if isempty(varargin)
+                            rec.SegmentStream{count} = McsHDF5.McsSegmentStream.makeSegmentStream(filename, recStruct.Groups(gidx).Groups(streams));
+                        else
+                            rec.SegmentStream{count} = McsHDF5.McsSegmentStream.makeSegmentStream(filename, recStruct.Groups(gidx).Groups(streams), varargin{:});
+                        end
+                        count = count + 1;
                     end
                 
                 elseif ~isempty(strfind(groupname,'TimeStampStream'))
                     % read timestamp streams
+                    count = 1;
                     for streams = 1:length(recStruct.Groups(gidx).Groups)
-                        if isempty(varargin)
-                            rec.TimeStampStream{streams} = McsHDF5.McsTimeStampStream(filename, recStruct.Groups(gidx).Groups(streams));
-                        else
-                            rec.TimeStampStream{streams} = McsHDF5.McsTimeStampStream(filename, recStruct.Groups(gidx).Groups(streams), varargin{:});
+                        if length(recStruct.Groups(gidx).Groups(streams).Datasets) <= 1
+                            continue;
                         end
+                        if isempty(varargin)
+                            rec.TimeStampStream{count} = McsHDF5.McsTimeStampStream(filename, recStruct.Groups(gidx).Groups(streams));
+                        else
+                            rec.TimeStampStream{count} = McsHDF5.McsTimeStampStream(filename, recStruct.Groups(gidx).Groups(streams), varargin{:});
+                        end
+                        count = count + 1;
                     end
                 end      
             end    
