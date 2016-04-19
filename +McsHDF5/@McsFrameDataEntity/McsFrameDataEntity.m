@@ -26,7 +26,7 @@ classdef McsFrameDataEntity < handle
         FrameData = []; % (channels_x x channels_y x samples) Data array
         FrameDataTimeStamps = int64([]); % (1 x samples) Vector of time stamps in microseconds
         Info % (struct) Information about the frame entity
-        DataDimensions = 'channels_x x channels_y x samples'; % (string) The data dimensions
+        DataDimensions = 'channels_y x channels_x x samples'; % (string) The data dimensions
         
         % DataUnit - (1 x channels) Cell array with the unit of each sample (e.g. 'nV'). 
         % 'ADC', if the data is not yet converted to voltages.
@@ -159,7 +159,7 @@ classdef McsFrameDataEntity < handle
                     fde.FrameData = hdf5read(fde.FileName, ...
                                       [fde.StructName '/FrameData']);
                 end
-                fde.FrameData = permute(fde.FrameData,[3 2 1]);
+                fde.FrameData = permute(fde.FrameData,[2 3 1]);
                 fprintf('done!\n');
                 fde.DataLoaded = true;
                 
@@ -178,8 +178,10 @@ classdef McsFrameDataEntity < handle
         function s = disp(str)
             s = 'McsFrameDataEntity object\n\n';
             s = [s 'Properties:\n'];
-            s = [s '\tNumber of Channels:\t\t ' num2str(str.Info.FrameBottom - str.Info.FrameTop + 1) ...
-                'x' num2str(str.Info.FrameRight - str.Info.FrameLeft + 1) '\n'];
+            nrows = str.Info.FrameBottom - str.Info.FrameTop + 1;
+            ncols = str.Info.FrameRight - str.Info.FrameLeft + 1;
+            s = [s '\tNumber of Channels:\t\t ' num2str(nrows*ncols) ' in ' num2str(nrows) ' rows and ' num2str(ncols) ...
+                 ' columns\n'];
             s = [s '\tTime Range:\t\t\t\t ' num2str(McsHDF5.TickToSec(str.FrameDataTimeStamps(1))) ...
                 ' - ' num2str(McsHDF5.TickToSec(str.FrameDataTimeStamps(end))) ' s\n'];
             s = [s '\tData Loaded:\t\t\t '];
@@ -191,8 +193,8 @@ classdef McsFrameDataEntity < handle
             s = [s '\n'];
             
             s = [s 'Available Fields:\n'];
-            s = [s '\tFrameData:\t\t\t\t [' num2str(str.Info.FrameBottom - str.Info.FrameTop + 1) ...
-                'x' num2str(str.Info.FrameRight - str.Info.FrameLeft + 1) ...
+            s = [s '\tFrameData:\t\t\t\t [' num2str(ncols) ...
+                'x' num2str(nrows) ...
                 'x' num2str(length(str.FrameDataTimeStamps))];
             if str.DataLoaded
                 s = [s ' ' class(str.FrameData) ']'];
@@ -341,15 +343,15 @@ classdef McsFrameDataEntity < handle
                 fid = H5F.open(fde.FileName);
                 gid = H5G.open(fid,fde.StructName);
                 did = H5D.open(gid,'FrameData');
-                dims = [length(cfg.channel_x) length(cfg.channel_y) length(cfg.window)];
-                offset = [cfg.channel_x(1)-1 cfg.channel_y(1)-1 cfg.window(1)-1];
+                dims = [length(cfg.channel_y) length(cfg.channel_x) length(cfg.window)];
+                offset = [cfg.channel_y(1)-1 cfg.channel_x(1)-1 cfg.window(1)-1];
                 mem_space_id = H5S.create_simple(3,dims,[]);
                 file_space_id = H5D.get_space(did);
                 H5S.select_hyperslab(file_space_id,'H5S_SELECT_SET',offset,[],[],dims);
 
                 fprintf('Reading partial frame data...');
                 out_fde.FrameData = H5D.read(did,'H5ML_DEFAULT',mem_space_id,file_space_id,'H5P_DEFAULT');
-                out_fde.FrameData = permute(out_fde.FrameData,[3 2 1]);
+                out_fde.FrameData = permute(out_fde.FrameData,[2 3 1]);
                 fprintf('done!\n');
                 
                 H5D.close(did);
