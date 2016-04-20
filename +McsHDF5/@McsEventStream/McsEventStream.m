@@ -41,13 +41,15 @@ classdef McsEventStream < McsHDF5.McsStream
         %               'double' is useful for older Matlab version without
         %               int64 arithmetic.
         
+            cfg = McsHDF5.McsStream.checkStreamParameter(varargin{:});
+        
             str = str@McsHDF5.McsStream(filename,strStruct,'Event');
             evts = str.Info.EventID;
             str.Events = cell(1,length(evts)); 
-            if isempty(varargin) || ~isfield(varargin{1},'timeStampDataType') || strcmpi(varargin{1}.timeStampDataType,'int64')
+            if strcmpi(cfg.timeStampDataType,'int64')
                 str.TimeStampDataType = 'int64';
             else
-                type = varargin{1}.timeStampDataType;
+                type = cfg.timeStampDataType;
                 if ~strcmp(type,'double')
                     error('Only int64 and double are supported for timeStampDataType!');
                 end

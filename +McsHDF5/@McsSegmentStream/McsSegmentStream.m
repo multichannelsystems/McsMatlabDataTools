@@ -23,6 +23,8 @@ classdef McsSegmentStream < McsHDF5.McsStream
         
         function str = McsSegmentStream(filename, strStruct, varargin)
             
+            cfg = McsHDF5.McsStream.checkStreamParameter(varargin{:});
+            
             if exist('h5info')
                 mode = 'h5';
             else
@@ -40,16 +42,19 @@ classdef McsSegmentStream < McsHDF5.McsStream
             fn = fieldnames(sourceInfo);
             for fni = 1:length(fn)
                 str.SourceInfoChannel.(fn{fni}) = sourceInfo.(fn{fni});
+                if strcmpi(cfg.timeStampDataType,'double') && strcmpi(class(str.SourceInfoChannel.(fn{fni})), 'int64')
+                    str.SourceInfoChannel.(fn{fni}) = double(str.SourceInfoChannel.(fn{fni}));
+                end
             end
             
-            if isempty(varargin) || ~isfield(varargin{1},'dataType') || strcmpi(varargin{1}.dataType,'double')
+            if strcmpi(cfg.dataType,'double')
                 str.DataType = 'double';
             else
-                type = varargin{1}.dataType;
+                type = cfg.dataType;
                 if ~strcmpi(type,'double') && ~strcmpi(type,'single') && ~strcmpi(type,'raw')
                     error('Only double, single and raw are allowed as data types!');
                 end
-                str.DataType = varargin{1}.dataType;
+                str.DataType = cfg.dataType;
             end
         end
     end

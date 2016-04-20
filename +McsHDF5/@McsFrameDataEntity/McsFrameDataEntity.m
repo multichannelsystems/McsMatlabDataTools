@@ -85,6 +85,8 @@ classdef McsFrameDataEntity < handle
                 mode = 'hdf5';
             end
             
+            cfg = McsHDF5.McsStream.checkStreamParameter(varargin{:});
+            
             fde.FileName = filename;
             fde.Info = info;
             fde.StructName = fdeStructName;
@@ -103,7 +105,7 @@ classdef McsFrameDataEntity < handle
             if size(timestamps,1) ~= 3
                 timestamps = timestamps';
             end
-            if isempty(varargin) || ~isfield(varargin{1},'timeStampDataType') || strcmpi(varargin{1}.timeStampDataType,'int64')
+            if strcmpi(cfg.timeStampDataType,'int64')
                 timestamps = bsxfun(@plus,timestamps,int64([0 1 1])');
                 for tsi = 1:size(timestamps,2)
                     fde.FrameDataTimeStamps(timestamps(2,tsi):timestamps(3,tsi)) = ...
@@ -112,7 +114,7 @@ classdef McsFrameDataEntity < handle
                 end
                 fde.TimeStampDataType = 'int64';
             else
-                type = varargin{1}.timeStampDataType;
+                type = cfg.timeStampDataType;
                 if ~strcmp(type,'double')
                     error('Only int64 and double are supported for timeStampDataType!');
                 end
@@ -126,14 +128,14 @@ classdef McsFrameDataEntity < handle
                 fde.TimeStampDataType = type;
             end
             
-            if isempty(varargin) || ~isfield(varargin{1},'dataType') || strcmpi(varargin{1}.dataType,'double')
+            if strcmpi(cfg.dataType,'double')
                 fde.DataType = 'double';
             else
-                type = varargin{1}.dataType;
+                type = cfg.dataType;
                 if ~strcmpi(type,'double') && ~strcmpi(type,'single') && ~strcmpi(type,'raw')
                     error('Only double, single and raw are allowed as data types!');
                 end
-                fde.DataType = varargin{1}.dataType;
+                fde.DataType = cfg.dataType;
             end
         end
         
@@ -333,21 +335,24 @@ classdef McsFrameDataEntity < handle
             end
             
             % read metadata
-            out_fde = McsHDF5.McsFrameDataEntity(fde.FileName, fde.Info, fde.StructName);
+            tmpcfg = [];
+            tmpcfg.dataType = fde.DataType;
+            tmpcfg.timeStampDataType = fde.TimeStampDataType;
+            out_fde = McsHDF5.McsFrameDataEntity(fde.FileName, fde.Info, fde.StructName, tmpcfg);
             
             out_fde.Internal = true;
             if fde.DataLoaded
                 out_fde.FrameData = fde.FrameData(cfg.channel_x, cfg.channel_y, cfg.window);
             else
                 % read data segment
-                fid = H5F.open(fde.FileName);
+                fid = H5F.open(fde.FileName, 'H5F_ACC_RDONLY', []);
                 gid = H5G.open(fid,fde.StructName);
                 did = H5D.open(gid,'FrameData');
                 dims = [length(cfg.channel_y) length(cfg.channel_x) length(cfg.window)];
                 offset = [cfg.channel_y(1)-1 cfg.channel_x(1)-1 cfg.window(1)-1];
                 mem_space_id = H5S.create_simple(3,dims,[]);
                 file_space_id = H5D.get_space(did);
-                H5S.select_hyperslab(file_space_id,'H5S_SELECT_SET',offset,[],[],dims);
+                H5S.select_hyperslab(file_space_id,'H5S_SELECT_SET',offset,[1 1 1],[1 1 1],dims);
 
                 fprintf('Reading partial frame data...');
                 out_fde.FrameData = H5D.read(did,'H5ML_DEFAULT',mem_space_id,file_space_id,'H5P_DEFAULT');

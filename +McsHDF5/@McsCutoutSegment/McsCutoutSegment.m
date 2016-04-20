@@ -72,12 +72,14 @@ classdef McsCutoutSegment < McsHDF5.McsSegmentStream
                 mode = 'hdf5';
             end
             
+            cfg = McsHDF5.McsStream.checkStreamParameter(varargin{:});
+            
             str = str@McsHDF5.McsSegmentStream(filename,strStruct, varargin{:});
             segments = str.Info.SegmentID;
             str.SegmentData = cell(1,length(segments));
             str.SegmentDataTimeStamps = cell(1,length(segments));
             
-            if isempty(varargin) || ~isfield(varargin{1},'timeStampDataType') || strcmpi(varargin{1}.timeStampDataType,'int64')
+            if strcmpi(cfg.timeStampDataType,'int64')
                 for segi = 1:length(segments)
                     try
                         if strcmp(mode,'h5')
@@ -91,7 +93,7 @@ classdef McsCutoutSegment < McsHDF5.McsSegmentStream
                 end
                 str.TimeStampDataType = 'int64';
             else
-                type = varargin{1}.timeStampDataType;
+                type = cfg.timeStampDataType;
                 if ~strcmp(type,'double')
                     error('Only int64 and double are supported for timeStampDataType!');
                 end

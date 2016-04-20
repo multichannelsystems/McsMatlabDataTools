@@ -50,6 +50,9 @@ classdef McsStream < handle
             fn = fieldnames(inf);
             for fni = 1:length(fn)
                 str.Info(1).(fn{fni}) = inf.(fn{fni});
+                if verLessThan('matlab','7.11') && strcmp(class(inf.(fn{fni})),'int64')
+                    str.Info(1).(fn{fni}) = double(str.Info(1).(fn{fni}));
+                end
             end
             
             if isfield(strStruct,'Attributes')
@@ -103,6 +106,21 @@ classdef McsStream < handle
             for fni = 1:length(fns)
                 info = from.Info.(fns{fni});
                 to.Info.(fns{fni}) = info(index);
+            end
+        end
+    end
+    
+    methods (Static)
+        function cfg = checkStreamParameter(varargin)
+            if isempty(varargin)
+                cfg = [];
+            else
+                cfg = varargin{1};
+            end
+            cfg = McsHDF5.checkParameter(cfg, 'dataType', 'double');
+            cfg = McsHDF5.checkParameter(cfg, 'timeStampDataType', 'int64');
+            if verLessThan('matlab','7.11')
+                cfg.timeStampDataType = 'double';
             end
         end
     end

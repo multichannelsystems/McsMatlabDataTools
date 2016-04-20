@@ -90,6 +90,8 @@ classdef McsAverageSegment < McsHDF5.McsSegmentStream
                 mode = 'hdf5';
             end
             
+            cfg = McsHDF5.McsStream.checkStreamParameter(varargin{:});
+            
             str = str@McsHDF5.McsSegmentStream(filename,strStruct, varargin{:});
             averages = str.Info.SegmentID;
             str.AverageDataMean = cell(1,length(averages));
@@ -97,7 +99,7 @@ classdef McsAverageSegment < McsHDF5.McsSegmentStream
             str.AverageDataTimeStamps = cell(1,length(averages));
             str.AverageDataCount = cell(1,length(averages));
             
-            if isempty(varargin) || ~isfield(varargin{1},'timeStampDataType') || strcmpi(varargin{1}.timeStampDataType,'int64')
+            if strcmpi(cfg.timeStampDataType,'int64')
                 for segi = 1:length(averages)
                     try
                         if strcmp(mode,'h5')
@@ -111,16 +113,16 @@ classdef McsAverageSegment < McsHDF5.McsSegmentStream
                 end
                 str.TimeStampDataType = 'int64';
             else
-                type = varargin{1}.timeStampDataType;
+                type = cfg.timeStampDataType;
                 if ~strcmp(type,'double')
                     error('Only int64 and double are supported for timeStampDataType!');
                 end
                 for segi = 1:length(averages)
                     try
                         if strcmp(mode,'h5')
-                            vals = h5read(filename,[strStruct.Name '/AverageData_Range_' num2str(averages(segi))]);
+                            vals = h5read(filename,[strStruct.Name '/AverageData_Range_' num2str(averages(segi))])';
                         else
-                            vals = hdf5read(filename,[strStruct.Name '/AverageData_Range_' num2str(averages(segi))]);
+                            vals = hdf5read(filename,[strStruct.Name '/AverageData_Range_' num2str(averages(segi))])';
                         end
                         str.AverageDataTimeStamps{segi} = cast(vals(1:2,:),type);
                         str.AverageDataCount{segi} = vals(3,:);
@@ -140,7 +142,7 @@ classdef McsAverageSegment < McsHDF5.McsSegmentStream
             if ~str.Internal && ~str.MeanLoaded
                 fprintf('Reading segment data...');
                 emptySegments = false(1,length(str.Info.SegmentID));
-                fid = H5F.open(str.FileName);
+                fid = H5F.open(str.FileName, 'H5F_ACC_RDONLY', []);
                 gid = H5G.open(fid,str.StructName);
                 
                 for segi = 1:length(str.Info.SegmentID)
@@ -402,7 +404,7 @@ classdef McsAverageSegment < McsHDF5.McsSegmentStream
                 out_str.AverageDataMean = str.AverageDataMean(cfg.segment);
             else 
                 out_str.AverageDataMean = out_str.AverageDataMean(cfg.segment);
-                fid = H5F.open(str.FileName);
+                fid = H5F.open(str.FileName, 'H5F_ACC_RDONLY', []);
                 gid = H5G.open(fid,str.StructName);
                 for gidx = 1:length(cfg.segment)
                     try
@@ -422,7 +424,7 @@ classdef McsAverageSegment < McsHDF5.McsSegmentStream
             else 
                 out_str.AverageDataStdDev = out_str.AverageDataStdDev(cfg.segment);
                 emptySegments = false(1,length(cfg.segment));
-                fid = H5F.open(str.FileName);
+                fid = H5F.open(str.FileName, 'H5F_ACC_RDONLY', []);
                 gid = H5G.open(fid,str.StructName);
                 for gidx = 1:length(cfg.segment)
                     try
@@ -510,7 +512,7 @@ classdef McsAverageSegment < McsHDF5.McsSegmentStream
             offset = [0 0 0];
             mem_space_id = H5S.create_simple(3,dims,[]);
             file_space_id = H5D.get_space(did);
-            H5S.select_hyperslab(file_space_id,'H5S_SELECT_SET',offset,[],[],dims);
+            H5S.select_hyperslab(file_space_id,'H5S_SELECT_SET',offset,[1 1 1],[1 1 1],dims);
             str.AverageDataMean{storageIndex} = H5D.read(did,'H5ML_DEFAULT',mem_space_id,file_space_id,'H5P_DEFAULT');
             str.AverageDataMean{storageIndex} = reshape(str.AverageDataMean{storageIndex}, fliplr(dims(2:3)))';
             if ~strcmp(str.DataType,'raw')
@@ -529,7 +531,7 @@ classdef McsAverageSegment < McsHDF5.McsSegmentStream
             offset = [1 0 0];
             mem_space_id = H5S.create_simple(3,dims,[]);
             file_space_id = H5D.get_space(did);
-            H5S.select_hyperslab(file_space_id,'H5S_SELECT_SET',offset,[],[],dims);
+            H5S.select_hyperslab(file_space_id,'H5S_SELECT_SET',offset,[1 1 1],[1 1 1],dims);
             str.AverageDataStdDev{storageIndex} = H5D.read(did,'H5ML_DEFAULT',mem_space_id,file_space_id,'H5P_DEFAULT');
             str.AverageDataStdDev{storageIndex} = reshape(str.AverageDataStdDev{storageIndex}, fliplr(dims(2:3)))';
             if ~strcmp(str.DataType,'raw')
