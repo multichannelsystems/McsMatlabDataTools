@@ -1,6 +1,14 @@
 McsMatlabDataTools
 ==================
 --------------------------
+Version 1.0.2 (2016-06-16)
+--------------------------
+
+- Bug fixes:
+        * Rows and columns of FrameDataEntities were switched
+        * Compatibility with Matlab 2009: Better handling of 64-Bit numbers
+
+--------------------------
 Version 1.0.1 (2016-03-14)
 --------------------------
 
