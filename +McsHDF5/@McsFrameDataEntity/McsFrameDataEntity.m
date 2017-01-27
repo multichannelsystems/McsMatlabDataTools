@@ -93,11 +93,11 @@ classdef McsFrameDataEntity < handle
             
             if strcmp(mode,'h5')
                 fde.ConversionFactors = h5read(fde.FileName, ...
-                                      [fde.StructName '/ConversionFactors'])';
+                                      [fde.StructName '/ConversionFactors']);
                 timestamps = h5read(fde.FileName, [fde.StructName '/FrameDataTimeStamps']);
             else
                 fde.ConversionFactors = hdf5read(fde.FileName, ...
-                                      [fde.StructName '/ConversionFactors'])';
+                                      [fde.StructName '/ConversionFactors']);
                 timestamps = hdf5read(fde.FileName, [fde.StructName '/FrameDataTimeStamps']);
             end
             fde.ConversionFactors = double(fde.ConversionFactors);        
