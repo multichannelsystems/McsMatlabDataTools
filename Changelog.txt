@@ -1,6 +1,14 @@
 McsMatlabDataTools
 ==================
 --------------------------
+Version 1.0.3 (2017-01-27)
+--------------------------
+
+- Bug fixes:
+        * Rows and columns of ConversionFactors in FrameDataEntities were switched
+        * Handled DataSubType Sweep in SegmentStreams
+
+--------------------------
 Version 1.0.2 (2016-06-16)
 --------------------------
 
