@@ -64,7 +64,7 @@ classdef McsSegmentStream < McsHDF5.McsStream
             out_str = McsHDF5.McsStream(filename, strStruct, 'Segment');
             if strcmp(out_str.DataSubType,'Average')
                 out_str = McsHDF5.McsAverageSegment(filename, strStruct, varargin{:});
-            elseif strcmp(out_str.DataSubType,'Spike')
+            elseif strcmp(out_str.DataSubType,'Spike') || strcmp(out_str.DataSubType,'Sweep')
                 out_str = McsHDF5.McsCutoutSegment(filename, strStruct, varargin{:});
             else 
                 error('Unknown DataSubType');
