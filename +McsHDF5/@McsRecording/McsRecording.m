@@ -23,10 +23,9 @@ classdef McsRecording
     
     methods
         
-        function rec = McsRecording(filename, recStruct, varargin)
+        function rec = McsRecording(filename, recStruct, cfg)
         % Reads a single recording inside a HDF5 file.
         %
-        % function rec = McsRecording(filename, recStruct)
         % function rec = McsRecording(filename, recStruct, cfg)
         %
         % Input:
@@ -47,6 +46,10 @@ classdef McsRecording
         %               can be either 'int64' (default) or 'double'. Using
         %               'double' is useful for older Matlab version without
         %               int64 arithmetic.
+        %               'correctConversionFactorOrientation': (bool) flag
+        %               that signals whether to transpose the orientation
+        %               of the conversion factor matrix in frame streams.
+        %               This is necessary for older DataManager versions
         %
         % Output:
         %   rec         -   A McsRecording object
@@ -80,11 +83,7 @@ classdef McsRecording
                         if length(recStruct.Groups(gidx).Groups(streams).Datasets) <= 1
                             continue;
                         end
-                        if isempty(varargin)
-                            rec.AnalogStream{count} = McsHDF5.McsAnalogStream(filename, recStruct.Groups(gidx).Groups(streams));
-                        else
-                            rec.AnalogStream{count} = McsHDF5.McsAnalogStream(filename, recStruct.Groups(gidx).Groups(streams), varargin{:});
-                        end
+                        rec.AnalogStream{count} = McsHDF5.McsAnalogStream(filename, recStruct.Groups(gidx).Groups(streams), cfg);
                         count = count + 1;
                     end
                     
@@ -93,11 +92,7 @@ classdef McsRecording
                     % can't do the data set count here because the frame
                     % data entities are below the frame stream
                     for streams = 1:length(recStruct.Groups(gidx).Groups)
-                        if isempty(varargin)
-                            rec.FrameStream{streams} = McsHDF5.McsFrameStream(filename, recStruct.Groups(gidx).Groups(streams));
-                        else
-                            rec.FrameStream{streams} = McsHDF5.McsFrameStream(filename, recStruct.Groups(gidx).Groups(streams), varargin{:});
-                        end
+                        rec.FrameStream{streams} = McsHDF5.McsFrameStream(filename, recStruct.Groups(gidx).Groups(streams), cfg);
                     end
                     
                 elseif ~isempty(strfind(groupname,'EventStream'))
@@ -107,11 +102,7 @@ classdef McsRecording
                         if length(recStruct.Groups(gidx).Groups(streams).Datasets) <= 1
                             continue;
                         end
-                        if isempty(varargin)
-                            rec.EventStream{count} = McsHDF5.McsEventStream(filename, recStruct.Groups(gidx).Groups(streams));
-                        else
-                            rec.EventStream{count} = McsHDF5.McsEventStream(filename, recStruct.Groups(gidx).Groups(streams), varargin{:});
-                        end
+                        rec.EventStream{count} = McsHDF5.McsEventStream(filename, recStruct.Groups(gidx).Groups(streams), cfg);
                         count = count + 1;
                     end
                     
@@ -122,11 +113,7 @@ classdef McsRecording
                         if length(recStruct.Groups(gidx).Groups(streams).Datasets) <= 1
                             continue;
                         end
-                        if isempty(varargin)
-                            rec.SegmentStream{count} = McsHDF5.McsSegmentStream.makeSegmentStream(filename, recStruct.Groups(gidx).Groups(streams));
-                        else
-                            rec.SegmentStream{count} = McsHDF5.McsSegmentStream.makeSegmentStream(filename, recStruct.Groups(gidx).Groups(streams), varargin{:});
-                        end
+                        rec.SegmentStream{count} = McsHDF5.McsSegmentStream.makeSegmentStream(filename, recStruct.Groups(gidx).Groups(streams), cfg);
                         count = count + 1;
                     end
                 
@@ -137,11 +124,7 @@ classdef McsRecording
                         if length(recStruct.Groups(gidx).Groups(streams).Datasets) <= 1
                             continue;
                         end
-                        if isempty(varargin)
-                            rec.TimeStampStream{count} = McsHDF5.McsTimeStampStream(filename, recStruct.Groups(gidx).Groups(streams));
-                        else
-                            rec.TimeStampStream{count} = McsHDF5.McsTimeStampStream(filename, recStruct.Groups(gidx).Groups(streams), varargin{:});
-                        end
+                        rec.TimeStampStream{count} = McsHDF5.McsTimeStampStream(filename, recStruct.Groups(gidx).Groups(streams), cfg);
                         count = count + 1;
                     end
                 end      

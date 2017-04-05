@@ -129,6 +129,7 @@ classdef McsData
             if ~validFile
                 error('This is not a valid Mcs HDF5 file!');
             end
+            
             % Data structure
             dataAttributes = inf.Groups.Attributes;
             for fni = 1:length(dataAttributes)
@@ -144,19 +145,58 @@ classdef McsData
                 end
             end
             
+            correctConversionFactorOrientation = McsHDF5.McsData.CheckDataManagerVersion(inf.Attributes, mode);
+            if isempty(varargin)
+                cfg.correctConversionFactorOrientation = correctConversionFactorOrientation;
+            else
+                cfg = varargin{:};
+                cfg.correctConversionFactorOrientation = correctConversionFactorOrientation;
+            end
+            
             % Recordings
             for recs = 1:length(inf.Groups.Groups)
                 if isempty(inf.Groups.Groups(recs))
                     continue
                 end
-                if isempty(varargin)
-                    data.Recording{recs} = McsHDF5.McsRecording(filename, inf.Groups.Groups(recs));
-                else
-                    data.Recording{recs} = McsHDF5.McsRecording(filename, inf.Groups.Groups(recs), varargin{:});
+                data.Recording{recs} = McsHDF5.McsRecording(filename, inf.Groups.Groups(recs), cfg);
+            end
+        end
+    end
+    
+    methods (Static, Access = private)
+        function correctOrientation = CheckDataManagerVersion(attributes, mode)
+            appName = '';
+            appVersion = '';
+            correctOrientation = false;
+            for att = 1:length(attributes)
+                if strcmp(mode, 'hdf5')
+                    if strcmp(attributes(att).Name,'/GeneratingApplicationName')
+                        appName = attributes(att).Value.Data;
+                    elseif strcmp(attributes(att).Name,'/GeneratingApplicationVersion')
+                        appVersion = attributes(att).Value.Data;
+                    end
+                elseif strcmp(mode, 'h5')
+                    if strcmp(attributes(att).Name,'GeneratingApplicationName')
+                        appName = attributes(att).Value;
+                    elseif strcmp(attributes(att).Name,'GeneratingApplicationVersion')
+                        appVersion = attributes(att).Value;
+                    end
+                end
+            end
+            
+            % DataManager versions 1.9.2 and earlier had a bug concerning the
+            % orientation of the ConversionFactor array or
+            % FrameDataEntities
+            if strcmp(appName,'Multi Channel DataManager')
+                spl = regexp(appVersion,'\.','split');
+                if length(spl) == 4
+                    numericVersion = str2double(spl);
+                    if numericVersion(1) <= 1 && (numericVersion(2) < 9 || (numericVersion(2) == 9 && numericVersion(3) <= 2))
+                        correctOrientation = true;
+                    end
                 end
             end
         end
-      
     end
     
 end

@@ -26,7 +26,7 @@ classdef McsFrameDataEntity < handle
         FrameData = []; % (channels_x x channels_y x samples) Data array
         FrameDataTimeStamps = int64([]); % (1 x samples) Vector of time stamps in microseconds
         Info % (struct) Information about the frame entity
-        DataDimensions = 'channels_y x channels_x x samples'; % (string) The data dimensions
+        DataDimensions = 'channels_x x channels_y x samples'; % (string) The data dimensions
         
         % DataUnit - (1 x channels) Cell array with the unit of each sample (e.g. 'nV'). 
         % 'ADC', if the data is not yet converted to voltages.
@@ -54,11 +54,10 @@ classdef McsFrameDataEntity < handle
     
     methods
         
-        function fde = McsFrameDataEntity(filename, info, fdeStructName, varargin)
+        function fde = McsFrameDataEntity(filename, info, fdeStructName, cfg)
         % Reads the metadata, time stamps and conversion factors of the
         % frame data entity.
         %
-        % function fde = McsFrameDataEntity(filename, info, fdeStructName)
         % function fde = McsFrameDataEntity(filename, info, fdeStructName, cfg)
         %
         % The frame data itself is loaded only if it is requested by
@@ -79,13 +78,18 @@ classdef McsFrameDataEntity < handle
         %               can be either 'int64' (default) or 'double'. Using
         %               'double' is useful for older Matlab version without
         %               int64 arithmetic.
+        %               'correctConversionFactorOrientation': (bool) flag
+        %               that signals whether to transpose the orientation
+        %               of the conversion factor matrix in frame streams.
+        %               This is necessary for older DataManager versions
             if exist('h5info')
                 mode = 'h5';
             else
                 mode = 'hdf5';
             end
             
-            cfg = McsHDF5.McsStream.checkStreamParameter(varargin{:});
+            cfg = McsHDF5.McsStream.checkStreamParameter(cfg);
+            cfg = McsHDF5.checkParameter(cfg, 'correctConversionFactorOrientation',false);
             
             fde.FileName = filename;
             fde.Info = info;
@@ -101,7 +105,9 @@ classdef McsFrameDataEntity < handle
                 timestamps = hdf5read(fde.FileName, [fde.StructName '/FrameDataTimeStamps']);
             end
             fde.ConversionFactors = double(fde.ConversionFactors);        
-            
+            if cfg.correctConversionFactorOrientation
+                fde.ConversionFactors = fde.ConversionFactors';
+            end
             if size(timestamps,1) ~= 3
                 timestamps = timestamps';
             end
