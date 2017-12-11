@@ -23,11 +23,12 @@ classdef McsStream < handle
         StructName          
         DataLoaded = false;
         Internal = false;
+        SourceType
     end
     
     methods
         
-        function str = McsStream(filename, strStruct, type)
+        function str = McsStream(filename, strStruct, type, sourceType)
         % Reads the Info attributes and the stream attributes.
         %
         % function str = McsStream(filename, strStruct, type)
@@ -39,34 +40,37 @@ classdef McsStream < handle
             end
             str.StructName = strStruct.Name;
             str.FileName = filename;
-            
-            if strcmp(mode,'h5')
-                inf = h5read(filename, [strStruct.Name '/Info' type]);
-            else
-                fid = H5F.open(filename,'H5F_ACC_RDONLY','H5P_DEFAULT');
-                did = H5D.open(fid, [strStruct.Name '/Info' type]);
-                inf = H5D.read(did,'H5ML_DEFAULT','H5S_ALL','H5S_ALL','H5P_DEFAULT');
+            str.SourceType = sourceType;
+            if strcmp(sourceType, 'DataManager')
+                infoName = ['/Info' type];
+            elseif strcmp(sourceType, 'CMOS-MEA')
+                infoName = ['/' type 'Meta'];
             end
+            
+            inf = McsHDF5.McsH5Helper.ReadCompoundDataset(filename, [strStruct.Name infoName], mode);
             fn = fieldnames(inf);
             for fni = 1:length(fn)
-                str.Info(1).(fn{fni}) = inf.(fn{fni});
+                fname = strrep(fn{fni}, '0x2E', '');
+                str.Info(1).(fname) = inf.(fn{fni});
                 if verLessThan('matlab','7.11') && strcmp(class(inf.(fn{fni})),'int64')
-                    str.Info(1).(fn{fni}) = double(str.Info(1).(fn{fni}));
+                    str.Info(1).(fname) = double(str.Info(1).(fname));
                 end
             end
             
             if isfield(strStruct,'Attributes')
                 dataAttributes = strStruct.Attributes;
+                m = metaclass(str); % need to check whether the attribute is part of the class Properties
+                if isfield(m, 'PropertyList')
+                    propNames = {m.PropertyList.Name};
+                else
+                    propNames = cellfun(@(x)(x.Name), m.Properties, 'UniformOutput', false);
+                end
                 for fni = 1:length(dataAttributes)
-                    if strcmp(mode,'h5')
-                        str.(dataAttributes(fni).Name) = dataAttributes(fni).Value;
+                    [name, value] = McsHDF5.McsH5Helper.AttributeNameValueForStruct(dataAttributes(fni), mode);
+                    if any(arrayfun(@(x)(strcmp(x, name)), propNames))
+                        str.(name) = value;
                     else
-                        name = regexp(dataAttributes(fni).Name,'/\w+$','match');
-                        if isa(dataAttributes(fni).Value,'hdf5.h5string')
-                            str.(name{length(name)}(2:end)) = dataAttributes(fni).Value.Data;
-                        else
-                            str.(name{length(name)}(2:end)) = dataAttributes(fni).Value;
-                        end
+                        str.Info.(name) = value;
                     end
                 end
             end

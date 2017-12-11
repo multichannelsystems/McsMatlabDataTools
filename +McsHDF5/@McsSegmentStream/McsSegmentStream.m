@@ -31,7 +31,7 @@ classdef McsSegmentStream < McsHDF5.McsStream
                 mode = 'hdf5';
             end
             
-            str = str@McsHDF5.McsStream(filename,strStruct,'Segment');
+            str = str@McsHDF5.McsStream(filename,strStruct,'Segment','DataManager');
             if strcmp(mode,'h5')
                 sourceInfo = h5read(filename, [strStruct.Name '/SourceInfoChannel']);
             else
@@ -61,7 +61,7 @@ classdef McsSegmentStream < McsHDF5.McsStream
     
     methods (Static)
         function out_str = makeSegmentStream(filename, strStruct, varargin)
-            out_str = McsHDF5.McsStream(filename, strStruct, 'Segment');
+            out_str = McsHDF5.McsStream(filename, strStruct, 'Segment', 'DataManager');
             if strcmp(out_str.DataSubType,'Average')
                 out_str = McsHDF5.McsAverageSegment(filename, strStruct, varargin{:});
             elseif strcmp(out_str.DataSubType,'Spike') || strcmp(out_str.DataSubType,'Sweep')

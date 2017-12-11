@@ -47,18 +47,20 @@ classdef McsFrameDataEntity < handle
     
     properties (Access = private)
         FileName
-        StructName
+        Struct
+        SourceType
+        DatasetName
         DataLoaded = false;
         Internal = false;
     end
     
     methods
         
-        function fde = McsFrameDataEntity(filename, info, fdeStructName, cfg)
+        function fde = McsFrameDataEntity(filename, info, fdeStruct, datasetName, source, cfg)
         % Reads the metadata, time stamps and conversion factors of the
         % frame data entity.
         %
-        % function fde = McsFrameDataEntity(filename, info, fdeStructName, cfg)
+        % function fde = McsFrameDataEntity(filename, info, fdeStruct, datasetName, source, cfg)
         %
         % The frame data itself is loaded only if it is requested by
         % another function.
@@ -93,55 +95,14 @@ classdef McsFrameDataEntity < handle
             
             fde.FileName = filename;
             fde.Info = info;
-            fde.StructName = fdeStructName;
+            fde.Struct = fdeStruct;
+            fde.SourceType = source;
+            fde.DatasetName = datasetName;
             
-            if strcmp(mode,'h5')
-                fde.ConversionFactors = h5read(fde.FileName, ...
-                                      [fde.StructName '/ConversionFactors']);
-                timestamps = h5read(fde.FileName, [fde.StructName '/FrameDataTimeStamps']);
-            else
-                fde.ConversionFactors = hdf5read(fde.FileName, ...
-                                      [fde.StructName '/ConversionFactors']);
-                timestamps = hdf5read(fde.FileName, [fde.StructName '/FrameDataTimeStamps']);
-            end
-            fde.ConversionFactors = double(fde.ConversionFactors);        
-            if cfg.correctConversionFactorOrientation
-                fde.ConversionFactors = fde.ConversionFactors';
-            end
-            if size(timestamps,1) ~= 3
-                timestamps = timestamps';
-            end
-            if strcmpi(cfg.timeStampDataType,'int64')
-                timestamps = bsxfun(@plus,timestamps,int64([0 1 1])');
-                for tsi = 1:size(timestamps,2)
-                    fde.FrameDataTimeStamps(timestamps(2,tsi):timestamps(3,tsi)) = ...
-                        (int64(0:numel(timestamps(2,tsi):timestamps(3,tsi))-1) .* ...
-                        fde.Info.Tick) + timestamps(1,tsi);
-                end
-                fde.TimeStampDataType = 'int64';
-            else
-                type = cfg.timeStampDataType;
-                if ~strcmp(type,'double')
-                    error('Only int64 and double are supported for timeStampDataType!');
-                end
-                fde.FrameDataTimeStamps = cast([],type);
-                timestamps = bsxfun(@plus,double(timestamps),[0 1 1]');
-                for tsi = 1:size(timestamps,2)
-                    fde.FrameDataTimeStamps(timestamps(2,tsi):timestamps(3,tsi)) = ...
-                        ((0:numel(timestamps(2,tsi):timestamps(3,tsi))-1) .* ...
-                        cast(fde.Info.Tick,type)) + timestamps(1,tsi);
-                end
-                fde.TimeStampDataType = type;
-            end
-            
-            if strcmpi(cfg.dataType,'double')
-                fde.DataType = 'double';
-            else
-                type = cfg.dataType;
-                if ~strcmpi(type,'double') && ~strcmpi(type,'single') && ~strcmpi(type,'raw')
-                    error('Only double, single and raw are allowed as data types!');
-                end
-                fde.DataType = cfg.dataType;
+            if strcmp(source, 'DataManager')
+                fde = ConstructFromDataManager(fde, mode, cfg);
+            elseif strcmp(source, 'CMOS-MEA')
+                fde = ConstructFromCMOSMea(fde, fdeStruct, mode, cfg);
             end
         end
         
@@ -160,14 +121,7 @@ classdef McsFrameDataEntity < handle
             
             if ~fde.Internal && ~fde.DataLoaded
                 fprintf('Reading frame data...');
-                if strcmp(mode,'h5')
-                    fde.FrameData = h5read(fde.FileName, ...
-                                      [fde.StructName '/FrameData']);
-                else
-                    fde.FrameData = hdf5read(fde.FileName, ...
-                                      [fde.StructName '/FrameData']);
-                end
-                fde.FrameData = permute(fde.FrameData,[2 3 1]);
+                fde = LoadDataFromFile(fde, mode);
                 fprintf('done!\n');
                 fde.DataLoaded = true;
                 
@@ -265,8 +219,12 @@ classdef McsFrameDataEntity < handle
                 end
             else
                 conv_factor = cast(fde.ConversionFactors,cfg.dataType);
-                adzero = cast(fde.Info.ADZero,cfg.dataType);
-                data = cast(fde.FrameData,cfg.dataType) - adzero;
+                if isfield(fde.Info, 'ADZero')
+                    adzero = cast(fde.Info.ADZero,cfg.dataType);
+                    data = cast(fde.FrameData,cfg.dataType) - adzero;
+                else
+                    data = cast(fde.FrameData,cfg.dataType);
+                end
                 data = bsxfun(@times,data,conv_factor);
             end
         end
@@ -295,7 +253,12 @@ classdef McsFrameDataEntity < handle
         % Output:
         %   out_fde     -   The FrameDataEntity with the requested data
         %                   segment
-        
+            if exist('h5info')
+                mode = 'h5';
+            else
+                mode = 'hdf5';
+            end
+            
             ts = fde.FrameDataTimeStamps;
             defaultChannelX = double(1:(fde.Info.FrameRight - fde.Info.FrameLeft + 1));
             defaultChannelY = double(1:(fde.Info.FrameBottom - fde.Info.FrameTop + 1));
@@ -344,30 +307,15 @@ classdef McsFrameDataEntity < handle
             tmpcfg = [];
             tmpcfg.dataType = fde.DataType;
             tmpcfg.timeStampDataType = fde.TimeStampDataType;
-            out_fde = McsHDF5.McsFrameDataEntity(fde.FileName, fde.Info, fde.StructName, tmpcfg);
+            out_fde = McsHDF5.McsFrameDataEntity(fde.FileName, fde.Info, fde.Struct, fde.DatasetName, fde.SourceType, tmpcfg);
             
             out_fde.Internal = true;
             if fde.DataLoaded
                 out_fde.FrameData = fde.FrameData(cfg.channel_x, cfg.channel_y, cfg.window);
             else
-                % read data segment
-                fid = H5F.open(fde.FileName, 'H5F_ACC_RDONLY', []);
-                gid = H5G.open(fid,fde.StructName);
-                did = H5D.open(gid,'FrameData');
-                dims = [length(cfg.channel_y) length(cfg.channel_x) length(cfg.window)];
-                offset = [cfg.channel_y(1)-1 cfg.channel_x(1)-1 cfg.window(1)-1];
-                mem_space_id = H5S.create_simple(3,dims,[]);
-                file_space_id = H5D.get_space(did);
-                H5S.select_hyperslab(file_space_id,'H5S_SELECT_SET',offset,[1 1 1],[1 1 1],dims);
-
                 fprintf('Reading partial frame data...');
-                out_fde.FrameData = H5D.read(did,'H5ML_DEFAULT',mem_space_id,file_space_id,'H5P_DEFAULT');
-                out_fde.FrameData = permute(out_fde.FrameData,[2 3 1]);
+                out_fde = LoadPartialDataFromFile(cfg, fde, out_fde, mode);
                 fprintf('done!\n');
-                
-                H5D.close(did);
-                H5G.close(gid);
-                H5F.close(fid);
             end
             out_fde.Info.FrameRight = out_fde.Info.FrameLeft + cfg.channel_x(end) - 1;
             out_fde.Info.FrameBottom = out_fde.Info.FrameTop + cfg.channel_y(end) - 1;
@@ -404,11 +352,184 @@ classdef McsFrameDataEntity < handle
         %
         % This is performed during loading of the data.
             
-            fde.FrameData = cast(fde.FrameData,fde.DataType) - cast(fde.Info.ADZero,fde.DataType);
+            fde.FrameData = cast(fde.FrameData,fde.DataType);
+            if strcmp(fde.SourceType, 'DataManager')
+                fde.FrameData = fde.FrameData - cast(fde.Info.ADZero,fde.DataType);
+            end
 
             % multiply FrameData with the conversion factors in a fast and
             % memory efficient way
             fde.FrameData = bsxfun(@times,fde.FrameData,cast(fde.ConversionFactors,fde.DataType));            
+        end
+        
+        function fde = ConstructFromDataManager(fde, mode, cfg)
+            if strcmp(mode,'h5')
+                fde.ConversionFactors = h5read(fde.FileName, ...
+                                      [fde.Struct.Name '/ConversionFactors']);
+                timestamps = h5read(fde.FileName, [fde.Struct.Name '/FrameDataTimeStamps']);
+            else
+                fde.ConversionFactors = hdf5read(fde.FileName, ...
+                                      [fde.Struct.Name '/ConversionFactors']);
+                timestamps = hdf5read(fde.FileName, [fde.Struct.Name '/FrameDataTimeStamps']);
+            end
+            fde.ConversionFactors = double(fde.ConversionFactors);        
+            if cfg.correctConversionFactorOrientation
+                fde.ConversionFactors = fde.ConversionFactors';
+            end
+            if size(timestamps,1) ~= 3
+                timestamps = timestamps';
+            end
+            if strcmpi(cfg.timeStampDataType,'int64')
+                timestamps = bsxfun(@plus,timestamps,int64([0 1 1])');
+                for tsi = 1:size(timestamps,2)
+                    fde.FrameDataTimeStamps(timestamps(2,tsi):timestamps(3,tsi)) = ...
+                        (int64(0:numel(timestamps(2,tsi):timestamps(3,tsi))-1) .* ...
+                        fde.Info.Tick) + timestamps(1,tsi);
+                end
+                fde.TimeStampDataType = 'int64';
+            else
+                type = cfg.timeStampDataType;
+                if ~strcmp(type,'double')
+                    error('Only int64 and double are supported for timeStampDataType!');
+                end
+                fde.FrameDataTimeStamps = cast([],type);
+                timestamps = bsxfun(@plus,double(timestamps),[0 1 1]');
+                for tsi = 1:size(timestamps,2)
+                    fde.FrameDataTimeStamps(timestamps(2,tsi):timestamps(3,tsi)) = ...
+                        ((0:numel(timestamps(2,tsi):timestamps(3,tsi))-1) .* ...
+                        cast(fde.Info.Tick,type)) + timestamps(1,tsi);
+                end
+                fde.TimeStampDataType = type;
+            end
+            
+            if strcmpi(cfg.dataType,'double')
+                fde.DataType = 'double';
+            else
+                type = cfg.dataType;
+                if ~strcmpi(type,'double') && ~strcmpi(type,'single') && ~strcmpi(type,'raw')
+                    error('Only double, single and raw are allowed as data types!');
+                end
+                fde.DataType = cfg.dataType;
+            end
+        end
+        
+        function fde = ConstructFromCMOSMea(fde, fdeStruct, mode, cfg)
+            if isfield(fde.Info, 'RegionTop')
+                % transfer, then clear the Region* fields to avoid
+                % confusion
+                fde.Info.FrameTop = fde.Info.RegionTop;
+                fde.Info.FrameLeft = fde.Info.RegionLeft;
+                fde.Info.FrameBottom = fde.Info.RegionBottom;
+                fde.Info.FrameRight = fde.Info.RegionRight;
+                fde.Info = rmfield(fde.Info, 'RegionTop');
+                fde.Info = rmfield(fde.Info, 'RegionLeft');
+                fde.Info = rmfield(fde.Info, 'RegionBottom');
+                fde.Info = rmfield(fde.Info, 'RegionRight');
+            end
+            width = fde.Info.FrameRight - fde.Info.FrameLeft + 1;
+            height = fde.Info.FrameBottom - fde.Info.FrameTop + 1;
+            if isfield(fde.Info, 'ConversionFactors')
+                % only the case for full files, not for partial ones
+                cvString = fde.Info.ConversionFactors{1};
+                split = regexp(cvString, ' ', 'split');
+                split = split(arrayfun(@(x)(~isempty(x{1})), split));
+                cv = arrayfun(@(x)(str2double(x{1})), split);
+                fde.ConversionFactors = reshape(cv, [width, height]);
+                fde.ConversionFactors = double(fde.ConversionFactors)';        
+                if cfg.correctConversionFactorOrientation
+                    fde.ConversionFactors = fde.ConversionFactors';
+                end
+                % delete the ConversionFactors field to avoid confusion
+                fde.Info = rmfield(fde.Info, 'ConversionFactors');
+            end
+            from = McsHDF5.McsH5Helper.GetFromAttributes(fdeStruct, 'From', mode);
+            to = McsHDF5.McsH5Helper.GetFromAttributes(fdeStruct, 'To', mode);
+            tick = fde.Info.Tick(1);
+            
+            if strcmpi(cfg.timeStampDataType,'int64') 
+                timeStamps = from:tick:(to - 1);
+                fde.FrameDataTimeStamps = cast(timeStamps, 'int64');
+                fde.TimeStampDataType = 'int64';
+            else
+                timeStamps = double(from):double(tick):(double(to) - 1);
+                type = cfg.timeStampDataType;
+                if ~strcmp(type,'double')
+                    error('Only int64 and double are supported for timeStampDataType!');
+                end
+                fde.FrameDataTimeStamps = cast(timeStamps, type);
+                fde.TimeStampDataType = type;
+            end
+            
+            if strcmpi(cfg.dataType,'double')
+                fde.DataType = 'double';
+            else
+                type = cfg.dataType;
+                if ~strcmpi(type,'double') && ~strcmpi(type,'single') && ~strcmpi(type,'raw')
+                    error('Only double, single and raw are allowed as data types!');
+                end
+                fde.DataType = cfg.dataType;
+            end
+        end
+        
+        function fde = LoadDataFromFile(fde, mode)
+            oldInternal = fde.Internal;
+            fde.Internal = true;
+            if strcmp(fde.SourceType, 'DataManager')
+                if strcmp(mode,'h5')
+                    fde.FrameData = h5read(fde.FileName, ...
+                                      [fde.Struct.Name '/FrameData']);
+                else
+                    fde.FrameData = hdf5read(fde.FileName, ...
+                                      [fde.Struct.Name '/FrameData']);
+                end
+                fde.FrameData = permute(fde.FrameData,[2 3 1]);
+            elseif strcmp(fde.SourceType, 'CMOS-MEA')
+                if strcmp(mode,'h5')
+                    fde.FrameData = h5read(fde.FileName, fde.DatasetName);
+                else
+                    fde.FrameData = hdf5read(fde.FileName, fde.DatasetName);
+                end
+                fde.FrameData = permute(fde.FrameData,[2 1 3]);
+            end
+            fde.Internal = oldInternal;
+        end
+        
+        function out_fde = LoadPartialDataFromFile(cfg, fde, out_fde, mode)
+            fid = H5F.open(fde.FileName, 'H5F_ACC_RDONLY', []);
+            if strcmp(fde.SourceType, 'DataManager')
+                % read data segment
+                gid = H5G.open(fid,fde.Struct.Name);
+                did = H5D.open(gid,'FrameData');
+                dims = [length(cfg.channel_y) length(cfg.channel_x) length(cfg.window)];
+                offset = [cfg.channel_y(1)-1 cfg.channel_x(1)-1 cfg.window(1)-1];
+                mem_space_id = H5S.create_simple(3,dims,[]);
+                file_space_id = H5D.get_space(did);
+                H5S.select_hyperslab(file_space_id,'H5S_SELECT_SET',offset,[1 1 1],[1 1 1],dims);
+
+                out_fde.FrameData = H5D.read(did,'H5ML_DEFAULT',mem_space_id,file_space_id,'H5P_DEFAULT');
+                out_fde.FrameData = permute(out_fde.FrameData,[2 3 1]);
+                
+                H5D.close(did);
+                H5G.close(gid);
+            elseif strcmp(fde.SourceType, 'CMOS-MEA')
+                if strcmp(mode, 'h5')
+                    did = H5D.open(fid,fde.DatasetName);
+                else
+                    did = H5D.open(fid,fde.Struct.Name);
+                end
+                
+                dims = [length(cfg.window) length(cfg.channel_x) length(cfg.channel_y)];
+                offset = [cfg.window(1)-1 cfg.channel_x(1)-1 cfg.channel_y(1)-1];
+                mem_space_id = H5S.create_simple(3,dims,[]);
+                file_space_id = H5D.get_space(did);
+                H5S.select_hyperslab(file_space_id,'H5S_SELECT_SET',offset,[1 1 1],[1 1 1],dims);
+
+                out_fde.FrameData = H5D.read(did,'H5ML_DEFAULT',mem_space_id,file_space_id,'H5P_DEFAULT');
+                out_fde.FrameData = permute(out_fde.FrameData,[2 1 3]);
+                
+                H5D.close(did);
+            end
+            H5F.close(fid);
         end
     end
     

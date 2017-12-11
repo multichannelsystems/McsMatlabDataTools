@@ -33,7 +33,7 @@ classdef McsTimeStampStream < McsHDF5.McsStream
         %               int64 arithmetic.
             cfg = McsHDF5.McsStream.checkStreamParameter(varargin{:});
         
-            str = str@McsHDF5.McsStream(filename,strStruct,'TimeStamp');
+            str = str@McsHDF5.McsStream(filename,strStruct,'TimeStamp','DataManager');
             evts = str.Info.TimeStampEntityID;
             str.TimeStamps = cell(1,length(evts)); 
             if strcmpi(cfg.timeStampDataType,'int64')

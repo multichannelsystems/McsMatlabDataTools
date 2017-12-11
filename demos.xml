@@ -4,7 +4,9 @@
    <type>toolbox</type>
    <icon>HelpIcon.DEMOS</icon>
    <website/>
-   <description>The McsMatlabDataTools allow you to import HDF5 files created by Multi Channel Systems MCS software into Matlab and offer some basic plotting functions for the data. Use the Multi Channel DataManager software to export recorded files to HDF5. More information can be found at: http://www.multichannelsystems.com/software/multi-channel-datamanager</description>
+   <description>The McsMatlabDataTools allow you to import HDF5 files created by Multi Channel Systems MCS software into Matlab and offer some basic plotting functions for the data. It supports files exported to HDF5 by the Multi Channel DataManager software and files created by CMOS-MEA-Control and CMOS-MEA-Tools. More information can be found at: http://www.multichannelsystems.com/software/multi-channel-datamanager
+http://www.multichannelsystems.com/software/cmos-mea-control
+http://www.multichannelsystems.com/software/cmos-mea-tools</description>
    <demosection>
       <label>+McsHDF5</label>
       <demoitem>

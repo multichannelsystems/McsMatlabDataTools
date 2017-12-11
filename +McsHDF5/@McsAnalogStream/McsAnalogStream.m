@@ -26,13 +26,18 @@ classdef McsAnalogStream < McsHDF5.McsStream
         TimeStampDataType % (string) The type of the time stamps, 'double' or 'int64'
     end
     
+    properties (Access = private)
+        ChannelDataSets = {};
+        StructInfo
+    end
+    
     methods
         
-        function str = McsAnalogStream(filename, strStruct, varargin)
+        function str = McsAnalogStream(filename, strStruct, source, varargin)
         % Constructs a McsAnalogStream object
         %
-        % function str = McsAnalogStream(filename, strStruct)    
-        % function str = McsAnalogStream(filename, strStruct, cfg)
+        % function str = McsAnalogStream(filename, strStruct, source)    
+        % function str = McsAnalogStream(filename, strStruct, source, cfg)
         %
         % Reads the meta-information and the time stamps, not the analog
         % data. Reading the analog data is done the first time that
@@ -58,50 +63,17 @@ classdef McsAnalogStream < McsHDF5.McsStream
             else
                 mode = 'hdf5';
             end
-        
-            str = str@McsHDF5.McsStream(filename,strStruct,'Channel');
+            
             cfg = McsHDF5.McsStream.checkStreamParameter(varargin{:});
+            str = str@McsHDF5.McsStream(filename,strStruct,'Channel',source);
+            str.StructInfo = strStruct;
             
-            if strcmp(mode,'h5')
-                timestamps = h5read(filename, [strStruct.Name '/ChannelDataTimeStamps']);
+            if strcmp(source, 'DataManager')
+                str = ConstructFromDataManager(str, strStruct, mode, filename, cfg);
+            elseif strcmp(source, 'CMOS-MEA')
+                str = ConstructFromCMOSMea(str, strStruct, mode, cfg);
             else
-                timestamps = hdf5read(filename, [strStruct.Name '/ChannelDataTimeStamps']);
-            end
-            if size(timestamps,1) ~= 3
-                timestamps = timestamps';
-            end
-            
-            if strcmpi(cfg.timeStampDataType,'int64') 
-                timestamps = bsxfun(@plus,timestamps,int64([0 1 1])');
-                for tsi = 1:size(timestamps,2)
-                    str.ChannelDataTimeStamps(timestamps(2,tsi):timestamps(3,tsi)) = ...
-                        (int64(0:numel(timestamps(2,tsi):timestamps(3,tsi))-1) .* ...
-                        str.Info.Tick(1)) + timestamps(1,tsi);
-                end
-                str.TimeStampDataType = 'int64';
-            else
-                type = cfg.timeStampDataType;
-                if ~strcmp(type,'double')
-                    error('Only int64 and double are supported for timeStampDataType!');
-                end
-                str.ChannelDataTimeStamps = cast([],type);
-                timestamps = bsxfun(@plus,double(timestamps),[0 1 1]');
-                for tsi = 1:size(timestamps,2)
-                    str.ChannelDataTimeStamps(timestamps(2,tsi):timestamps(3,tsi)) = ...
-                        ((0:numel(timestamps(2,tsi):timestamps(3,tsi))-1) .* ...
-                        cast(str.Info.Tick(1),type)) + timestamps(1,tsi);
-                end
-                str.TimeStampDataType = type;
-            end
-            
-            if strcmpi(cfg.dataType,'double')
-                str.DataType = 'double';
-            else
-                type = cfg.dataType;
-                if ~strcmpi(type,'double') && ~strcmpi(type,'single') && ~strcmpi(type,'raw')
-                    error('Only double, single and raw are allowed as data types!');
-                end
-                str.DataType = cfg.dataType;
+                error('Unknown source!');
             end
         end
         
@@ -120,11 +92,7 @@ classdef McsAnalogStream < McsHDF5.McsStream
             
             if ~str.Internal && ~str.DataLoaded
                 fprintf('Reading analog data...')
-                if strcmp(mode,'h5')
-                    str.ChannelData = h5read(str.FileName, [str.StructName '/ChannelData'])';
-                else
-                    str.ChannelData = hdf5read(str.FileName, [str.StructName '/ChannelData'])';
-                end
+                str = LoadDataFromFile(str, mode);
                 fprintf('done!\n');
                 str.DataLoaded = true;
                 if ~strcmp(str.DataType,'raw')
@@ -231,9 +199,11 @@ classdef McsAnalogStream < McsHDF5.McsStream
                 end
             else
                 conv_factor = cast(str.Info.ConversionFactor,cfg.dataType);
-                adzero = cast(str.Info.ADZero,cfg.dataType);
                 data = cast(str.ChannelData,cfg.dataType);
-                data = bsxfun(@minus,data,adzero);
+                if strcmp(str.SourceType, 'DataManager')
+                    adzero = cast(str.Info.ADZero,cfg.dataType);
+                    data = bsxfun(@minus,data,adzero);
+                end
                 data = bsxfun(@times,data,conv_factor);
             end
         end
@@ -261,7 +231,11 @@ classdef McsAnalogStream < McsHDF5.McsStream
         % Output:
         %   out_str     -   The McsAnalogStream with the requested data
         %                   segment
-        
+            if exist('h5info')
+                mode = 'h5';
+            else
+                mode = 'hdf5';
+            end
             ts = str.ChannelDataTimeStamps;
             defaultChannel = 1:length(str.Info.ChannelID);
             defaultWindow = 1:length(ts);
@@ -292,34 +266,20 @@ classdef McsAnalogStream < McsHDF5.McsStream
                 cfg.window = t;
             end
             
-            % read metadata
-            tmpStruct.Name = str.StructName;
+            tmpStruct = str.StructInfo;
             tmpcfg = [];
             tmpcfg.dataType = str.DataType;
             tmpcfg.timeStampDataType = str.TimeStampDataType;
-            out_str = McsHDF5.McsAnalogStream(str.FileName, tmpStruct, tmpcfg);
+            out_str = McsHDF5.McsAnalogStream(str.FileName, tmpStruct, str.SourceType, tmpcfg);
             
             out_str.Internal = true;
             if str.DataLoaded
                 out_str.ChannelData = str.ChannelData(cfg.channel, cfg.window);
             else
                 % read data segment
-                fid = H5F.open(str.FileName, 'H5F_ACC_RDONLY', []);
-                gid = H5G.open(fid,str.StructName);
-                did = H5D.open(gid,'ChannelData');
-                dims = [length(cfg.channel) length(cfg.window)];
-                offset = [cfg.channel(1)-1 cfg.window(1)-1];
-                mem_space_id = H5S.create_simple(2,dims,[]);
-                file_space_id = H5D.get_space(did);
-                H5S.select_hyperslab(file_space_id,'H5S_SELECT_SET',offset,[1 1],[1 1],dims);
-                
                 fprintf('Reading partial analog data...');
-                out_str.ChannelData = H5D.read(did,'H5ML_DEFAULT',mem_space_id,file_space_id,'H5P_DEFAULT')';
+                out_str = LoadPartialDataFromFile(cfg, str, out_str);
                 fprintf('done!\n');
-                
-                H5D.close(did);
-                H5G.close(gid);
-                H5F.close(fid);
             end
             out_str.ChannelDataTimeStamps = ts(cfg.window);
             out_str.DataLoaded = true;
@@ -350,13 +310,187 @@ classdef McsAnalogStream < McsHDF5.McsStream
             % This is performed directly after the data is loaded from the
             % hdf5 file.
             conv_factor = cast(str.Info.ConversionFactor,str.DataType);
-            adzero = cast(str.Info.ADZero,str.DataType);
             str.ChannelData = cast(str.ChannelData,str.DataType);
-            str.ChannelData = bsxfun(@minus,str.ChannelData,adzero);
+            if strcmp(str.SourceType, 'DataManager')
+                adzero = cast(str.Info.ADZero,str.DataType);
+                str.ChannelData = bsxfun(@minus,str.ChannelData,adzero);
+            end
             str.ChannelData = bsxfun(@times,str.ChannelData,conv_factor);
+        end 
+        
+        function str = ConstructFromDataManager(str, strStruct, mode, filename, cfg)
+
+            if strcmp(mode,'h5')
+                timestamps = h5read(filename, [strStruct.Name '/ChannelDataTimeStamps']);
+            else
+                timestamps = hdf5read(filename, [strStruct.Name '/ChannelDataTimeStamps']);
+            end
+            if size(timestamps,1) ~= 3
+                timestamps = timestamps';
+            end
             
+            if strcmpi(cfg.timeStampDataType,'int64') 
+                timestamps = bsxfun(@plus,timestamps,int64([0 1 1])');
+                for tsi = 1:size(timestamps,2)
+                    str.ChannelDataTimeStamps(timestamps(2,tsi):timestamps(3,tsi)) = ...
+                        (int64(0:numel(timestamps(2,tsi):timestamps(3,tsi))-1) .* ...
+                        str.Info.Tick(1)) + timestamps(1,tsi);
+                end
+                str.TimeStampDataType = 'int64';
+            else
+                type = cfg.timeStampDataType;
+                if ~strcmp(type,'double')
+                    error('Only int64 and double are supported for timeStampDataType!');
+                end
+                str.ChannelDataTimeStamps = cast([],type);
+                timestamps = bsxfun(@plus,double(timestamps),[0 1 1]');
+                for tsi = 1:size(timestamps,2)
+                    str.ChannelDataTimeStamps(timestamps(2,tsi):timestamps(3,tsi)) = ...
+                        ((0:numel(timestamps(2,tsi):timestamps(3,tsi))-1) .* ...
+                        cast(str.Info.Tick(1),type)) + timestamps(1,tsi);
+                end
+                str.TimeStampDataType = type;
+            end
+            
+            if strcmpi(cfg.dataType,'double')
+                str.DataType = 'double';
+            else
+                type = cfg.dataType;
+                if ~strcmpi(type,'double') && ~strcmpi(type,'single') && ~strcmpi(type,'raw')
+                    error('Only double, single and raw are allowed as data types!');
+                end
+                str.DataType = cfg.dataType;
+            end
+            
+            grp = [];
+            grp.From = str.ChannelDataTimeStamps(1);
+            grp.To = str.ChannelDataTimeStamps(end) + cast(str.Info.Tick(1),cfg.timeStampDataType);
+            grp.Name = [strStruct.Name '/ChannelData'];
+            str.ChannelDataSets{1} = grp;
         end
         
+        function str = ConstructFromCMOSMea(str, strStruct, mode, cfg)
+
+            for didx = 1:length(strStruct.Datasets)
+                dataset = strStruct.Datasets(didx);
+                typeID = McsHDF5.McsH5Helper.GetFromAttributes(dataset, 'ID.TypeID', mode);
+                if strcmpi(typeID, '5efe7932-dcfe-49ff-ba53-25accff5d622')
+                    from = McsHDF5.McsH5Helper.GetFromAttributes(dataset, 'From', mode);
+                    to = McsHDF5.McsH5Helper.GetFromAttributes(dataset, 'To', mode);
+                    tick = str.Info.Tick(1);
+                    
+                    if strcmpi(cfg.timeStampDataType,'int64') 
+                        timeStamps = from:tick:(to - 1);
+                        str.ChannelDataTimeStamps = [str.ChannelDataTimeStamps cast(timeStamps, 'int64')];
+                        str.TimeStampDataType = 'int64';
+                    else
+                        timeStamps = double(from):double(tick):(double(to) - 1);
+                        type = cfg.timeStampDataType;
+                        if ~strcmp(type,'double')
+                            error('Only int64 and double are supported for timeStampDataType!');
+                        end
+                        str.ChannelDataTimeStamps = cast([],type);
+                        str.ChannelDataTimeStamps = [str.ChannelDataTimeStamps cast(timeStamps, type)];
+                        str.TimeStampDataType = type;
+                    end
+                    grp = [];
+                    grp.From = from;
+                    grp.To = to;
+                    if strcmp(mode, 'h5')
+                        grp.Name = [strStruct.Name '/' dataset.Name];
+                    else
+                        grp.Name = dataset.Name;
+                    end
+                    str.ChannelDataSets = [str.ChannelDataSets, {grp}];
+                end
+            end
+            
+            if strcmpi(cfg.dataType,'double')
+                str.DataType = 'double';
+            else
+                type = cfg.dataType;
+                if ~strcmpi(type,'double') && ~strcmpi(type,'single') && ~strcmpi(type,'raw')
+                    error('Only double, single and raw are allowed as data types!');
+                end
+                str.DataType = cfg.dataType;
+            end
+            str.Label = McsHDF5.McsH5Helper.GetFromAttributes(strStruct, 'ID.Instance', mode);
+            str.DataSubType = McsHDF5.McsH5Helper.GetFromAttributes(strStruct, 'SubType', mode);
+        end
+        
+        function str = LoadDataFromFile(str, mode)
+            if strcmp(str.SourceType, 'DataManager')
+                if strcmp(mode,'h5')
+                    str.ChannelData = h5read(str.FileName, [str.StructName '/ChannelData'])';
+                else
+                    str.ChannelData = hdf5read(str.FileName, [str.StructName '/ChannelData'])';
+                end
+            elseif strcmp(str.SourceType, 'CMOS-MEA')
+                oldInternal = str.Internal;
+                str.Internal = true;
+                for gidx = 1:length(str.ChannelDataSets)
+                    dataset = str.ChannelDataSets{gidx};
+                    if ~isempty(strfind(dataset.Name,'ChannelData'))
+                        if strcmp(mode,'h5')
+                            data = h5read(str.FileName, dataset.Name)';
+                        else
+                            data = hdf5read(str.FileName, dataset.Name)';
+                        end
+                        str.ChannelData = [str.ChannelData data];
+                    end
+                end
+                str.Internal = oldInternal;
+            end
+        end
+        
+        function out_str = LoadPartialDataFromFile(cfg, str, out_str)
+
+            fid = H5F.open(str.FileName, 'H5F_ACC_RDONLY', []);
+            if strcmp(str.SourceType, 'DataManager')
+                gid = H5G.open(fid,str.StructName);
+                did = H5D.open(gid,'ChannelData');
+                dims = [length(cfg.channel) length(cfg.window)];
+                offset = [cfg.channel(1)-1 cfg.window(1)-1];
+                mem_space_id = H5S.create_simple(2,dims,[]);
+                file_space_id = H5D.get_space(did);
+                H5S.select_hyperslab(file_space_id,'H5S_SELECT_SET',offset,[1 1],[1 1],dims);
+
+                out_str.ChannelData = H5D.read(did,'H5ML_DEFAULT',mem_space_id,file_space_id,'H5P_DEFAULT')';
+                
+                H5D.close(did);
+                H5G.close(gid); 
+            elseif strcmp(str.SourceType, 'CMOS-MEA')
+                from = (cfg.window(1)-1) * str.Info.Tick(1);
+                to = from + length(cfg.window) * str.Info.Tick(1);
+                for gidx = 1:length(str.ChannelDataSets)
+                    set = str.ChannelDataSets{gidx};
+                    if strcmp(str.TimeStampDataType, 'int64')
+                        setFrom = set.From;
+                        setTo = set.To;
+                    else
+                        setFrom = double(set.From);
+                        setTo = double(set.To);
+                    end
+                    if setFrom < to && setTo > from
+                        startOffset = (from - setFrom) / str.Info.Tick(1);
+                        startOffset = max(0, startOffset);
+                        count = (min(setTo, to) - max(setFrom, from)) / str.Info.Tick(1);
+                        if count > 0
+                            did = H5D.open(fid, set.Name);
+                            dims = double([length(cfg.channel) count]);
+                            offset = double([cfg.channel(1)-1 startOffset]);
+                            mem_space_id = H5S.create_simple(2,dims,[]);
+                            file_space_id = H5D.get_space(did);
+                            H5S.select_hyperslab(file_space_id,'H5S_SELECT_SET',offset,[1 1],[1 1],dims);
+                            
+                            data = H5D.read(did,'H5ML_DEFAULT',mem_space_id,file_space_id,'H5P_DEFAULT')';
+                            out_str.ChannelData = [out_str.ChannelData data];
+                            H5D.close(did);
+                        end
+                    end
+                end
+            end
+            H5F.close(fid);
+        end
     end
-    
 end

@@ -1,4 +1,4 @@
-classdef McsRecording
+classdef McsRecording < handle
 % Stores a single recording.
 %
 % The different streams present in the recording are sorted into the
@@ -59,6 +59,7 @@ classdef McsRecording
             else
                 mode = 'hdf5';
             end
+            source = 'DataManager';
             dataAttributes = recStruct.Attributes;
             for fni = 1:length(dataAttributes)
                 if strcmp(mode,'h5')
@@ -83,7 +84,7 @@ classdef McsRecording
                         if length(recStruct.Groups(gidx).Groups(streams).Datasets) <= 1
                             continue;
                         end
-                        rec.AnalogStream{count} = McsHDF5.McsAnalogStream(filename, recStruct.Groups(gidx).Groups(streams), cfg);
+                        rec.AnalogStream{count} = McsHDF5.McsAnalogStream(filename, recStruct.Groups(gidx).Groups(streams), source, cfg);
                         count = count + 1;
                     end
                     
@@ -92,7 +93,7 @@ classdef McsRecording
                     % can't do the data set count here because the frame
                     % data entities are below the frame stream
                     for streams = 1:length(recStruct.Groups(gidx).Groups)
-                        rec.FrameStream{streams} = McsHDF5.McsFrameStream(filename, recStruct.Groups(gidx).Groups(streams), cfg);
+                        rec.FrameStream{streams} = McsHDF5.McsFrameStream(filename, recStruct.Groups(gidx).Groups(streams), source, cfg);
                     end
                     
                 elseif ~isempty(strfind(groupname,'EventStream'))
@@ -102,7 +103,7 @@ classdef McsRecording
                         if length(recStruct.Groups(gidx).Groups(streams).Datasets) <= 1
                             continue;
                         end
-                        rec.EventStream{count} = McsHDF5.McsEventStream(filename, recStruct.Groups(gidx).Groups(streams), cfg);
+                        rec.EventStream{count} = McsHDF5.McsEventStream(filename, recStruct.Groups(gidx).Groups(streams), source, cfg);
                         count = count + 1;
                     end
                     

@@ -73,10 +73,15 @@ function plot(analogStream,cfg,varargin)
         data_to_plot = analogStream.ChannelData(cfg.channel,start_index:end_index);
     end
     
-    orig_exp = log10(max(abs(data_to_plot(:))));
-    unit_exp = double(analogStream.Info.Exponent(1));
-    
-    [fact,unit_string] = McsHDF5.ExponentToUnit(orig_exp+unit_exp,orig_exp);
+    if strcmp(analogStream.Info.Unit{1}, 'NoUnit')
+        fact = 1;
+        unit_string = '';
+    else
+        orig_exp = log10(max(abs(data_to_plot(:))));
+        unit_exp = double(analogStream.Info.Exponent(1));
+        
+        [fact,unit_string] = McsHDF5.ExponentToUnit(orig_exp+unit_exp,orig_exp);
+    end
     
     if ~isnan(fact)
         data_to_plot = data_to_plot * fact;
