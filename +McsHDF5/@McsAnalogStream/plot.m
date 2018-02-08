@@ -118,4 +118,6 @@ function plot(analogStream,cfg,varargin)
     xlabel('Time [s]')
     ylabel([unit_string analogStream.Info.Unit{1}],'Interpreter','tex')
     
+    set(gcf,'Name',[analogStream.Label]);
+    
 end

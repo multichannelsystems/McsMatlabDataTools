@@ -194,6 +194,17 @@ classdef McsCmosStaExplorerSource < handle
             out_str.Internal = false;
             out_str.DataUnit = str.DataUnit(cfg.sta);
         end
+        
+    end
+    
+    methods (Static)
+        mouseSingleSensor(src, evt)
+        
+        mouseHandlerHeatMap(src, evt)
+        
+        fig = plotSingleSensor(parentFIG,UOI,coordinates)
+        
+        plotHeatMap(fig, coordinates, heat, sensorDimension, SourceIDs)
     end
     
     methods (Static, Access=private)

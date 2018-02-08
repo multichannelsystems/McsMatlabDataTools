@@ -224,3 +224,52 @@
 % dashed red lines:
 %
 %   plot(data.Recording{1}.Acquisition.ChannelStream{1},cfg,'--r','LineWidth',5);
+
+%% Interactive Plots
+% Plot functions for the STAExplorer data source and the SpikeSorter 
+% data source produce interactive figures, i.e.
+%
+%   plot(data.Recording{1}.STAExplorer,[])
+%   plot(data.Recording{1}.SpikeSorter,[])
+
+%%
+% The *STAExplorer* data source plot produces a Heat Map that visualizes
+% the location of each detected sta and the realtive number of contributing
+% sweeps. Upon clicking an non-active sensor on the Heat Map, labels for
+% all units may be switched between visible and invisible.
+% Clicking an active sensor opens a separate figure with corresponding
+% detailed information. Namely, three graphics appear:
+%
+%
+% 
+% <<staComplete.PNG>>
+% 
+
+%%
+% 
+% # the signals of all sensors in a defined neighborhood of the clicked
+% sensor
+% # the signal of the clicked sensor
+% # an animation showing the STA across the entire sensor array over time
+
+%%
+% The animation may started/paused by clicking into it. A bar in the
+% magnified signal plot (middle) shows the timely position of the animation
+% within the recording. By clicking into the signal, the current animation 
+% frame may be changed.
+%%
+% For more detailed information on configuration options please refer to 
+% the specific function help
+%
+%   help McsHDF5.McsCmosStaExplorerSource.plot
+%%
+% The *SpikeSorter* data source plot visualizes the entire sensor array.
+% Several components of the visualization, including the grid, labels, etc.,  
+% are configurable prior to calling the plot function. However, they may be 
+% adjusted via the interface as needed. Upon clicking a unit, the plot
+% function for the corresponding SpikeSorter unit is called.
+%%
+% For more detailed information on configuration options please refer to 
+% the specific function help
+%
+%   help McsHDF5.McsCmosSpikeSorterSource.plot

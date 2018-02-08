@@ -312,4 +312,8 @@ classdef McsCmosSpikeSorterUnit < handle
             end
         end
     end
+    
+    methods (Static)
+        STAImage = createUnitSTAImage(str)
+    end
 end

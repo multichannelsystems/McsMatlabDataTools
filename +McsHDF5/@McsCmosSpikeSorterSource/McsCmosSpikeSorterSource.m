@@ -64,6 +64,16 @@ classdef McsCmosSpikeSorterSource < handle
         end
     end
     
+    methods (Static)
+        STAImage = createSensorSTAImage(str)
+        
+        mapHandler(src, evt)
+
+        checkboxHandler(src, evt)
+
+        listHandler(src, evt)
+    end
+    
     methods (Static, Access = private)
         function set = ReadSettingsDatasets(filename, strStruct, mode)
             
@@ -120,6 +130,10 @@ classdef McsCmosSpikeSorterSource < handle
                     units = [units {unit}];
                 end
             end
+            entities = [units{:}];
+            ids = arrayfun(@(x)(x.UnitInfo.UnitID),entities);
+            [tmp,idx] = sort(ids);
+            units = units(idx);
         end
     end
 end

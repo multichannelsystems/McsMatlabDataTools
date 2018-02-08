@@ -40,18 +40,24 @@ function plot(recording,cfg,varargin)
     
     if ~isempty(recording.Acquisition)
         cfg = doParameterCheck(cfg, 'acq', recording.Acquisition);
+        if ~isa(recording.Acquisition,'McsHDF5.McsCmosLinkedDataSource')
+            figure
+        end
         plot(recording.Acquisition, cfg.acq{1}, varargin{:});
     end
     if ~isempty(recording.SpikeExplorer)
         cfg = doParameterCheck(cfg, 'spike', recording.SpikeExplorer);
+        figure
         plot(recording.SpikeExplorer, cfg.spike{1}, varargin{:});
     end
     if ~isempty(recording.STAExplorer)
         cfg = doParameterCheck(cfg, 'sta', recording.STAExplorer);
+        figure
         plot(recording.STAExplorer, cfg.sta{1}, varargin{:});
     end
     if ~isempty(recording.SpikeSorter)
         cfg = doParameterCheck(cfg, 'sorter', recording.SpikeSorter);
+        figure
         plot(recording.SpikeSorter, cfg.sorter{1}, varargin{:});
     end
 end
