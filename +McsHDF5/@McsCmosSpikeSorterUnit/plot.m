@@ -64,10 +64,29 @@ detailedInfo    = {sprintf('%1.3d',str.UnitInfo.IsoIBg);...
                     sprintf('%1.3d',str.UnitInfo.IsoINN);...
                     sprintf('%1.3d',str.UnitInfo.Skewness);...
                     sprintf('%1.3d',str.UnitInfo.Kurtosis)};
+space           = {'';...
+                    '';...
+                    '';...
+                    '';...
+                    '';...
+                    '';...
+                    '';...
+                    '';...
+                    '';...
+                    '';...
+                    '';...
+                    ''};
 
 axes(AX1)%sets current axes to AX1
-text([0 0],[0.75 0.1],{basicsHeaders,detailsHeaders},'VerticalAlignment','bottom','HorizontalAlignment','left','FontUnits','normalized','FontSize', fontSizeInfobox);
-text([0.618 0.618],[0.75 0.1],{basicInfo,detailedInfo},'VerticalAlignment','bottom','HorizontalAlignment','left','FontUnits','normalized','FontSize', fontSizeInfobox);
+linespace   = fontSizeInfobox*0.2;
+headers     = {basicsHeaders{:}, space{:}, detailsHeaders};
+info        = {basicInfo{:}, space{:}, detailedInfo};
+for row=1:1:length(headers)
+%headers
+text(0.45,0.9-(row-1)*fontSizeInfobox-row*linespace,headers{row},'VerticalAlignment','top','HorizontalAlignment','right','FontUnits','normalized','FontSize', fontSizeInfobox,'Parent',AX1);
+%infos
+text(0.55,0.9-(row-1)*fontSizeInfobox-row*linespace,info{row},'VerticalAlignment','top','HorizontalAlignment','left','FontUnits','normalized','FontSize', fontSizeInfobox,'Parent',AX1);
+end
 
 %visualize Image
 AXImage_outerPosition = [ AX1_outerPosition(1) AX1_outerPosition(2)+AX1_outerPosition(4)/2-AX1_outerPosition(3)/4 AX1_outerPosition(3) AX1_outerPosition(3) ];
@@ -85,7 +104,9 @@ map(1,:)        = get(gcf,'Color');                         %modify colormap - s
 %that they are not converted to gray
 image           = image*(size(map,1)-1)/size(map,1);        %rescaling
 image(image~=0) = image(image~=0) + 1 - max(max(image));    %shifting all non-zero values up so that max(max(image)) == 1 again
-imshow(image,'Colormap',map,'Parent',AX_image);
+colormap(map);
+imagesc(image,'Parent',AX_image);
+set(AX_image,'Box','off','xticklabel',[],'yticklabel',[],'xtick',[],'ytick',[],'YColor',get(gcf,'Color'),'XColor',get(gcf,'Color'));
 %
 %% VISUALIZE CUTOUTS
 %fetch data
@@ -94,8 +115,6 @@ relevantCutouts =   str.Peaks.Cutout(logical(str.Peaks.IncludePeak),:);
 [M,I] = min(relevantCutouts(:));
 [I_row, I_col]  = ind2sub(size(relevantCutouts),I);
 timeWindow      =   ((1:1:size(str.Peaks.Cutout,2))-I_col)*1e-3*double(str.PeaksInfo.Tick);
-%timeWindow      =   0:(double(str.PeaksInfo.Tick)*1e-3):size(str.Peaks.Cutout,2)*double(str.PeaksInfo.Tick)*1e-3;
-%timeWindow      =   (timeWindow(1:end-1)-timeWindow(end-1)/2).';
 %assemble axes
 AX2 = axes('OuterPosition',AX2_outerPosition);
 if noisyCutouts
@@ -116,7 +135,9 @@ set(AX2,'YTick',[],...
         'color',get(gcf,'Color'),...
         'TickLength',[0.005 0.0125]);
 xAX = get(AX2,'XAxis');
-set(xAX,'FontSize', fontSizeTicks)
+if isa(xAX,'handle')
+    set(xAX,'FontSize', fontSizeTicks)
+end
 xlabel('Time [ms]','FontSize',fontSizeLabel);
 %
 %% VISUALIZE PEAK AMPLITUDE HISTOGRAMM
@@ -139,10 +160,14 @@ set(AX3,'Box','off',...
         'TickLength',[0.005 0.0125],...
         'YGrid','on');
 xAX = get(AX3,'XAxis');
-set(xAX,'FontSize', fontSizeTicks)
+if isa(xAX,'handle')
+    set(xAX,'FontSize', fontSizeTicks)
+end
 xlabel('Amplitude','FontSize',fontSizeLabel);
 yAX = get(AX3,'YAxis');
-set(yAX,'FontSize', fontSizeTicks)
+if isa(yAX,'handle')
+    set(yAX,'FontSize', fontSizeTicks)
+end
 ylabel('Count','FontSize',fontSizeLabel);
 %
 %% VISUALIZE SOURCE SIGNAL
@@ -153,17 +178,22 @@ set(AX4,'XTick',[],...
         'XColor',get(gcf,'Color'),...
         'Box','off',...
         'color',get(gcf,'Color'),...
-        'TickLength',[0.005 0.0125],...
-        'xlim',[0 length(str.Source)]);
+        'TickLength',[0.005 0.0125])
+    axis([0 length(str.Source) min(str.Source) max(str.Source)]);
 yAX = get(AX4,'YAxis');
-set(yAX,'FontSize', fontSizeTicks)
+if isa(yAX,'handle')
+    set(yAX,'FontSize', fontSizeTicks)
+end
 ylabel('Arbitrary Units','FontSize',fontSizeLabel);
+%compute time vector to be used to compute x axis labels for combined plots
+timeWindow = [0 (length(str.Source)-1)*double(str.PeaksInfo.Tick)*1e-6];% in seconds
 %visualize spikes
 AX5     = axes('OuterPosition',AX5_outerPosition);
 peaks   = (double(str.Peaks.Timestamp(logical(str.Peaks.IncludePeak)))*double(str.PeaksInfo.Tick)*1e-6).';
-y       = zeros(size(peaks));
 axes(AX5)%sets current axes to AX5
-text(peaks,y,'|','VerticalAlignment','middle','HorizontalAlignment','center','Color','black');
+for num_peaks=1:length(peaks)
+    text(peaks(num_peaks),0,'|','VerticalAlignment','middle','HorizontalAlignment','center','Color','black');
+end
 set(AX5,'Box','off',...
         'color',get(gcf,'Color'),...
         'XTick',[],...
@@ -174,23 +204,36 @@ set(AX5,'Box','off',...
 axis([0 double(str.Peaks.Timestamp(end))*double(str.PeaksInfo.Tick)*1e-6 -0.5 0.5]);
 %visualize count
 AX6             = axes('OuterPosition',AX6_outerPosition);
-[count, edges]  = histcounts(peaks,100);
+timestamps      = double(str.Peaks.Timestamp(logical(str.Peaks.IncludePeak))).';
+edges           = linspace(0,max(timestamps),101);
+if exist('histcounts')
+    [count,edges]   = histcounts(timestamps,edges);
+else
+    count           = histc(timestamps,edges(2:end));
+end
 width           = edges(2)-edges(1);
-index           = edges(1:end-1)+width/2;
-bar(AX6,index,count,1,'FaceColor','black','EdgeColor',get(gcf,'Color'));
-axis([edges(1) edges(end) 0 max(count)])
-xTicks = edges(1):(edges(end)-edges(1))/10:edges(end);
+index           = edges(1:end-1)-1+width/2;
+bar(index,count,1,'FaceColor','black','EdgeColor',get(gcf,'Color'),'Parent',AX6);
+axis([edges(1)-1 edges(end)-1 0 max(count)])
+xTicks = edges(1)-1:(edges(end)-edges(1))/10:edges(end)-1;
 set(AX6,'Box','off',...
         'color',get(gcf,'Color'),...
         'TickLength',[0.005 0.0125],...
-        'YGrid','on')
-xticks(xTicks);
-xticklabels(arrayfun(@num2str,xTicks/double(str.PeaksInfo.Tick),'UniformOutput',false));
+        'YGrid','on',...
+        'xtick',xTicks)
+timeWindow  = linspace(timeWindow(1),timeWindow(2),length(xTicks));
+n           = floor(log10(max(timeWindow)));
+timeWindow  = round(timeWindow*10^(-(n-1)))*10^(n-1);
+set(AX6,'xticklabel',arrayfun(@num2str,timeWindow,'UniformOutput',false));
 xAX = get(AX6,'XAxis');
-set(xAX,'FontSize', fontSizeTicks)
+if isa(xAX,'handle')
+    set(xAX,'FontSize', fontSizeTicks)
+end
 xlabel('Time [s]','FontSize',fontSizeLabel);
 yAX = get(AX6,'YAxis');
-set(yAX,'FontSize', fontSizeTicks)
+if isa(yAX,'handle')
+    set(yAX,'FontSize', fontSizeTicks)
+end
 ylabel('Count','FontSize',fontSizeLabel);
 %
 %% WRITE BOX TITLES

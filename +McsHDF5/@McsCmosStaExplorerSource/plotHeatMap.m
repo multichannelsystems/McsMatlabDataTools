@@ -60,12 +60,19 @@ function plotHeatMap(fig, coordinates, heat, sensorDimension)
     c                       = colorbar('Location','manual',...
                                 'Position',[0.12 0.115 0.05 0.8],...
                                 'Visible','on',...
-                                'Tag','colbarSweeps');
-    ticks                   = get(c,'TickLabels');
-    ticks                   = round(cellfun(@str2num,ticks)*max(heat),-2);
-    ticks                   = arrayfun(@num2str,ticks,'UniformOutput',false);
-    set(c,'TickLabels',ticks);
-    c.Label.String          = 'Number of Sweeps';
+                                'Tag','colbarSweeps',...
+                                'ytickmode','manual',...
+                                'yticklabelmode','manual');
+                            
+    lim                     = get(c,'YLim');
+    offset                  = lim(1);
+    ticks                   = [0:0.1:1]*(lim(2)-lim(1))+offset;
+    ticklabels              = [0:0.1:1]*max(heat);
+    n                       = floor(log10(max(heat)))-1;
+    ticklabels           	= round(ticklabels*10^(-n))*10^n;
+    ticklabels              = arrayfun(@num2str,ticklabels,'UniformOutput',false);
+  	set(c,'YTick',ticks,'YTickLabel',ticklabels);
+    ylabel(c,'Number of Sweeps');
     
     %mark labels
     position = get(gca,'OuterPosition');
@@ -76,10 +83,11 @@ function plotHeatMap(fig, coordinates, heat, sensorDimension)
                 'PlotBoxAspectRatio',[1 1 1],...
                 'OuterPosition', AX_OuterPosition);
     axis(([1 (sensorDimension(2)+1) 1 (sensorDimension(1)+1)]-0.5));
-    text(ax,coordinates(1,:), coordinates(2,:), txt, 'HorizontalAlignment', 'center',...
+    text(coordinates(1,:), coordinates(2,:), txt, 'HorizontalAlignment', 'center',...
                                                         'VerticalAlignment', 'middle',...
                                                         'FontUnits', 'normalized',...
                                                         'FontSize', 2/sensorDimension(1),...
-                                                        'Visible',data.labels);
+                                                        'Visible',data.labels,...
+                                                        'Parent',ax);
     set(ax,'Visible','off','Tag','markers')
 end

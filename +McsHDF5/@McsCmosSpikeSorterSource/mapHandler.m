@@ -16,7 +16,7 @@ function mapHandler(src, evt)
 
 %TEST CLICK TYPE
     if strcmp(get(src, 'SelectionType'), 'normal')
-        pt = get(src.CurrentAxes,'CurrentPoint');
+        pt = get(get(src,'CurrentAxes'),'CurrentPoint');
         
         x = pt(1,1);
         y = pt(1,2);

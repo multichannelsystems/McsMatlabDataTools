@@ -8,15 +8,16 @@ function mouseSingleSensor(src, evt)
 
     if strcmp(get(src, 'SelectionType'), 'normal')
         subplts = get(src,'Children');
-        if src.CurrentAxes == findobj(subplts,'Tag','neighborhood') %Neighborhood is clicked
-        elseif src.CurrentAxes == findobj(subplts,'Tag','video') %Video is clicked
+        curAX = get(src,'CurrentAxes');
+        if curAX == findobj(subplts,'Tag','neighborhood') %Neighborhood is clicked
+        elseif curAX == findobj(subplts,'Tag','video') %Video is clicked
             data = guidata(src);
             if data.video.playing
                 data.video.pauseVideo();
             else
                 data.video.playVideo();
             end
-        elseif src.CurrentAxes == findobj(subplts,'Tag','singleUnitPlot')
+        elseif curAX == findobj(subplts,'Tag','singleUnitPlot')
             pt = get(gca,'CurrentPoint');
             data = guidata(src);
             videoLength = size(data.video.imageCube,3);
@@ -41,7 +42,12 @@ function mouseSingleSensor(src, evt)
             
             %show Video frame
             axes(AX_Video);
-            h = imshow(imageStack{data.video.curFrame},'Parent',AX_Video);
+            if exist('imshow')
+                h = imshow(imageStack{data.video.curFrame},'Parent',AX_Video);
+            else
+                h = imagesc(imageStack{data.video.curFrame},[0 1]);
+                set(h,'Parent',AX_Video);
+            end
             set(h,'Interruptible','off');
             set(AX_Video,'Tag','video','Interruptible','off');
             
@@ -53,8 +59,10 @@ function mouseSingleSensor(src, evt)
             hold off
             xlabel('Time [s]');
             ylabel('Voltage [V]');
-            title(sprintf('Unit (%d,%d)',data.video.CoordinateOI(1),data.video.CoordinateOI(2)));
-            set(AX_SingleUnitPlot,'Tag','singleUnitPlot');
+            title(sprintf('Sensor Signal (%d,%d)',data.video.CoordinateOI(1),data.video.CoordinateOI(2)));
+            set(AX_SingleUnitPlot,'Tag','singleUnitPlot',...
+                                            'Box','off',...
+                                            'color',get(gcf,'Color'));
             
             data.video.curFrame = data.video.curFrame + 1 ;
             

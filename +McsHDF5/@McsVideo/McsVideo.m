@@ -60,7 +60,12 @@ classdef McsVideo < handle
                     
                     %show Video
                     set(0,'CurrentFigure',vid.environment) %not the optimal solution: multithreading would be better
-                    h = imshow(imageStack{frame},'Parent',AX_Video);
+                 	if exist('imshow')
+                        h = imshow(imageStack{frame},'Parent',AX_Video);
+                    else
+                        h = imagesc(imageStack{frame},[0 1]);
+                        set(h,'Parent',AX_Video);
+                    end
                     set(h,'Interruptible','off');
                     set(AX_Video,'Tag','video','Interruptible','off');
                     
@@ -73,8 +78,10 @@ classdef McsVideo < handle
                     hold off
                     xlabel('Time [s]');
                     ylabel('Voltage [V]');
-                    title(sprintf('Unit (%d,%d)',vid.CoordinateOI(1),vid.CoordinateOI(2)));
-                    set(AX_SingleUnitPlot,'Tag','singleUnitPlot');
+                    title(sprintf('Sensor Signal (%d,%d)',vid.CoordinateOI(1),vid.CoordinateOI(2)));
+                    set(AX_SingleUnitPlot,'Tag','singleUnitPlot',...
+                                            'Box','off',...
+                                            'color',get(gcf,'Color'));
                     pause(1/vid.framerate);
                     
                     %handle interruption
@@ -112,9 +119,15 @@ classdef McsVideo < handle
         
         function [ vid , success ] = loadVideo( vid , AX )
             success        	= 0;
-            himage          = imshow(vid.imageCube(:,:,1),'Parent',AX);
+            colormap(AX,gray);
+            if exist('imshow')
+                h = imshow(vid.imageCube(:,:,1),'Parent',AX);
+            else
+                h = imagesc(vid.imageCube(:,:,1),[0 1]);
+                set(h,'Parent',AX);
+            end
             vid.curFrame    = 2;
-            if isgraphics(himage)
+            if isgraphics(h)
                 success         = 1;
             end
         end

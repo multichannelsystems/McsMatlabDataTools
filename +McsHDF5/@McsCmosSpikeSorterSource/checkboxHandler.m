@@ -34,22 +34,42 @@ function checkboxHandler(src, evt)
             % turn everything invisible
             children                    = get(data.image,'Children');
             set(findobj(children,'Type','image'),'Visible','off');
-            set(findobj(get(fig,'Children'),'Type','colorbar','-and','Tag','colbarSTA'),'Visible','off');
             set(findobj(get(fig,'Children'),'Type','colorbar','-and','Tag','colbarSpikeCount'),'Visible','off');
+            %for older MATLAB Versions
+            set(findobj(get(fig,'Children'),'Tag','colbarSpikeCount'),'Visible','off');
+            set(data.colbar,'Visible','off');
+            %
             children                    = get(data.activity,'Children');
             set(findobj(children,'Type','Rectangle'),'Visible','off');
-            % turn selection visible
+            % turn selection visible in popupmenu
             selection   = get(src,'String');
             value       = get(src,'Value');
             switch selection{value}
                 case 'STA Image'
                     children                    = get(data.image,'Children');
                     set(findobj(children,'Type','image'),'Visible','on');
-                    set(findobj(get(fig,'Children'),'Type','colorbar','-and','Tag','colbarSTA'),'Visible','on');
+                    colormap(data.image,data.colormapSTA);
                 case'Spike Count'
                     children                    = get(data.activity,'Children');
                     set(findobj(children,'Type','Rectangle'),'Visible','on');
                     set(findobj(get(fig,'Children'),'Type','colorbar','-and','Tag','colbarSpikeCount'),'Visible','on');
+                    
+                    
+                    %for older MATLAB Version
+                    set(findobj(get(fig,'Children'),'Tag','colbarSpikeCount'),'Visible','on');
+                    set(data.colbar,'Visible','on');
+                    colormap(data.activity,data.colormapSpikeCount);
+
+                    lim                     = get(data.colbar,'YLim');
+                    offset                  = lim(1);
+                    ticks                   = [0:0.1:1]*(lim(2)-lim(1))+offset;
+                    ticklabels              = [0:0.1:1]*max(data.spikeCount);
+                    n                       = floor(log10(max(data.spikeCount)))-1;
+                    ticklabels           	= round(ticklabels*10^(-n))*10^n;
+                    ticklabels              = arrayfun(@num2str,ticklabels,'UniformOutput',false);
+                    set(data.colbar,'YTick',ticks,'YTickLabel',ticklabels);
+                    ylabel(data.colbar,'Spike Count');
+                    %
                 otherwise
             end
         case 'markers'

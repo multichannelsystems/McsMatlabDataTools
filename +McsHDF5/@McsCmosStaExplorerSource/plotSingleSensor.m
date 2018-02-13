@@ -70,7 +70,10 @@ function fig = plotSingleSensor(parentFIG,UOI,coordinates)
     plot_num        = 1;
     for yi=1:1:inY
         for xi=1:inX
-            ax = axes(fig,'Units','normalized','Position',[left+xi*spacing_x+(xi-1)*width,...
+            ax = axes();
+            set(ax,'Units','normalized',...
+                                'Parent',fig,...
+                                'Position',[left+xi*spacing_x+(xi-1)*width,...
                                     (1-0.2*bottom)-(yi*spacing_y+yi*height),...
                                     width,...
                                     height]);
@@ -85,7 +88,7 @@ function fig = plotSingleSensor(parentFIG,UOI,coordinates)
                         'YColor',get(gcf,'Color'),...
                         'xticklabel',{[]},...
                         'yticklabel',{[]});
-                ax.Box = 'off';
+                 box(ax,'off');
                 %set(ax,'Visible','off')
                  %axis off;
             else
@@ -116,7 +119,8 @@ function fig = plotSingleSensor(parentFIG,UOI,coordinates)
 %%  PLOT UNIT ACTIVITY
     STAData     = data.STAData{UOI};
     UnitOIData  = reshape(STAData(coordinates(2),coordinates(1),:),[1,size(STAData,3)]);
-    AX2         = axes(fig,'OuterPosition',posAX2,'Units','normalized');
+    AX2         = axes();
+    set(AX2,'Parent',fig,'OuterPosition',posAX2,'Units','normalized');
     plot(AX2,UnitOIData)
     xlabel('Time [s]')
     ylabel('Voltage [V]')
@@ -124,11 +128,14 @@ function fig = plotSingleSensor(parentFIG,UOI,coordinates)
     hold on
     plot(AX2,[1 1],ylim,'--','LineWidth',1,'Color',[0.3333 0.4196 0.1843])
     hold off
-    set(AX2,'Tag','singleUnitPlot');
+    set(AX2,'Tag','singleUnitPlot',...
+            'Box','off',...
+            'color',get(gcf,'Color'));
 %
 %%  CREATE VIDEO & PLOT FIRST FRAME OF VIDEO
     data.video      = McsHDF5.McsVideo(fig, data.STAData{UOI}, coordinates);
-    AX3             = axes(fig,'OuterPosition',posAX3);
+    AX3             = axes();
+    set(AX3,'Parent',fig,'OuterPosition',posAX3);
     title('Video');
     [data.video,~]  = data.video.loadVideo(AX3);
     set(AX3,'Tag','video');
