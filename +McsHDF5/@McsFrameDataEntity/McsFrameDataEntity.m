@@ -435,7 +435,7 @@ classdef McsFrameDataEntity < handle
                 split = split(arrayfun(@(x)(~isempty(x{1})), split));
                 cv = arrayfun(@(x)(str2double(x{1})), split);
                 fde.ConversionFactors = reshape(cv, [width, height]);
-                fde.ConversionFactors = double(fde.ConversionFactors)';        
+                fde.ConversionFactors = double(fde.ConversionFactors);        
                 if cfg.correctConversionFactorOrientation
                     fde.ConversionFactors = fde.ConversionFactors';
                 end
