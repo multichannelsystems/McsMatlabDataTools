@@ -56,6 +56,12 @@ function fig = plotSingleSensor(parentFIG,UOI,coordinates)
     inY             = length(windowY);
     ROI             = data.STAData{UOI};
     ROI             = ROI(windowY, windowX,:);
+    ROI             = ROI / double(data.sweeps(UOI));
+    
+    orig_exp = log10(max(abs(ROI(:))));
+    unit_exp = -9;
+    [fact,unit_string] = McsHDF5.ExponentToUnit(orig_exp+unit_exp,orig_exp);
+    ROI = ROI * fact;
     
     maxValue        = max(max(max(ROI)));
     minValue        = min(min(min(ROI)));
@@ -100,14 +106,14 @@ function fig = plotSingleSensor(parentFIG,UOI,coordinates)
             	set(ax,'color',0.85*color);
             end
             if yi == inY
-                xlabel('Time [s]')
+                xlabel('Time [µs]')
                 if xi ~= 1
                     set(gca,'YTick',[])
                     set(gca,'YColor',get(gcf,'Color'))
                 end
             end
             if xi == 1
-                ylabel('Voltage [V]')
+                ylabel(['Voltage [' unit_string 'V]'])
                 if yi ~= inY
                     set(gca,'XTick',[])
                     set(gca,'XColor',get(gcf,'Color'))
@@ -119,26 +125,29 @@ function fig = plotSingleSensor(parentFIG,UOI,coordinates)
 %%  PLOT UNIT ACTIVITY
     STAData     = data.STAData{UOI};
     UnitOIData  = reshape(STAData(coordinates(2),coordinates(1),:),[1,size(STAData,3)]);
+    UnitOIData  = UnitOIData / double(data.sweeps(UOI));
+    orig_exp = log10(max(abs(UnitOIData(:))));
+    unit_exp = -9;
+    [fact,unit_string] = McsHDF5.ExponentToUnit(orig_exp+unit_exp,orig_exp);
+    UnitOIData = UnitOIData * fact;
     AX2         = axes();
     set(AX2,'Parent',fig,'OuterPosition',posAX2,'Units','normalized');
     plot(AX2,UnitOIData)
-    xlabel('Time [s]')
-    ylabel('Voltage [V]')
+    xlabel('Time [µs]')
+    ylabel(['Voltage [' unit_string 'V]'])
     title(sprintf('Sensor Signal (%d,%d)',coordinates(1),coordinates(2)))
-    hold on
-    plot(AX2,[1 1],ylim,'--','LineWidth',1,'Color',[0.3333 0.4196 0.1843])
-    hold off
+    linehandle = line([1 1],ylim,'LineStyle','--','LineWidth',1,'Color',[0.3333 0.4196 0.1843]);
     set(AX2,'Tag','singleUnitPlot',...
             'Box','off',...
             'color',get(gcf,'Color'));
 %
 %%  CREATE VIDEO & PLOT FIRST FRAME OF VIDEO
-    data.video      = McsHDF5.McsVideo(fig, data.STAData{UOI}, coordinates);
+    data.video      = McsHDF5.McsVideo(fig, data.STAData{UOI} / double(data.sweeps(UOI)), linehandle);
     AX3             = axes();
     set(AX3,'Parent',fig,'OuterPosition',posAX3);
     title('Video');
     [data.video,~]  = data.video.loadVideo(AX3);
-    set(AX3,'Tag','video');
+    set(AX3,'Tag','video','Interruptible','on');
 %
 %%  STORE DATA WITH FIGURE
     guidata(fig, data);

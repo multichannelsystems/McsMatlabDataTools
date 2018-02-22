@@ -32,37 +32,13 @@ function mouseSingleSensor(src, evt)
             data = guidata(src);
             data.video.curFrame = x;
             
-            AX_Video            = findobj(get(data.video.environment,'Children'),'Tag','video');
-            AX_SingleUnitPlot   = findobj(get(data.video.environment,'Children'),'Tag','singleUnitPlot');
-            
             %prepare data
             imageStack  = data.video.imageCube;
             imageStack  = num2cell(imageStack,[1 2]);
-            UnitOIData  = data.video.signalUOI;
             
-            %show Video frame
-            axes(AX_Video);
-            if exist('imshow')
-                h = imshow(imageStack{data.video.curFrame},'Parent',AX_Video);
-            else
-                h = imagesc(imageStack{data.video.curFrame},[0 1]);
-                set(h,'Parent',AX_Video);
-            end
-            set(h,'Interruptible','off');
-            set(AX_Video,'Tag','video','Interruptible','off');
-            
-            %plot Data and Video progress
-            axes(AX_SingleUnitPlot);
-            plot(UnitOIData)
-            hold on
-            plot([data.video.curFrame-1 data.video.curFrame-1],ylim,'--','LineWidth',1,'Color',[0.3333 0.4196 0.1843])
-            hold off
-            xlabel('Time [s]');
-            ylabel('Voltage [V]');
-            title(sprintf('Sensor Signal (%d,%d)',data.video.CoordinateOI(1),data.video.CoordinateOI(2)));
-            set(AX_SingleUnitPlot,'Tag','singleUnitPlot',...
-                                            'Box','off',...
-                                            'color',get(gcf,'Color'));
+            set(data.video.framehandle, 'CData', imageStack{data.video.curFrame});
+            set(data.video.linehandle, 'XData', [data.video.curFrame-1 data.video.curFrame-1]);
+            drawnow
             
             data.video.curFrame = data.video.curFrame + 1 ;
             

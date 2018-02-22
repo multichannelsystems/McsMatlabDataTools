@@ -8,18 +8,16 @@ classdef McsVideo < handle
         imageCube       = [];
         framerate       = [];
         curFrame        = 1;
-        CoordinateOI    = [];
-        signalUOI        = [];
+        framehandle     = [];
+        linehandle      = [];
     end
     
     methods 
-        function vid = McsVideo(fig, images, CoordinateOI, varargin)
+        function vid = McsVideo(fig, images, linehandle, varargin)
             % Construct an instance of class McsVideo
             vid.environment     = fig;
             vid.imageCube       = images;
             vid.framerate       = 25;
-            vid.CoordinateOI    = CoordinateOI;
-            vid.signalUOI       = reshape(images(CoordinateOI(2),CoordinateOI(1),:),[1,size(images,3)]);
             %scale Images
             maxValue         	= max(max(max(abs(images))));
             images              = images/maxValue;
@@ -28,19 +26,16 @@ classdef McsVideo < handle
             maxValue         	= max(max(max(abs(images))));
             images              = images/maxValue;
             vid.imageCube       = images;
+            vid.linehandle      = linehandle;
         end
         
         function playVideo( vid )
             %fetch data
             data                        = guidata(vid.environment);
             vid                         = data.video;
-            
-            AX_Video                    = findobj(get(vid.environment,'Children'),'Tag','video');
-            AX_SingleUnitPlot           = findobj(get(vid.environment,'Children'),'Tag','singleUnitPlot');
-            
+
             %prepare data
             imageStack                  = vid.imageCube;
-            UnitOIData                  = vid.signalUOI;
             imageStack  = num2cell(imageStack,[1 2]);
             %Prepare figure
             figure(vid.environment);
@@ -52,6 +47,7 @@ classdef McsVideo < handle
             data.video  = vid;
             guidata(vid.environment,data)
             %
+
             while(vid.playing && gcf == vid.environment)
                 for frame=vid.curFrame:size(imageStack,3)
                     if gcf ~= vid.environment %&& gca~=AX_Video
@@ -60,28 +56,13 @@ classdef McsVideo < handle
                     
                     %show Video
                     set(0,'CurrentFigure',vid.environment) %not the optimal solution: multithreading would be better
-                 	if exist('imshow')
-                        h = imshow(imageStack{frame},'Parent',AX_Video);
-                    else
-                        h = imagesc(imageStack{frame},[0 1]);
-                        set(h,'Parent',AX_Video);
-                    end
-                    set(h,'Interruptible','off');
-                    set(AX_Video,'Tag','video','Interruptible','off');
                     
-                    %plot Data and Video progress
-                    set(0,'CurrentFigure',vid.environment)
-                    axes(AX_SingleUnitPlot);
-                    plot(UnitOIData)
-                    hold on
-                    plot([frame-1 frame-1],ylim,'--','LineWidth',1,'Color',[0.3333 0.4196 0.1843])
-                    hold off
-                    xlabel('Time [s]');
-                    ylabel('Voltage [V]');
-                    title(sprintf('Sensor Signal (%d,%d)',vid.CoordinateOI(1),vid.CoordinateOI(2)));
-                    set(AX_SingleUnitPlot,'Tag','singleUnitPlot',...
-                                            'Box','off',...
-                                            'color',get(gcf,'Color'));
+                    % update video frame
+                    set(vid.framehandle, 'CData', imageStack{frame});
+                    % update position of the vertical line
+                    set(vid.linehandle,'XData',[frame-1 frame-1]);
+                    % draw the updates and process callbacks
+                    drawnow
                     pause(1/vid.framerate);
                     
                     %handle interruption
@@ -121,11 +102,12 @@ classdef McsVideo < handle
             success        	= 0;
             colormap(AX,gray);
             if exist('imshow')
-                h = imshow(vid.imageCube(:,:,1),'Parent',AX);
+                vid.framehandle = imshow(vid.imageCube(:,:,1),'Parent',AX);
             else
-                h = imagesc(vid.imageCube(:,:,1),[0 1]);
-                set(h,'Parent',AX);
+                vid.framehandle = imagesc(vid.imageCube(:,:,1),[0 1]);
+                set(vid.framehandle,'Parent',AX);
             end
+            set(vid.framehandle,'Interruptible','on');
             vid.curFrame    = 2;
             if isgraphics(h)
                 success         = 1;

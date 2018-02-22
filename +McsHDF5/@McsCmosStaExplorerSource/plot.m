@@ -127,6 +127,7 @@ function plot(staObject, cfg, varargin)
     data.coordinates              = coordinates;
     data.sourceIDs                = SourceIDs;
     data.STAData                  = staObject.STAData;
+    data.sweeps                   = cellfun(@(x)(x.Sweeps),staObject.STAInfos);
     data.neighborhood             = cfg.neighborhood;
     data.labelType                = cfg.labelType;
     data.labels                   = cfg.labels;
