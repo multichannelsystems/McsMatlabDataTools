@@ -43,7 +43,7 @@ function mapHandler(src, evt)
                 end
                 guidata(src, data);
             else
-                disp('Not a detected activity hub!');
+                disp('No unit at this position!');
             end
         end
     end
