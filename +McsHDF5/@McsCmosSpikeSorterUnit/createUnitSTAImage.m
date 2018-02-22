@@ -26,7 +26,7 @@ function STAImage = createUnitSTAImage(str)
     sensorXDimension = 65;
     sensorYDimension = 65;
 
-    channelIDs = strsplit(str.RoiSTAsInfo.ChannelIDs);
+    channelIDs = regexp(str.RoiSTAsInfo.ChannelIDs, ' ', 'split');
     channelIDs = cellfun(@str2num,channelIDs).';
 
     % Compute Pixel Values

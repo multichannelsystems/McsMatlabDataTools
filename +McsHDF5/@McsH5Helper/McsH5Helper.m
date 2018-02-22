@@ -56,6 +56,9 @@ classdef McsH5Helper
                     value = attribute.Value;
                 end
             elseif strcmp(mode, 'h5')
+                if ischar(attribute.Value) && ~isempty(attribute.Value) > 0 && double(attribute.Value(end)) == 0
+                    attribute.Value = attribute.Value(1:end-1);
+                end
                 value = attribute.Value;
             end
         end

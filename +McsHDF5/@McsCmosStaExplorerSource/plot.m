@@ -106,7 +106,11 @@ function plot(staObject, cfg, varargin)
     end
     % end of section "GET REOCCURING PARAMETERS"
     %% DATA VISUALIZATION
-    visualization = struct('localizationFig', gobjects(1));
+    if exist('gobjects')
+        visualization = struct('localizationFig', gobjects(1));
+    else
+        visualization = struct('localizationFig', 0);
+    end
     % end of initialization for "DATA VISUALIZATION"
     %% PLOT LOCALIZATION (AND ACTIVITY) OF SENSORS (HEATMAP)
     % plots a HeatMap of the selected accessible sta, which are selected

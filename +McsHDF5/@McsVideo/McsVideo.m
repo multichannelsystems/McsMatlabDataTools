@@ -66,7 +66,7 @@ classdef McsVideo < handle
                     pause(1/vid.framerate);
                     
                     %handle interruption
-                    if isgraphics(vid.environment,'figure')
+                    if ishghandle(vid.environment,'figure')
                         data = guidata(vid.environment);
                     else
                         break
@@ -79,7 +79,7 @@ classdef McsVideo < handle
                     guidata(data.video.environment,data);
                 end
                 %handle interruption
-                if isgraphics(vid.environment,'figure')
+                if ishghandle(vid.environment,'figure')
                     data = guidata(vid.environment);
                 else
                     break
@@ -109,7 +109,7 @@ classdef McsVideo < handle
             end
             set(vid.framehandle,'Interruptible','on');
             vid.curFrame    = 2;
-            if isgraphics(h)
+            if ishghandle(vid.framehandle)
                 success         = 1;
             end
         end
