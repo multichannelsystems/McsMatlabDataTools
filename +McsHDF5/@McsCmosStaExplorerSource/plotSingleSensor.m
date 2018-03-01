@@ -54,6 +54,7 @@ function fig = plotSingleSensor(parentFIG,UOI,coordinates)
     windowY         = base_coordinate(2):1:base_coordinate(2)+inY-1;
     windowY         = windowY( windowY>=1 & windowY<=data.sensorDimension(1) );
     inY             = length(windowY);
+    base_coordinate = [windowX(1) windowY(1)];
     ROI             = data.STAData{UOI};
     ROI             = ROI(windowY, windowX,:);
     ROI             = ROI / double(data.sweeps(UOI));
@@ -80,47 +81,48 @@ function fig = plotSingleSensor(parentFIG,UOI,coordinates)
             set(ax,'Units','normalized',...
                                 'Parent',fig,...
                                 'Position',[left+xi*spacing_x+(xi-1)*width,...
-                                    (1-0.2*bottom)-(yi*spacing_y+yi*height),...
+                                    bottom+(yi-1)*(spacing_y+height),...
                                     width,...
                                     height]);
+                                %(1-0.2*bottom)-(yi*spacing_y+yi*height)
             plot_num = plot_num+1;
-            plot(ax,squeeze(ROI(yi,xi,:)));
+            plot(ax,squeeze(ROI(inY-(yi-1),xi,:)));
             axis([0 size(ROI,3) minValue-abs(maxValue-minValue)*0.1 maxValue+ abs(maxValue-minValue)*0.1])
-            title(['(' num2str(base_coordinate(1)+xi-1) ',' num2str(base_coordinate(2)+yi-1) ')'],'Fontweight','normal','FontSize',10);
+            title(['(' num2str(base_coordinate(1)+xi-1) ',' num2str(base_coordinate(2)+inY-yi) ')'],'Fontweight','normal','FontSize',10);
             set(ax,'Tag','neighborhood');
-            if xi > 1 && yi < inY
-                set(ax,'color',get(gcf,'Color'),...
-                        'XColor',get(gcf,'Color'),...
+            if xi > 1 && yi > 1
+                set(ax,'color','none',...
+                        'XColor','none',...
                         'YColor',get(gcf,'Color'),...
                         'xticklabel',{[]},...
                         'yticklabel',{[]});
                  box(ax,'off');
-                %set(ax,'Visible','off')
-                 %axis off;
             else
                 set(gca,'Box','off');
-                set(gca,'color',get(gcf,'Color'))
+                set(gca,'color','none')
             end
-            if xi==coordinates(1)-base_coordinate(1)+1 && yi==coordinates(2)-base_coordinate(2)+1
-                color = get(gcf,'Color');
-            	set(ax,'color',0.85*color);
+            if base_coordinate(1)+xi-1==coordinates(1) && base_coordinate(2)+inY-yi==coordinates(2)
+                 color = get(gcf,'Color');
+             	set(ax,'color',0.85*color);
+                 selectedAX = ax;
             end
-            if yi == inY
+            if yi == 1
                 xlabel('Time [µs]')
                 if xi ~= 1
                     set(gca,'YTick',[])
-                    set(gca,'YColor',get(gcf,'Color'))
+                    set(gca,'YColor','none')
                 end
             end
             if xi == 1
                 ylabel(['Voltage [' unit_string 'V]'])
-                if yi ~= inY
+                if yi ~= 1
                     set(gca,'XTick',[])
-                    set(gca,'XColor',get(gcf,'Color'))
+                    set(gca,'XColor','none')
                 end
             end
         end
     end
+    uistack(selectedAX,'bottom');
 %
 %%  PLOT UNIT ACTIVITY
     STAData     = data.STAData{UOI};
