@@ -24,9 +24,11 @@ In addition to the usual help functions of the Matlab command line, documentatio
 doc McsHDF5
 ```
 
+For an introduction into the Toolbox, open the Matlab Help for the Toolbox by pressing ``F1`` or using the *Help &rarr; Documentation* menu. Then, click the *McsHDF5 Toolbox* link in the *Supplemental Software* section. The same information can also be found in the **Tutorial** pages of the Wiki.
+
 ### Authors
 This Toolbox is written and maintained by Armin Walter (Multi Channel Systems GmbH) <walter@multichannelsystems.com>.
-See the [AUTHORS.md](https://github.com/multichannelsystems/McsMatlabDataTools/AUTHORS.md) for a list of contributors.
+See the [AUTHORS.md](https://github.com/multichannelsystems/McsMatlabDataTools/blob/master/AUTHORS.md) for a list of contributors.
 
 ### License
-This project is licensed under the BSD license - see the [LICENSE.md](https://github.com/multichannelsystems/McsMatlabDataTools/LICENSE.md) for details.
+This project is licensed under the BSD license - see the [LICENSE.md](https://github.com/multichannelsystems/McsMatlabDataTools/blob/master/LICENSE.md) for details.
