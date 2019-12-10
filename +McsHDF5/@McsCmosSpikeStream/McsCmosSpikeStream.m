@@ -109,7 +109,7 @@ classdef McsCmosSpikeStream < McsHDF5.McsStream
             end
             
             if ~str.Internal && ~str.DataLoaded
-                fprintf('Reading spike data...')
+                McsHDF5.print('Reading spike data...')
                 try 
                     spikeData = McsHDF5.McsH5Helper.ReadCompoundDataset(str.FileName, [str.StructName '/SpikeData'], mode);
                     fn = fieldnames(spikeData);
@@ -134,7 +134,7 @@ classdef McsCmosSpikeStream < McsHDF5.McsStream
                         str.SpikeData.TimeStamp = cast(str.SpikeData.TimeStamp, str.TimeStampDataType);
                     end
                 end
-                fprintf('done!\n');
+                McsHDF5.print('done!\n');
                 str.DataLoaded = true;
             end
             data = str.SpikeData;

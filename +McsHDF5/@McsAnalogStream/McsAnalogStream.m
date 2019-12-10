@@ -91,9 +91,9 @@ classdef McsAnalogStream < McsHDF5.McsStream
             end
             
             if ~str.Internal && ~str.DataLoaded
-                fprintf('Reading analog data...')
+                McsHDF5.print('Reading analog data...')
                 str = LoadDataFromFile(str, mode);
-                fprintf('done!\n');
+                McsHDF5.print('done!\n');
                 str.DataLoaded = true;
                 if ~strcmp(str.DataType,'raw')
                     for ch = 1:length(str.Info.Unit)
@@ -277,9 +277,9 @@ classdef McsAnalogStream < McsHDF5.McsStream
                 out_str.ChannelData = str.ChannelData(cfg.channel, cfg.window);
             else
                 % read data segment
-                fprintf('Reading partial analog data...');
+                McsHDF5.print('Reading partial analog data...');
                 out_str = LoadPartialDataFromFile(cfg, str, out_str);
-                fprintf('done!\n');
+                McsHDF5.print('done!\n');
             end
             out_str.ChannelDataTimeStamps = ts(cfg.window);
             out_str.DataLoaded = true;

@@ -120,9 +120,9 @@ classdef McsFrameDataEntity < handle
             end
             
             if ~fde.Internal && ~fde.DataLoaded
-                fprintf('Reading frame data...');
+                McsHDF5.print('Reading frame data...');
                 fde = LoadDataFromFile(fde, mode);
-                fprintf('done!\n');
+                McsHDF5.print('done!\n');
                 fde.DataLoaded = true;
                 
                 if ~strcmp(fde.DataType,'raw')
@@ -313,9 +313,9 @@ classdef McsFrameDataEntity < handle
             if fde.DataLoaded
                 out_fde.FrameData = fde.FrameData(cfg.channel_x, cfg.channel_y, cfg.window);
             else
-                fprintf('Reading partial frame data...');
+                McsHDF5.print('Reading partial frame data...');
                 out_fde = LoadPartialDataFromFile(cfg, fde, out_fde, mode);
-                fprintf('done!\n');
+                McsHDF5.print('done!\n');
             end
             out_fde.Info.FrameRight = out_fde.Info.FrameLeft + cfg.channel_x(end) - 1;
             out_fde.Info.FrameBottom = out_fde.Info.FrameTop + cfg.channel_y(end) - 1;

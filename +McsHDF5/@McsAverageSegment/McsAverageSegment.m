@@ -140,7 +140,7 @@ classdef McsAverageSegment < McsHDF5.McsSegmentStream
         % Reads the average mean data from the file the first time that the
         % AverageDataMean field is accessed.
             if ~str.Internal && ~str.MeanLoaded
-                fprintf('Reading segment data...');
+                McsHDF5.print('Reading segment data...');
                 emptySegments = false(1,length(str.Info.SegmentID));
                 fid = H5F.open(str.FileName, 'H5F_ACC_RDONLY', []);
                 gid = H5G.open(fid,str.StructName);
@@ -155,7 +155,7 @@ classdef McsAverageSegment < McsHDF5.McsSegmentStream
                 end 
                 H5G.close(gid);
                 H5F.close(fid);
-                fprintf('done!\n');
+                McsHDF5.print('done!\n');
                 str.MeanLoaded = true;
                 if ~str.StdDevLoaded
                     str.set_data_unit_dimension(emptySegments);
@@ -172,7 +172,7 @@ classdef McsAverageSegment < McsHDF5.McsSegmentStream
         % Reads the standard deviation data from the file the first time
         % that the AverageDataStdDev field is accessed.
             if ~str.Internal && ~str.StdDevLoaded
-                fprintf('Reading segment data...');
+                McsHDF5.print('Reading segment data...');
                 emptySegments = false(1,length(str.Info.SegmentID));
                 fid = H5F.open(str.FileName);
                 gid = H5G.open(fid,str.StructName);
@@ -187,7 +187,7 @@ classdef McsAverageSegment < McsHDF5.McsSegmentStream
                 end 
                 H5G.close(gid);
                 H5F.close(fid);
-                fprintf('done!\n');
+                McsHDF5.print('done!\n');
                 str.StdDevLoaded = true;
                 if ~str.MeanLoaded
                     str.set_data_unit_dimension(emptySegments);
@@ -393,7 +393,7 @@ classdef McsAverageSegment < McsHDF5.McsSegmentStream
             
             readNecessary = ~str.MeanLoaded || ~str.StdDevLoaded;
             if readNecessary
-                fprintf('Reading partial segment data...')
+                McsHDF5.print('Reading partial segment data...')
             end
             
             out_str.AverageDataTimeStamps = out_str.AverageDataTimeStamps(cfg.segment);
@@ -440,7 +440,7 @@ classdef McsAverageSegment < McsHDF5.McsSegmentStream
             out_str.Internal = true;
             
             if readNecessary
-                fprintf('done!\n');
+                McsHDF5.print('done!\n');
             end
             
             fns = fieldnames(out_str.SourceInfoChannel);

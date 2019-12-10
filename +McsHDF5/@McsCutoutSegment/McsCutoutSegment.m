@@ -126,7 +126,7 @@ classdef McsCutoutSegment < McsHDF5.McsSegmentStream
             end
             
             if ~str.Internal && ~str.DataLoaded
-                fprintf('Reading segment data...');
+                McsHDF5.print('Reading segment data...');
                 emptySegments = false(1,length(str.Info.SegmentID));
                 for segi = 1:length(str.Info.SegmentID)
                     try
@@ -146,7 +146,7 @@ classdef McsCutoutSegment < McsHDF5.McsSegmentStream
                         emptySegments(segi) = true;
                     end
                 end 
-                fprintf('done!\n');
+                McsHDF5.print('done!\n');
                 str.DataLoaded = true;
                 if ~strcmp(str.DataType,'raw')
                     for segi = 1:length(str.Info.SegmentID)
@@ -310,7 +310,7 @@ classdef McsCutoutSegment < McsHDF5.McsSegmentStream
             else
                 out_str.SegmentData = out_str.SegmentData(cfg.segment);
                 out_str.SegmentDataTimeStamps = out_str.SegmentDataTimeStamps(cfg.segment);
-                fprintf('Reading partial segment data...')
+                McsHDF5.print('Reading partial segment data...')
                 emptySegments = false(1,length(cfg.segment));
                 for gidx = 1:length(cfg.segment)
                     try
@@ -330,7 +330,7 @@ classdef McsCutoutSegment < McsHDF5.McsSegmentStream
                         emptySegments(gidx) = true;
                     end
                 end
-                fprintf('done!\n');
+                McsHDF5.print('done!\n');
             end
             fns = fieldnames(out_str.SourceInfoChannel);
             for fni = 1:length(fns)

@@ -61,7 +61,7 @@ classdef McsTimeStampStream < McsHDF5.McsStream
             end
             
             if ~str.Internal && ~str.DataLoaded
-                fprintf('Reading time stamp data...')
+                McsHDF5.print('Reading time stamp data...')
                 for gidx = 1:length(str.TimeStamps)
                     try
                         if strcmp(mode,'h5')
@@ -76,7 +76,7 @@ classdef McsTimeStampStream < McsHDF5.McsStream
                         str.TimeStamps{gidx} = cast(str.TimeStamps{gidx},str.TimeStampDataType);
                     end
                 end
-                fprintf('done!\n');
+                McsHDF5.print('done!\n');
                 str.DataLoaded = true;
             end
             data = str.TimeStamps;
@@ -174,7 +174,7 @@ classdef McsTimeStampStream < McsHDF5.McsStream
                 out_str.TimeStamps = str.TimeStamps(cfg.timestamp);
             else
                 out_str.TimeStamps = out_str.TimeStamps(cfg.timestamp);
-                fprintf('Reading partial time stamp data...')
+                McsHDF5.print('Reading partial time stamp data...')
                 for gidx = 1:length(cfg.timestamp)
                     try
                         if strcmp(mode,'h5')
@@ -192,7 +192,7 @@ classdef McsTimeStampStream < McsHDF5.McsStream
                         & McsHDF5.TickToSec(out_str.TimeStamps{gidx}) <= cfg.window(2);
                     out_str.TimeStamps{gidx} = out_str.TimeStamps{gidx}(idx);
                 end
-                fprintf('done!\n');
+                McsHDF5.print('done!\n');
             end
             out_str.DataLoaded = true;
             out_str.TimeStampDataType = str.TimeStampDataType;

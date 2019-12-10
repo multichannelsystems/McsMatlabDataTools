@@ -164,7 +164,7 @@ classdef McsCmosSpikeSorterUnit < handle
             
             if ~str.Internal && ~str.PeaksLoaded
                 str.Internal = true;
-                fprintf('Reading Unit peaks...')
+                McsHDF5.print('Reading Unit peaks...')
                 spikeData = McsHDF5.McsH5Helper.ReadCompoundDataset(str.FileName, [str.StructInfo.Name '/Peaks'], mode);
                 fn = fieldnames(spikeData);
                 numCutout = sum(cellfun(@(x)(~isempty(regexp(x, 'x\d+', 'once'))), fn));
@@ -178,7 +178,7 @@ classdef McsCmosSpikeSorterUnit < handle
                 if numCutout > 0
                     str.Peaks.Cutout = cutouts';
                 end
-                fprintf('done!\n');
+                McsHDF5.print('done!\n');
                 str.PeaksLoaded = true;
                 str.Internal = false;
             end
@@ -200,13 +200,13 @@ classdef McsCmosSpikeSorterUnit < handle
             
             if ~str.Internal && ~str.StasLoaded
                 str.Internal = true;
-                fprintf('Reading Unit Roi STAs...')
+                McsHDF5.print('Reading Unit Roi STAs...')
                 if strcmp(mode, 'h5')
                     str.RoiSTAs = h5read(str.FileName, [str.StructInfo.Name '/RoiSTAs']);
                 else
                     str.RoiSTAs = hdf5read(str.FileName, [str.StructInfo.Name '/RoiSTAs']);
                 end
-                fprintf('done!\n');
+                McsHDF5.print('done!\n');
                 str.StasLoaded = true;
                 str.Internal = false;
             end
@@ -228,13 +228,13 @@ classdef McsCmosSpikeSorterUnit < handle
             
             if ~str.Internal && ~str.SourceLoaded
                 str.Internal = true;
-                fprintf('Reading Unit Source...')
+                McsHDF5.print('Reading Unit Source...')
                 if strcmp(mode, 'h5')
                     str.Source = h5read(str.FileName, [str.StructInfo.Name '/Source']);
                 else
                     str.Source = hdf5read(str.FileName, [str.StructInfo.Name '/Source']);
                 end
-                fprintf('done!\n');
+                McsHDF5.print('done!\n');
                 str.SourceLoaded = true;
                 str.Internal = false;
             end

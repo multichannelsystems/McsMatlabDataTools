@@ -84,9 +84,9 @@ classdef McsEventStream < McsHDF5.McsStream
             end
             
             if ~str.Internal && ~str.DataLoaded
-                fprintf('Reading event data...')
+                McsHDF5.print('Reading event data...')
                 str = LoadEventsFromFile(str, mode, str.Info.EventID);
-                fprintf('done!\n');
+                McsHDF5.print('done!\n');
                 str.DataLoaded = true;
             end
             data = str.Events;
@@ -182,7 +182,7 @@ classdef McsEventStream < McsHDF5.McsStream
                 out_str.Events = str.Events(cfg.event);
             else
                 out_str.Events = out_str.Events(cfg.event);
-                fprintf('Reading partial event data...')
+                McsHDF5.print('Reading partial event data...')
                 out_str = LoadEventsFromFile(out_str, mode, str.Info.EventID(cfg.event));
                 for gidx = 1:length(cfg.event)
                     if ~isempty(out_str.Events{gidx})
@@ -191,7 +191,7 @@ classdef McsEventStream < McsHDF5.McsStream
                         out_str.Events{gidx} = out_str.Events{gidx}(:,idx);
                     end
                 end
-                fprintf('done!\n');
+                McsHDF5.print('done!\n');
             end
             out_str.DataLoaded = true;
             out_str.TimeStampDataType = str.TimeStampDataType;
