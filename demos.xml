@@ -8,12 +8,30 @@
 http://www.multichannelsystems.com/software/cmos-mea-control
 http://www.multichannelsystems.com/software/cmos-mea-tools</description>
    <demosection>
-      <label>+McsHDF5</label>
+      <label>help</label>
       <demoitem>
-         <label>examples</label>
+         <label>helpCmosMea</label>
          <type>other</type>
-         <source>examples</source>
-         <file>+McsHDF5/html/examples.html</file>
+         <source>helpCmosMea</source>
+         <file>+McsHDF5/help/html/helpCmosMea.html</file>
+      </demoitem>
+      <demoitem>
+         <label>helpDataManager</label>
+         <type>other</type>
+         <source>helpDataManager</source>
+         <file>+McsHDF5/help/html/helpDataManager.html</file>
+      </demoitem>
+      <demoitem>
+         <label>helpInstalling</label>
+         <type>other</type>
+         <source>helpInstalling</source>
+         <file>+McsHDF5/help/html/helpInstalling.html</file>
+      </demoitem>
+      <demoitem>
+         <label>helpIntro</label>
+         <type>other</type>
+         <source>helpIntro</source>
+         <file>+McsHDF5/help/html/helpIntro.html</file>
       </demoitem>
    </demosection>
 </demos>
