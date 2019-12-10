@@ -33,7 +33,7 @@
 %   data.Recording{1}.Acquisition
 %   data.Recording{1}.FilterTool
 %   data.Recording{1}.SpikeExplorer
-%   data.Recording{1}.STAExplorer
+%   data.Recording{1}.NetworkExplorer
 %   data.Recording{1}.SpikeSorter
 %   data.Recording{1}.UnknownDataSources
 
@@ -98,19 +98,34 @@
 %
 %   data.Recording{1}.FilterTool.Pipeline{1}
 
-%% STAExplorer
-% The STAExplorer data source holds the results of the STA Explorer Tool in
-% CMOS-MEA-Tools. The STAs are stored in its STAData field and read from
-% the file only when the STAData field is accessed for the first time:
+%% NetworkExplorer
+% The NetworkExplorer data source holds the results of the Network Explorer
+% Tool in CMOS-MEA-Tools. The STAs are stored in its STAData field and read
+% from the file only when the STAData field is accessed for the first time:
 %
-%   data.Recording{1}.STAExplorer.STAData
+%   data.Recording{1}.NetworkExplorer.STAData
 
 %% 
 % Metadata about the STAs can be found in the STAInfos field:
 %
-%   data.Recording{1}.STAExplorer.STAInfos
+%   data.Recording{1}.NetworkExplorer.STAInfos
 
-%% Reading a subset of STAs from the STAExplorer
+%%
+% For each channel/unit, there are two additional data sets available in
+% the NetworkExplorer data source: Spikes and STAStdDev. These are mainly
+% relevant for axon tracking in the STA. The Spikes field represents the
+% results of a channel-wise spike detection in the STA and the STAStdDev
+% field contains the standard deviations of each sensor in the STA which is
+% used to compute the threshold for the spike detection. Both are read from
+% the file the first time the respective field is accessed and have Info
+% fields storing their metadata:
+%
+%   data.Recording{1}.NetworkExplorer.Spikes
+%   data.Recording{1}.NetworkExplorer.SpikeInfos
+%   data.Recording{1}.NetworkExplorer.STAStdDev
+%   data.Recording{1}.NetworkExplorer.STAStdDevInfos
+
+%% Reading a subset of STAs from the NetworkExplorer
 % In order to save memory, it is possible to load only a subset of STAs
 % from the file instead of all of them. To achieve this, one needs to take
 % care to not directly access the STAData field as this would trigger
@@ -120,15 +135,15 @@
 %   data = McsHDF5.McsData('SOME_CMOS_MEA_FILE');
 %   cfg = [];
 %   cfg.sta = [2 4 8];
-%   stas = data.Recording{1}.STAExplorer.readPartialSTAData(cfg);
+%   stas = data.Recording{1}.NetworkExplorer.readPartialSTAData(cfg);
 
 %%
-% 'stas' will be a McsCmosStaExplorerSource object, containing the 2nd, 4th
-% and 8th STA of the original data. In order to find out, which indices to
-% use in the cfg.sta array, you can access the STAInfos field which
+% 'stas' will be a McsCmosNetworkExplorerSource object, containing the 2nd,
+% 4th and 8th STA of the original data. In order to find out, which indices
+% to use in the cfg.sta array, you can access the STAInfos field which
 % contains the metadata for each STA and is loaded from the beginning:
 %
-%   data.Recording{1}.STAExplorer.STAInfos
+%   data.Recording{1}.NetworkExplorer.STAInfos
 
 %% SpikeSorter
 % The SpikeSorter data source holds the results of the Spike Sorter Tool in
@@ -226,14 +241,14 @@
 %   plot(data.Recording{1}.Acquisition.ChannelStream{1},cfg,'--r','LineWidth',5);
 
 %% Interactive Plots
-% Plot functions for the STAExplorer data source and the SpikeSorter 
+% Plot functions for the NetworkExplorer data source and the SpikeSorter 
 % data source produce interactive figures, i.e.
 %
-%   plot(data.Recording{1}.STAExplorer,[])
+%   plot(data.Recording{1}.NetworkExplorer,[])
 %   plot(data.Recording{1}.SpikeSorter,[])
 
 %%
-% The *STAExplorer* data source plot produces a Heat Map that visualizes
+% The *NetworkExplorer* data source plot produces a Heat Map that visualizes
 % the location of each detected sta and the realtive number of contributing
 % sweeps. Upon clicking an non-active sensor on the Heat Map, labels for
 % all units may be switched between visible and invisible.
@@ -253,15 +268,15 @@
 % # an animation showing the STA across the entire sensor array over time
 
 %%
-% The animation may started/paused by clicking into it. A bar in the
-% magnified signal plot (middle) shows the timely position of the animation
+% The animation can be started/paused by clicking into it. A bar in the
+% magnified signal plot (middle) shows the time position of the animation
 % within the recording. By clicking into the signal, the current animation 
-% frame may be changed.
+% frame can be changed.
 %%
 % For more detailed information on configuration options please refer to 
 % the specific function help
 %
-%   help McsHDF5.McsCmosStaExplorerSource.plot
+%   help McsHDF5.McsCmosNetworkExplorerSource.plot
 %%
 % The *SpikeSorter* data source plot visualizes the entire sensor array.
 % Several components of the visualization, including the grid, labels, etc.,  

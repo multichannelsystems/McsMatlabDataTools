@@ -50,10 +50,10 @@ function plot(recording,cfg,varargin)
         figure
         plot(recording.SpikeExplorer, cfg.spike{1}, varargin{:});
     end
-    if ~isempty(recording.STAExplorer)
-        cfg = doParameterCheck(cfg, 'sta', recording.STAExplorer);
+    if ~isempty(recording.NetworkExplorer)
+        cfg = doParameterCheck(cfg, 'sta', recording.NetworkExplorer);
         figure
-        plot(recording.STAExplorer, cfg.sta{1}, varargin{:});
+        plot(recording.NetworkExplorer, cfg.sta{1}, varargin{:});
     end
     if ~isempty(recording.SpikeSorter)
         cfg = doParameterCheck(cfg, 'sorter', recording.SpikeSorter);

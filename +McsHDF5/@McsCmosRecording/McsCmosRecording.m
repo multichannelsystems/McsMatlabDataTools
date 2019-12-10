@@ -13,7 +13,7 @@ classdef McsCmosRecording < handle
         Acquisition             % McsCmosAcquisitionSource object or empty if the file has no Acquisition group
         FilterTool              % McsCmosFilterSource object or empty if the file has no FilterTool group 
         SpikeExplorer           % McsCmosSpikeStream object or empty if the file has no SpikeExplorer group
-        STAExplorer             % McsCmosStaExplorerSource object or empty if the file has no STAExplorer group
+        NetworkExplorer         % McsCmosNetworkExplorerSource object or empty if the file has no STAExplorer group
         SpikeSorter             % McsCmosSpikeSorterSource object or empty if the file has no SpikeSorter group
         UnknownDataSources = {} % List of McsCmosDataSource objects, one for each unknown data source in the file
     end
@@ -62,7 +62,7 @@ classdef McsCmosRecording < handle
             { ...
                 'Acquisition', ...
                 'FilterTool', ...
-                'STAExplorer', ...
+                'NetworkExplorer', ...
                 'SpikeExplorer', ...
                 'SpikeSorter', ...
             });
@@ -82,8 +82,8 @@ classdef McsCmosRecording < handle
                                 rec.(name) = McsHDF5.McsCmosFilterSource(filename, recStruct.Groups(gi), cfg);
                             elseif strcmp(name, 'SpikeExplorer')
                                 rec.(name) = McsHDF5.McsCmosSpikeStream(filename, recStruct.Groups(gi), cfg);
-                            elseif strcmp(name, 'STAExplorer')
-                                rec.(name) = McsHDF5.McsCmosStaExplorerSource(filename, recStruct.Groups(gi), cfg);
+                            elseif strcmp(name, 'NetworkExplorer')
+                                rec.(name) = McsHDF5.McsCmosNetworkExplorerSource(filename, recStruct.Groups(gi), cfg);
                             elseif strcmp(name, 'SpikeSorter')
                                 rec.(name) = McsHDF5.McsCmosSpikeSorterSource(filename, recStruct.Groups(gi), cfg);
                             end
