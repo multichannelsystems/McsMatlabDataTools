@@ -1,6 +1,21 @@
 McsMatlabDataTools
 ==================
 --------------------------
+Version 1.2.1 (2019-12-10)
+--------------------------
+- Replaced STA Explorer with Network Explorer for compatibility with newest CMOS-MEA-Tools version
+- Added McsHDF5.verbosity function to suppress toolbox outputs
+
+--------------------------
+Version 1.2.0 (2018-02-27)
+--------------------------
+	
+- Added plot functions for STA Explorer and Spike Sorter data
+- Added new plot options for SegmentStreams
+- Bug Fix: Improved compatibility with Matlab R2011a
+- Bug Fix: Fixed orientation of Conversion Factor matrix in new CMOS-MEA format
+
+--------------------------
 Version 1.1.0 (2017-12-08)
 --------------------------
 
