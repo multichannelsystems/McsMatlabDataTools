@@ -29,6 +29,8 @@ classdef McsAnalogStream < McsHDF5.McsStream
     properties (Access = private)
         ChannelDataSets = {};
         StructInfo
+        TimestampsLoaded = false;
+        Timestamps = [];
     end
     
     methods
@@ -114,13 +116,48 @@ classdef McsAnalogStream < McsHDF5.McsStream
             data = str.ChannelData;
         end
         
+        function ts = get.ChannelDataTimeStamps(str)
+        % Accessor function for the ChannelDataTimeStamps field.
+        %
+        % function  ts = get.ChannelDataTimeStamps(str)
+        %
+        % Will expand the timestamps to a vector with 1 timestamp per
+        % sample the first time this field is accessed.
+            if exist('h5info')
+                mode = 'h5';
+            else
+                mode = 'hdf5';
+            end
+            
+            if ~str.Internal && ~str.TimestampsLoaded
+                if strcmpi(str.TimeStampDataType,'int64') 
+                    timestamps = bsxfun(@plus,str.Timestamps,int64([0 1 1])');
+                    for tsi = 1:size(timestamps,2)
+                        str.ChannelDataTimeStamps(timestamps(2,tsi):timestamps(3,tsi)) = ...
+                            (int64(0:numel(timestamps(2,tsi):timestamps(3,tsi))-1) .* ...
+                            str.Info.Tick(1)) + timestamps(1,tsi);
+                    end
+                else
+                    str.ChannelDataTimeStamps = cast([],str.TimeStampDataType);
+                    timestamps = bsxfun(@plus,double(str.Timestamps),[0 1 1]');
+                    for tsi = 1:size(timestamps,2)
+                        str.ChannelDataTimeStamps(timestamps(2,tsi):timestamps(3,tsi)) = ...
+                            ((0:numel(timestamps(2,tsi):timestamps(3,tsi))-1) .* ...
+                            cast(str.Info.Tick(1),str.TimeStampDataType)) + timestamps(1,tsi);
+                    end
+                end
+                str.TimestampsLoaded = true;
+            end
+            ts = str.ChannelDataTimeStamps;
+        end
+        
         function s = disp(str)
             s = 'McsAnalogStream object\n\n';
             s = [s 'Properties:\n'];
             s = [s '\tStream Label:\t\t\t ' strtrim(str.Label) '\n'];
             s = [s '\tNumber of Channels:\t\t ' num2str(length(str.Info.ChannelID)) '\n'];
-            s = [s '\tTime Range:\t\t\t\t ' num2str(McsHDF5.TickToSec(str.ChannelDataTimeStamps(1))) ...
-                ' - ' num2str(McsHDF5.TickToSec(str.ChannelDataTimeStamps(end))) ' s\n'];
+            s = [s '\tTime Range:\t\t\t\t ' num2str(McsHDF5.TickToSec(str.Timestamps(1,1))) ...
+                ' - ' num2str(McsHDF5.TickToSec(str.Timestamps(1,end) + (str.Timestamps(3,end) - str.Timestamps(2,end)) * cast(str.Info.Tick(1),str.TimeStampDataType))) ' s\n'];
             s = [s '\tData Loaded:\t\t\t '];
             if str.DataLoaded
                 s = [s 'true\n'];
@@ -130,15 +167,20 @@ classdef McsAnalogStream < McsHDF5.McsStream
             s = [s '\n'];
             
             s = [s 'Available Fields:\n'];
-            s = [s '\tChannelData:\t\t\t [' num2str(length(str.Info.ChannelID)) 'x' num2str(length(str.ChannelDataTimeStamps))];
+            s = [s '\tChannelData:\t\t\t [' num2str(length(str.Info.ChannelID)) 'x' num2str(str.Timestamps(3,end) + 1)];
             if str.DataLoaded
                 s = [s ' ' class(str.ChannelData) ']'];
             else
                 s = [s ', not loaded]'];
             end
             s = [s '\n'];
-            s = [s '\tChannelDataTimeStamps:\t [' num2str(size(str.ChannelDataTimeStamps,1))...
-                'x' num2str(size(str.ChannelDataTimeStamps,2)) ' ' class(str.ChannelDataTimeStamps) ']'];
+            if str.TimestampsLoaded
+                s = [s '\tChannelDataTimeStamps:\t [' num2str(size(str.ChannelDataTimeStamps,1))...
+                    'x' num2str(size(str.ChannelDataTimeStamps,2)) ' ' class(str.ChannelDataTimeStamps) ']'];
+            else
+                s = [s '\tChannelDataTimeStamps:\t [1x'...
+                    num2str(str.Timestamps(3,end) + 1) ', not loaded]'];
+            end
             s = [s '\n'];
             s = [s '\tDataDimensions:\t\t\t ' str.DataDimensions];
             s = [s '\n'];
@@ -236,9 +278,7 @@ classdef McsAnalogStream < McsHDF5.McsStream
             else
                 mode = 'hdf5';
             end
-            ts = str.ChannelDataTimeStamps;
             defaultChannel = 1:length(str.Info.ChannelID);
-            defaultWindow = 1:length(ts);
             
             [cfg, isDefault] = McsHDF5.checkParameter(cfg, 'channel', defaultChannel);
             if ~isDefault
@@ -253,17 +293,66 @@ classdef McsAnalogStream < McsHDF5.McsStream
                 end
             end
             
-            [cfg, isDefault] = McsHDF5.checkParameter(cfg, 'window', defaultWindow);
+            % don't use the McsHDF5.checkParameter function here, because
+            % the default window can be very large, so construct it only if
+            % necessary!
+            isDefault = false;
+            if isempty(cfg)
+                cfg.window = [];
+                isDefault = true;
+            end
+            if ~isfield(cfg, 'window') || isempty(cfg.window)
+                if str.TimestampsLoaded
+                    ts = str.ChannelDataTimeStamps;
+                    cfg.window = [1 length(ts)];
+                else
+                    cfg.window = [1 cast(str.Timestamps(3,end), 'double')+1];
+                end
+                isDefault = true;
+            end
             if ~isDefault
-                t = find(ts >= McsHDF5.SecToTick(cfg.window(1)) & ts <= McsHDF5.SecToTick(cfg.window(2)));
-                if McsHDF5.TickToSec(ts(t(1)) - str.Info.Tick(1)) > cfg.window(1) || ...
-                        McsHDF5.TickToSec(ts(t(end)) + str.Info.Tick(1)) < cfg.window(2)
-                    warning(['Using only time range between ' num2str(McsHDF5.TickToSec(ts(t(1)))) ...
-                        ' and ' num2str(McsHDF5.TickToSec(ts(t(end)))) ' s!']);
-                elseif isempty(t)
+                tick = cast(str.Info.Tick(1), str.TimeStampDataType);
+                regionsFrom = str.Timestamps(1,:);
+                regionsTo = str.Timestamps(1,:) + (str.Timestamps(3,:) - str.Timestamps(2,:)) * tick;
+                w1 = McsHDF5.SecToTick(cfg.window(1));
+                w2 = McsHDF5.SecToTick(cfg.window(2));
+                requestedRegions = find(regionsTo >= w1 & regionsFrom <= w2);
+                if isempty(requestedRegions)
                     error('No time range found!');
                 end
-                cfg.window = t;
+                k = max(ceil((w1 - regionsFrom(requestedRegions(1))) / tick), 0);
+                startIdx = cast(str.Timestamps(2,requestedRegions(1)) + 1 + k, 'double');
+                startT = regionsFrom(requestedRegions(1)) + k * tick;
+                k = min(floor((w2 - regionsFrom(requestedRegions(end))) / tick), str.Timestamps(3,requestedRegions(end))-str.Timestamps(2,requestedRegions(end)));
+                endIdx = cast(str.Timestamps(2,requestedRegions(end)) + 1 + k, 'double');
+                endT = regionsFrom(requestedRegions(end)) + k * tick;
+                if startT > w1 || endT < w2
+                    warning(['Using only time range between ' num2str(McsHDF5.TickToSec(startT)) ...
+                        ' and ' num2str(McsHDF5.TickToSec(endT)) ' s!']);
+                end
+                cfg.window = [startIdx endIdx];
+                    
+                if length(requestedRegions) == 1 
+                    ts = startT:tick:endT;
+                    tsStruct = [startT; 0; endIdx - startIdx];
+                else
+                    ts = startT:tick:regionsTo(requestedRegions(1));
+                    tsStruct = [startT; 0; str.Timestamps(3,requestedRegions(1))-startIdx+1];
+                    for ri = 2:length(requestedRegions)-1
+                        reg = requestedRegions(ri);
+                        ts = [ts regionsFrom(reg):tick:regionsTo(reg)];
+                        tsStruct = [tsStruct [str.Timestamps(1,reg);str.Timestamps(2,reg)-startIdx+1;str.Timestamps(3,reg)-startIdx+1]];
+                    end
+                    ts =  [ts regionsFrom(requestedRegions(end)):tick:endT];
+                    tsStruct = [tsStruct [str.Timestamps(1,requestedRegions(end)); str.Timestamps(2,requestedRegions(end))-startIdx+1; endIdx - startIdx]];
+                end
+            else
+                tick = cast(str.Info.Tick(1), str.TimeStampDataType);
+                ts = [];
+                for ri = 1:size(str.Timestamps,2)
+                    ts = [ts str.Timestamps(1,ri):tick:(str.Timestamps(1,ri)+(str.Timestamps(3,ri)-str.Timestamps(2,ri))*tick)];
+                end
+                tsStruct = str.Timestamps;
             end
             
             tmpStruct = str.StructInfo;
@@ -274,15 +363,17 @@ classdef McsAnalogStream < McsHDF5.McsStream
             
             out_str.Internal = true;
             if str.DataLoaded
-                out_str.ChannelData = str.ChannelData(cfg.channel, cfg.window);
+                out_str.ChannelData = str.ChannelData(cfg.channel, cfg.window(1):cfg.window(2));
             else
                 % read data segment
                 McsHDF5.print('Reading partial analog data...');
                 out_str = LoadPartialDataFromFile(cfg, str, out_str);
                 McsHDF5.print('done!\n');
             end
-            out_str.ChannelDataTimeStamps = ts(cfg.window);
+            out_str.ChannelDataTimeStamps = ts;
+            out_str.Timestamps = tsStruct;
             out_str.DataLoaded = true;
+            out_str.TimestampsLoaded = true;
             out_str.DataType = str.DataType;
             out_str.TimeStampDataType = str.TimeStampDataType;
             out_str.copyFields(str, cfg.channel);
@@ -321,36 +412,25 @@ classdef McsAnalogStream < McsHDF5.McsStream
         function str = ConstructFromDataManager(str, strStruct, mode, filename, cfg)
 
             if strcmp(mode,'h5')
-                timestamps = h5read(filename, [strStruct.Name '/ChannelDataTimeStamps']);
+                str.Timestamps = h5read(filename, [strStruct.Name '/ChannelDataTimeStamps']);
             else
-                timestamps = hdf5read(filename, [strStruct.Name '/ChannelDataTimeStamps']);
+                str.Timestamps = hdf5read(filename, [strStruct.Name '/ChannelDataTimeStamps']);
             end
-            if size(timestamps,1) ~= 3
-                timestamps = timestamps';
+            if size(str.Timestamps,1) ~= 3
+                str.Timestamps = str.Timestamps';
             end
             
             if strcmpi(cfg.timeStampDataType,'int64') 
-                timestamps = bsxfun(@plus,timestamps,int64([0 1 1])');
-                for tsi = 1:size(timestamps,2)
-                    str.ChannelDataTimeStamps(timestamps(2,tsi):timestamps(3,tsi)) = ...
-                        (int64(0:numel(timestamps(2,tsi):timestamps(3,tsi))-1) .* ...
-                        str.Info.Tick(1)) + timestamps(1,tsi);
-                end
                 str.TimeStampDataType = 'int64';
             else
                 type = cfg.timeStampDataType;
                 if ~strcmp(type,'double')
                     error('Only int64 and double are supported for timeStampDataType!');
                 end
-                str.ChannelDataTimeStamps = cast([],type);
-                timestamps = bsxfun(@plus,double(timestamps),[0 1 1]');
-                for tsi = 1:size(timestamps,2)
-                    str.ChannelDataTimeStamps(timestamps(2,tsi):timestamps(3,tsi)) = ...
-                        ((0:numel(timestamps(2,tsi):timestamps(3,tsi))-1) .* ...
-                        cast(str.Info.Tick(1),type)) + timestamps(1,tsi);
-                end
                 str.TimeStampDataType = type;
             end
+            
+            str.Timestamps = cast(str.Timestamps, str.TimeStampDataType);
             
             if strcmpi(cfg.dataType,'double')
                 str.DataType = 'double';
@@ -363,8 +443,8 @@ classdef McsAnalogStream < McsHDF5.McsStream
             end
             
             grp = [];
-            grp.From = str.ChannelDataTimeStamps(1);
-            grp.To = str.ChannelDataTimeStamps(end) + cast(str.Info.Tick(1),cfg.timeStampDataType);
+            grp.From = str.Timestamps(1,1) * cast(str.Info.Tick(1),cfg.timeStampDataType);
+            grp.To = (str.Timestamps(3,end) + 1) * cast(str.Info.Tick(1),cfg.timeStampDataType);
             grp.Name = [strStruct.Name '/ChannelData'];
             str.ChannelDataSets{1} = grp;
         end
@@ -378,21 +458,22 @@ classdef McsAnalogStream < McsHDF5.McsStream
                     from = McsHDF5.McsH5Helper.GetFromAttributes(dataset, 'From', mode);
                     to = McsHDF5.McsH5Helper.GetFromAttributes(dataset, 'To', mode);
                     tick = str.Info.Tick(1);
-                    
+                    str.Timestamps = cast([from ; 0 ; round((to - from) / tick) - 1], 'int64');
                     if strcmpi(cfg.timeStampDataType,'int64') 
                         timeStamps = from:tick:(to - 1);
-                        str.ChannelDataTimeStamps = [str.ChannelDataTimeStamps cast(timeStamps, 'int64')];
                         str.TimeStampDataType = 'int64';
+                        str.ChannelDataTimeStamps = cast(timeStamps, 'int64');
                     else
                         timeStamps = double(from):double(tick):(double(to) - 1);
                         type = cfg.timeStampDataType;
                         if ~strcmp(type,'double')
                             error('Only int64 and double are supported for timeStampDataType!');
                         end
-                        str.ChannelDataTimeStamps = cast([],type);
-                        str.ChannelDataTimeStamps = [str.ChannelDataTimeStamps cast(timeStamps, type)];
+                        str.Timestamps = cast(str.Timestamps, type);
                         str.TimeStampDataType = type;
+                        str.ChannelDataTimeStamps = cast(timeStamps, type);
                     end
+                    str.TimestampsLoaded = true;
                     grp = [];
                     grp.From = from;
                     grp.To = to;
@@ -449,7 +530,7 @@ classdef McsAnalogStream < McsHDF5.McsStream
             if strcmp(str.SourceType, 'DataManager')
                 gid = H5G.open(fid,str.StructName);
                 did = H5D.open(gid,'ChannelData');
-                dims = [length(cfg.channel) length(cfg.window)];
+                dims = [length(cfg.channel) cfg.window(2)-cfg.window(1)+1];
                 offset = [cfg.channel(1)-1 cfg.window(1)-1];
                 mem_space_id = H5S.create_simple(2,dims,[]);
                 file_space_id = H5D.get_space(did);
@@ -461,7 +542,7 @@ classdef McsAnalogStream < McsHDF5.McsStream
                 H5G.close(gid); 
             elseif strcmp(str.SourceType, 'CMOS-MEA')
                 from = (cfg.window(1)-1) * str.Info.Tick(1);
-                to = from + length(cfg.window) * str.Info.Tick(1);
+                to = from + (cfg.window(2)-cfg.window(1)+1) * str.Info.Tick(1);
                 for gidx = 1:length(str.ChannelDataSets)
                     set = str.ChannelDataSets{gidx};
                     if strcmp(str.TimeStampDataType, 'int64')
@@ -491,6 +572,10 @@ classdef McsAnalogStream < McsHDF5.McsStream
                 end
             end
             H5F.close(fid);
+        end
+        
+        function out_str = ConstructPartialTimestamps(cfg, str, out_str)
+            
         end
     end
 end
