@@ -177,14 +177,14 @@ classdef McsData < handle
                     end
                 elseif McsHDF5.McsH5Helper.AttributeNameEquals(attribute, 'FileVersion', mode)
                     type = 'CMOS-MEA';
-                    if ~McsHDF5.McsH5Helper.AttributeIsValid(attribute, @(x)(x == 1), mode)
+                    if ~McsHDF5.McsH5Helper.AttributeIsValid(attribute, @(x)(x <= 2), mode)
                         isValid = false;
                         message = 'Only MCS HDF5 up to version 1 is supported for CMOS-MEA files!';
                         break;
                     else
                         isValid = true;
                         version = attribute.Value;
-                    end
+                   end
                 end
             end
             
